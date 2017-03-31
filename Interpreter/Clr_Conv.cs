@@ -16,7 +16,19 @@ namespace ApolloClr
         partial class Clr
     {
 
-
+        private Type[] conveTypes = new[]
+        {
+            typeof(int)  ,
+            typeof(long),
+            typeof(float),
+            typeof(double),
+            typeof(sbyte),
+            typeof(short),
+            typeof(byte),
+            typeof(ushort),
+            typeof(uint),
+            typeof(ulong)
+        };
 
         /// <summary>
         /// 将位于计算堆栈顶部的值转换为Type
@@ -25,10 +37,27 @@ namespace ApolloClr
         public void Conv(StackValueType type)
         {
             var v = EvaluationStack_Pop();
-            var rv = new StackItem();
+         
 #if JS
-            throw new NotImplementedException();
+            object value = v.IntValue;
+            if (v.ValueType != StackValueType.i4)
+            {
+                value = v.VPoint;
+            }
+            object result = Convert.ChangeType(value, conveTypes[(int) type]);
+            switch (type)
+            {
+                case  StackValueType.i8:
+                case StackValueType.r8:
+                case StackValueType.r4:
+                    EvaluationStack_Push(type, result);
+                    break;
+                default:
+                    EvaluationStack_Push(type, Convert.ChangeType(value, typeof(int)));
+                    break;
+            }
 #else
+            var rv = new StackItem();
             rv.VPoint = &rv.IntValue;
             switch (type)
             {

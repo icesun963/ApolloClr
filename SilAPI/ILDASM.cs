@@ -1,4 +1,4 @@
-﻿#if !JS
+﻿#if  !BRIDGE
 using System;
 using System.Diagnostics;
 using System.IO;

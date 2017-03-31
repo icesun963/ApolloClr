@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using static ApolloClr.PtrFix;
+
 namespace ApolloClr.Cross
 {
     public

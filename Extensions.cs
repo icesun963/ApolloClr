@@ -18,15 +18,20 @@ namespace ApolloClr
         {
             if (DeleageSetFun == null)
             {
-#if JS
+#if BRIDGE
 
 
                 var xfield = @delegate.GetType().GetField("_target");
 #else
-                  BindingFlags flag = BindingFlags.Instance | BindingFlags.NonPublic;
+                 BindingFlags flag = BindingFlags.Instance | BindingFlags.NonPublic;
 
                 var xfield = @delegate.GetType().GetField("_target", flag);
+
 #endif
+                if (xfield == null)
+                {
+                    throw new NotSupportedException("_target field was not found!");
+                }
                 DeleageSetFun = GetFSet(xfield);
             }
             DeleageSetFun(@delegate, target);
@@ -140,9 +145,4 @@ namespace ApolloClr
         }
     }
 
-
-    public static class PtrFix
-    {
-
-    }
 }

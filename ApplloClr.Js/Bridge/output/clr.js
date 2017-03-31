@@ -3,7 +3,7 @@
  * @copyright Copyright ©  2017
  * @compiler Bridge.NET 15.7.0
  */
-Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
+Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
     "use strict";
 
     Bridge.define("ApolloClr.BaseClrStack", {
@@ -35,21 +35,11 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
             return result;
         },
         pop$1: function (count) {
-            var result = System.Array.init(count, null, ApolloClr.StackItem);
-            for (var i = 0; i < count; i = (i + 1) | 0) {
-                result[((((count - i) | 0) - 1) | 0)] = this.evaluationStack[((this.esp = (this.esp - 1) | 0))];
-            }
-            return result;
-        }
-    });
-
-    Bridge.define("ApolloClr.BaseOpTask", {
-        config: {
-            properties: {
-                Dump: 0,
-                OpCode: null,
-                Method: null
-            }
+            this.esp = (this.esp - count) | 0;
+            return this.evaluationStack[this.esp];
+        },
+        top: function () {
+            return this.evaluationStack[this.esp];
         }
     });
 
@@ -67,13 +57,13 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          *
          * @instance
          */
-        csp: 0,
+        csp: null,
         /**
          * ����ָ��
          *
          * @instance
          */
-        argp: 0,
+        argp: null,
         /**
          * ��ǰ�ķ���ֵ
          *
@@ -81,6 +71,7 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          */
         resultPoint: null,
         dumpAction: null,
+        throwAction: null,
         localVarCount: 0,
         argsVarCount: 0,
         retResult: false,
@@ -101,20 +92,27 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
                 return;
             }
 
-            this.csp = 0;
-            this.argp = (this.csp + localCount) | 0;
+            this.csp = ApolloClr.StackItem.op_Implicit(0);
+            this.argp = ApolloClr.StackItem.op_Addition(this.csp, localCount);
         },
         evaluationStack_Push: function (obj) {
             this.stack.push(obj);
         },
-        evaluationStack_Push$1: function (obj) {
+        evaluationStack_Push$2: function (obj) {
             this.stack.push$1(obj);
         },
-        evaluationStack_Push$2: function (args) {
+        evaluationStack_Push$3: function (args) {
             for (var i = 0; i < args.length; i = (i + 1) | 0) {
-                this.stack.push$1(((this.csp + args[i]) | 0));
+                this.stack.push(ApolloClr.StackItem.op_Addition(this.csp, args[i]));
             }
 
+        },
+        evaluationStack_Push$1: function (vtype, value) {
+
+        },
+        evaluationStack_Push$4: function (obj) {
+            var iptr = ApolloClr.StackObject.newObject(obj);
+            //Stack.Push(iptr);
         },
         evaluationStack_Pop: function () {
             return this.stack.pop();
@@ -135,6 +133,31 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
             this.evaluationStack_Pop();
         },
         /**
+         * ���Ƽ����ջ�ϵ�ǰ��˵�ֵ
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        dup: function () {
+            var vs = this.stack.top();
+            this.evaluationStack_Push(vs);
+        },
+        /**
+         * �˳���ǰ����������ָ������
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        jmp: function () {
+            //TODO
+        },
+        /**
          * ����������ָ������ֵ���ã����ص���ջ�ϡ�
          *
          * @instance
@@ -145,34 +168,60 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          * @return  {void}
          */
         ldarg: function (i) {
-            this.evaluationStack_Push(this.callStack[((this.argp + i) | 0)]);
+            this.evaluationStack_Push(ApolloClr.StackItem.op_Addition(this.argp, i));
         },
         ldstr: function (str) {
-
+            this.evaluationStack_Push$4(str);
         },
         ldnull: function () {
-
+            this.evaluationStack_Push(ApolloClr.StackItem.sPtrEmpty);
         },
         /**
-         * ���ص�һ����������ѹ��Evaluation Stack�У�
+         * ѹ������ ѹ��Evaluation Stack��
          *
          * @instance
          * @public
          * @this ApolloClr.Clr
          * @memberof ApolloClr.Clr
-         * @param   {number}    i    
-         * @param   {number}    v    λ��
+         * @param   {number}    v    ֵ
          * @return  {void}
          */
-        ldc: function (i, v) {
-
-
-            this.evaluationStack_Push$1(v);
-
-
+        ldc_i4: function (v) {
+            this.evaluationStack_Push$2(v);
         },
-        ldc_R4: function (v) {
+        /**
+         * ��λ�ڼ����ջ������ֵ�洢�ڲ������е�ָ�����������̸�ʽ����
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @param   {number}    i
+         * @return  {void}
+         */
+        starg: function (i) {
+            var v = this.evaluationStack_Pop();
+            (ApolloClr.StackItem.op_Addition(this.argp, 1)).copyFrom(v);
+        },
+        /**
+         * ѹ������ ѹ��Evaluation Stack��
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @param   {ApolloClr.StackValueType}    vtype    
+         * @param   {Object}                      value
+         * @return  {void}
+         */
+        ldc: function (vtype, value) {
+            if (Bridge.is(value.v, String)) {
+                value.v = ApolloClr.Extensions.getValueFromStr(Bridge.as(value.v, String), vtype.v);
+            }
 
+            {
+                this.evaluationStack_Push$1(vtype.v, value.v);
+            }
 
         },
         /**
@@ -186,8 +235,7 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          * @return  {void}
          */
         ldloc: function (i) {
-            this.evaluationStack_Push(this.callStack[((this.csp + i) | 0)]);
-
+            this.evaluationStack_Push(ApolloClr.StackItem.op_Addition(this.csp, i));
         },
         /**
          * ��һ���������� ��ѹ��Evaluation Stack�У�
@@ -202,11 +250,11 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
         ldloc$1: function (args) {
             if (args === void 0) { args = []; }
 
-            this.evaluationStack_Push$2(args);
+            this.evaluationStack_Push$3(args);
 
         },
         /**
-         * ���ض��������ľֲ��������ص������ջ�ϣ��̸�ʽ����
+         * ��һ���������� ��ѹ��Evaluation Stack�У�
          *
          * @instance
          * @public
@@ -215,27 +263,12 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          * @param   {number}    i
          * @return  {void}
          */
-        ldloc_s: function (i) {
-            this.evaluationStack_Push(this.callStack[((this.csp + i) | 0)]);
-
+        ldloca: function (i) {
+            this.ldloc(i);
         },
         /**
-         * ���������� ���� ��ѹ��Evaluation Stack�У�
-         *
-         * @instance
-         * @public
-         * @this ApolloClr.Clr
-         * @memberof ApolloClr.Clr
-         * @param   {number}    i     
-         * @param   {number}    i2
-         * @return  {void}
-         */
-        ldlocLdloc: function (i, i2) {
-            this.evaluationStack_Push$1(((this.csp + i) | 0));
-            this.evaluationStack_Push$1(((this.csp + i2) | 0));
-        },
-        /**
-         * ��ֵ��CallStack�е�i��λ��
+         * �Ӽ����ջ�Ķ���������ǰֵ������洢�ھֲ������б��е� index �����̸�ʽ����
+         Stloc_S
          *
          * @instance
          * @public
@@ -246,36 +279,7 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          */
         stloc: function (i) {
             var result = this.evaluationStack_Pop();
-            this.callStack[(((this.csp + i) | 0))] = result;
-        },
-        /**
-         * �Ӽ����ջ�Ķ���������ǰֵ������洢�ھֲ������б��е� index �����̸�ʽ����
-         *
-         * @instance
-         * @public
-         * @this ApolloClr.Clr
-         * @memberof ApolloClr.Clr
-         * @param   {number}    i    λ��
-         * @return  {void}
-         */
-        stloc_S: function (i) {
-            this.stloc(i);
-        },
-        /**
-         * �ϲ�ָ�� ��һ��ֵѹ��ֲ�����
-         *
-         * @instance
-         * @public
-         * @this ApolloClr.Clr
-         * @memberof ApolloClr.Clr
-         * @param   {number}    li    
-         * @param   {number}    lv    
-         * @param   {number}    si    �ֲ�����
-         * @return  {void}
-         */
-        ldcStloc: function (li, lv, si) {
-            this.callStack[(((this.csp + si) | 0))].intValue = lv;
-
+            (ApolloClr.StackItem.op_Addition(this.csp, i)).copyFrom(result);
         },
         /**
          * ���ô�
@@ -293,8 +297,98 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
             this.stack.reset();
             this.resultPoint = null;
         },
-        dump: function (action) {
-            this.dumpAction = action;
+        /**
+         * 将从零开始的、一维数组的元素的数目推送到计算堆栈上。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        ldlen: function () {
+            var vs = this.evaluationStack_Pop();
+            var array = Bridge.as(vs.getValue(), Array);
+            this.evaluationStack_Push$2(array.length);
+        },
+        /**
+         * 将对新的从零开始的一维数组（其元素属于特定类型）的对象引用推送到计算堆栈上。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @param   {Function}    T       
+         * @param   {Function}    type
+         * @return  {void}
+         */
+        newarr: function (T, type) {
+            var vs = this.evaluationStack_Pop();
+            var array = System.Array.init(vs.intValue, function (){
+                return Bridge.getDefaultValue(T);
+            }, T);
+            this.evaluationStack_Push$4(array);
+        },
+        
+        ldelema: function (T, type) {
+            var vs = this.evaluationStack_Pop$1(2);
+            var ptr = (vs).ptr;
+            var index = (ApolloClr.StackItem.op_Addition(vs, 1)).intValue;
+            var sptr = Bridge.merge(new ApolloClr.StackItem(), {
+                ptr: ptr,
+                index: index,
+                valueType: ApolloClr.StackValueType.Array
+            } );
+
+            this.evaluationStack_Push(sptr);
+        },
+        /**
+         * 将位于指定数组索引处的 int8 类型的元素作为 int32 加载到计算堆栈的顶部。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @param   {ApolloClr.StackValueType}    type
+         * @return  {void}
+         */
+        ldelem: function (type) {
+            var vs = this.evaluationStack_Pop$1(2);
+            var array = Bridge.as((vs).ptr.object, Array);
+            var index = (ApolloClr.StackItem.op_Addition(vs, 1)).intValue;
+
+
+            this.evaluationStack_Push$1(type, System.Array.get(array, index));
+        },
+        /**
+         * 用计算堆栈上的 native int 值替换给定索引处的数组元素。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @param   {ApolloClr.StackValueType}    type
+         * @return  {void}
+         */
+        stelem: function (type) {
+            var vs = this.evaluationStack_Pop$1(3);
+            var array = Bridge.as(vs.ptr.object, Array);
+            var index = (ApolloClr.StackItem.op_Addition(vs, 1)).intValue;
+            var optr = (ApolloClr.StackItem.op_Addition(ApolloClr.StackItem.op_Addition(vs, 1), 1));
+            switch (optr.valueType) {
+                case ApolloClr.StackValueType.Ref: 
+                    {
+                        var obj = optr.ptr.object;
+                        System.Array.set(array, obj, index);
+                        break;
+                    }
+                default: 
+                    {
+                        var obj1 = optr.getValue();
+                        System.Array.set(array, obj1, index);
+                        break;
+                    }
+            }
         },
         /**
          * 无条件地将控制转移到目标指令（短格式）。
@@ -361,7 +455,7 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          */
         beq: function (n1, n2, pc) {
             var vs = this.evaluationStack_Pop$1(2);
-            if (ApolloClr.StackItem.op_Equality(vs[0], vs[1])) {
+            if (ApolloClr.StackItem.op_Equality(vs, ApolloClr.StackItem.op_Addition(vs, 1))) {
                 this.dumpAction(pc);
             }
         },
@@ -379,7 +473,7 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          */
         bge: function (n1, n2, pc) {
             var vs = this.evaluationStack_Pop$1(2);
-            if (ApolloClr.StackItem.op_GreaterThanOrEqual(vs[0], vs[1])) {
+            if (ApolloClr.StackItem.op_GreaterThanOrEqual(vs, ApolloClr.StackItem.op_Addition(vs, 1))) {
                 this.dumpAction(pc);
             }
         },
@@ -397,7 +491,7 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          */
         bgt: function (n1, n2, pc) {
             var vs = this.evaluationStack_Pop$1(2);
-            if (ApolloClr.StackItem.op_GreaterThan(vs[0], vs[1])) {
+            if (ApolloClr.StackItem.op_GreaterThan(vs, ApolloClr.StackItem.op_Addition(vs, 1))) {
                 this.dumpAction(pc);
             }
         },
@@ -415,7 +509,7 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          */
         ble: function (n1, n2, pc) {
             var vs = this.evaluationStack_Pop$1(2);
-            if (ApolloClr.StackItem.op_LessThanOrEqual(vs[0], vs[1])) {
+            if (ApolloClr.StackItem.op_LessThanOrEqual(vs, ApolloClr.StackItem.op_Addition(vs, 1))) {
                 this.dumpAction(pc);
             }
         },
@@ -433,9 +527,70 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          */
         blt: function (n1, n2, pc) {
             var vs = this.evaluationStack_Pop$1(2);
-            if (ApolloClr.StackItem.op_LessThan(vs[0], vs[1])) {
+            if (ApolloClr.StackItem.op_LessThan(vs, ApolloClr.StackItem.op_Addition(vs, 1))) {
                 this.dumpAction(pc);
             }
+        },
+        /**
+         * 引发当前位于计算堆栈上的异常对象。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        throw: function () {
+            var vs = this.evaluationStack_Pop();
+            this.evaluationStack_Push(vs);
+            this.throwAction(vs.getValue(), -1);
+        },
+        /**
+         * 再次引发当前异常。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        rethrow: function () {
+            this.evaluationStack_Push$2(0);
+            this.throwAction(null, -1);
+        },
+        /**
+         * 退出受保护的代码区域，无条件将控制转移到特定目标指令。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @param   {number}    i
+         * @return  {void}
+         */
+        leave: function (i) {
+            this.throwAction(null, i);
+        },
+        _Try: function (spc, epc, pcs) {
+
+        },
+        catch: function (spc, epc) {
+            this.dumpAction(epc);
+        },
+        finally: function (spc, epc) {
+
+        },
+        /**
+         * 将控制从异常块的 fault 或 finally 子句转移回公共语言结构 (CLI) 异常处理程序。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        endfinally: function () {
+
         },
         /**
          * 拷贝当前参数到目标堆栈
@@ -451,7 +606,7 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
             var count = clr.argsVarCount;
             var vs = this.evaluationStack_Pop$1(count);
             for (var i = 0; i < count; i = (i + 1) | 0) {
-                clr.callStack[((clr.argp + i) | 0)] = vs[i];
+                (ApolloClr.StackItem.op_Addition(clr.argp, i)).copyFrom(ApolloClr.StackItem.op_Addition(vs, i));
             }
 
         },
@@ -520,29 +675,547 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
 
 
         },
-        callvirt: function () {
+        /**
+         * 向公共语言结构 (CLI) 发出信号以通知调试器已撞上了一个断点。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        break: function () {
 
         },
-        throw: function () {
+        /**
+         * 实现跳转表
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @param   {Array.<number>}    pcs
+         * @return  {void}
+         */
+        switch: function (pcs) {
+            var vs = this.evaluationStack_Pop();
+            this.dumpAction(pcs[vs.intValue]);
+        },
+        /**
+         * 通过调用约定描述的参数调用在计算堆栈上指示的方法（作为指向入口点的指针）。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        calli: function () {
 
         },
-        stfld: function () {
+        /**
+         * 对对象调用后期绑定方法，并且将返回值推送到计算堆栈上。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @param   {string}                   instance    
+         * @param   {string}                   return      
+         * @param   {ApolloClr.MethodTasks}    task
+         * @return  {void}
+         */
+        callvirt: function (instance, $return, task) {
+
+            this.call(null, null, task);
+        },
+        /**
+         * 创建一个值类型的新对象或新实例，并将对象引用（O 类型）推送到计算堆栈上。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @param   {string}                   instance    
+         * @param   {string}                   return      
+         * @param   {ApolloClr.MethodTasks}    task
+         * @return  {void}
+         */
+        newobj: function (instance, $return, task) {
+            task.run();
+
+            this.evaluationStack_Push(task.clr.resultPoint);
+        },
+        
+        cpobj: function () {
 
         },
+        /**
+         * 将地址指向的值类型对象复制到计算堆栈的顶部。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        ldobj: function () {
+
+        },
+        /**
+         * 尝试将引用传递的对象转换为指定的类。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        castclass: function () {
+
+        },
+        /**
+         * 测试对象引用（O 类型）是否为特定类的实例。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        isinst: function () {
+
+        },
+        /**
+         * 将值类型的已装箱的表示形式转换为其未装箱的形式
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @param   {Function}    T       
+         * @param   {Function}    type
+         * @return  {void}
+         */
+        unBox: function (T, type) {
+            //var vs = EvaluationStack_Pop();
+            //EvaluationStack_Push(vs->Value);
+        },
+        /**
+         * 将值类型的已装箱的表示形式转换为其未装箱的形式
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @param   {Function}    T       
+         * @param   {Function}    type
+         * @return  {void}
+         */
+        unBox_Any: function (T, type) {
+            //UnBox<T>(type);
+        },
+        /**
+         * 将值类转换为对象引用（O 类型）。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @param   {Function}    T       
+         * @param   {Function}    type
+         * @return  {void}
+         */
+        box: function (T, type) {
+            //var vs = EvaluationStack_Pop();
+            //EvaluationStack_Push(vs->Value);
+        },
+        /**
+         * 查找对象中其引用当前位于计算堆栈的字段的值。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
         ldfld: function () {
 
         },
-        box: function () {
+        /**
+         * 查找对象中其引用当前位于计算堆栈的字段的地址。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        ldflda: function () {
 
         },
-        unBox: function () {
+        /**
+         * 用新值替换在对象引用或指针的字段中存储的值。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        stfld: function () {
 
         },
-        newobj: function (type) {
+        /**
+         * 将静态字段的值推送到计算堆栈上。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        ldsfld: function () {
 
         },
-        conv: function () {
+        /**
+         * 将静态字段的地址推送到计算堆栈上。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        ldsflda: function () {
 
+        },
+        /**
+         * 用来自计算堆栈的值替换静态字段的值。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        stsfld: function () {
+
+        },
+        /**
+         * 将指定类型的值从计算堆栈复制到所提供的内存地址中。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        stobj: function () {
+
+        },
+        
+        refanyval: function () {
+
+        },
+        /**
+         * 如果值不是有限数，则引发 ArithmeticException。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        ckfinite: function () {
+
+        },
+        /**
+         * 将对特定类型实例的类型化引用推送到计算堆栈上。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        mkrefany: function () {
+
+        },
+        /**
+         * 将元数据标记转换为其运行时表示形式，并将其推送到计算堆栈上。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        ldtoken: function () {
+
+        },
+        /**
+         * 返回指向当前方法的参数列表的非托管指针。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        arglist: function () {
+
+        },
+        /**
+         * 将指向实现特定方法的本机代码的非托管指针（native int 类型）推送到计算堆栈上。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        ldftn: function () {
+
+        },
+        /**
+         * 将指向实现与指定对象关联的特定虚方法的本机代码的非托管指针（native int 类型）推送到计算堆栈上。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        ldvirtftn: function () {
+
+        },
+        /**
+         * 从本地动态内存池分配特定数目的字节并将第一个分配的字节的地址（瞬态指针，* 类型）推送到计算堆栈上。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        localloc: function () {
+
+        },
+        /**
+         * 将控制从异常的 filter 子句转移回公共语言结构 (CLI) 异常处理程序。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        endfilter: function () {
+
+        },
+        /**
+         * 指示当前位于计算堆栈上的地址可能没有与紧接的 ldind、stind、ldfld、stfld、ldobj、stobj、initblk 或 cpblk 指令的自然大小对齐。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        unaligned: function () {
+
+        },
+        /**
+         * 指定当前位于计算堆栈顶部的地址可以是易失的，并且读取该位置的结果不能被缓存，或者对该地址的多个存储区不能被取消。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        volatile: function () {
+
+        },
+        /**
+         * 执行后缀的方法调用指令，以便在执行实际调用指令前移除当前方法的堆栈帧。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        tail: function () {
+
+        },
+        /**
+         * 将位于指定地址的值类型的每个字段初始化为空引用或适当的基元类型的 0。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        initobj: function () {
+
+        },
+        /**
+         * 约束要对其进行虚方法调用的类型。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        constrained: function () {
+
+        },
+        /**
+         * 将指定数目的字节从源地址复制到目标地址。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        cpblk: function () {
+
+        },
+        /**
+         * 将位于特定地址的内存的指定块初始化为给定大小和初始值。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        initblk: function () {
+
+        },
+        no: function () {
+
+        },
+        /**
+         * 将提供的值类型的大小（以字节为单位）推送到计算堆栈上。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        sizeof: function () {
+
+        },
+        /**
+         * 检索嵌入在类型化引用内的类型标记。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        refanytype: function () {
+
+        },
+        /**
+         * 指定后面的数组地址操作在运行时不执行类型检查，并且返回可变性受限的托管指针。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @return  {void}
+         */
+        readonly: function () {
+
+        },
+        /**
+         * 将位于计算堆栈顶部的值转换为Type
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @param   {ApolloClr.StackValueType}    type
+         * @return  {void}
+         */
+        conv: function (type) {
+            var v = this.evaluationStack_Pop();
+            var rv = new ApolloClr.StackItem();
+            throw new System.NotImplementedException();
+
+
+        },
+        /**
+         * 将 int8 类型的值作为 int32 间接加载到计算堆栈上。
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @param   {ApolloClr.StackValueType}    type
+         * @return  {void}
+         */
+        ldind: function (type) {
+            var vs = this.stack.top();
+            switch (vs.valueType) {
+                case ApolloClr.StackValueType.Array: 
+                    {
+                        var array = Bridge.as(vs.ptr.object, Array);
+                        vs.setValue(type, System.Array.get(array, vs.index));
+                        break;
+                    }
+                case ApolloClr.StackValueType.i4: 
+                case ApolloClr.StackValueType.r4: 
+                case ApolloClr.StackValueType.i8: 
+                case ApolloClr.StackValueType.r8: 
+                case ApolloClr.StackValueType.Ref: 
+                    {
+                        break;
+                    }
+                default: 
+                    throw new System.NotSupportedException();
+            }
+        },
+        /**
+         * 存储所提供地址处的对象引用值
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @param   {ApolloClr.StackValueType}    type
+         * @return  {void}
+         */
+        stind: function (type) {
+            var vs = this.stack.pop$1(2);
+            var vsv = ApolloClr.StackItem.op_Addition(vs, 1);
+            switch (vs.valueType) {
+                case ApolloClr.StackValueType.Array: 
+                    {
+                        var array = Bridge.as(vs.ptr.object, Array);
+                        System.Array.set(array, vsv.getValue(), vs.index);
+                        break;
+                    }
+                case ApolloClr.StackValueType.i4: 
+                case ApolloClr.StackValueType.r4: 
+                case ApolloClr.StackValueType.i8: 
+                case ApolloClr.StackValueType.r8: 
+                case ApolloClr.StackValueType.Ref: 
+                    {
+                        break;
+                    }
+                default: 
+                    throw new System.NotSupportedException();
+            }
         },
         /**
          * 将两个值相加并将结果推送到计算堆栈上。
@@ -555,9 +1228,8 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          */
         add: function () {
             var vs = this.evaluationStack_Pop$1(2);
-            //var x = *vs->IntV + *(vs + 1)->IntV;
-            var x = (vs[0].intValue + vs[1].intValue) | 0;
-            this.evaluationStack_Push$1(x);
+            //var x = *vs->VPoint + *(vs + 1)->VPoint;
+            var x = (vs.intValue + (ApolloClr.StackItem.op_Addition(vs, 1)).intValue) | 0;
 
         },
         /**
@@ -571,9 +1243,9 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          */
         sub: function () {
             var vs = this.evaluationStack_Pop$1(2);
-            //var x = *vs->IntV + *(vs + 1)->IntV;
-            var x = (vs[0].intValue - vs[1].intValue) | 0;
-            this.evaluationStack_Push$1(x);
+            //var x = *vs->VPoint + *(vs + 1)->VPoint;
+            var x = (vs.intValue - (ApolloClr.StackItem.op_Addition(vs, 1)).intValue) | 0;
+
 
         },
         /**
@@ -587,9 +1259,9 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          */
         mul: function () {
             var vs = this.evaluationStack_Pop$1(2);
-            //var x = *vs->IntV + *(vs + 1)->IntV;
-            var x = (vs[0].intValue * vs[1].intValue) | 0;
-            this.evaluationStack_Push$1(x);
+            //var x = *vs->VPoint + *(vs + 1)->VPoint;
+            var x = (vs.intValue * (ApolloClr.StackItem.op_Addition(vs, 1)).intValue) | 0;
+
 
         },
         /**
@@ -603,9 +1275,9 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          */
         div: function () {
             var vs = this.evaluationStack_Pop$1(2);
-            //var x = *vs->IntV + *(vs + 1)->IntV;
-            var x = (Bridge.Int.div(vs[0].intValue, vs[1].intValue)) | 0;
-            this.evaluationStack_Push$1(x);
+            //var x = *vs->VPoint + *(vs + 1)->VPoint;
+            var x = (Bridge.Int.div(vs.intValue, (ApolloClr.StackItem.op_Addition(vs, 1)).intValue)) | 0;
+
 
         },
         /**
@@ -619,9 +1291,9 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          */
         rem: function () {
             var vs = this.evaluationStack_Pop$1(2);
-            //var x = *vs->IntV + *(vs + 1)->IntV;
-            var x = vs[0].intValue % vs[1].intValue;
-            this.evaluationStack_Push$1(x);
+            //var x = *vs->VPoint + *(vs + 1)->VPoint;
+            var x = vs.intValue % (ApolloClr.StackItem.op_Addition(vs, 1)).intValue;
+
 
         },
         /**
@@ -635,9 +1307,10 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          */
         and: function () {
             var vs = this.evaluationStack_Pop$1(2);
-            //var x = *vs->IntV + *(vs + 1)->IntV;
-            var x = vs[0].intValue & vs[1].intValue;
-            this.evaluationStack_Push$1(x);
+            //var x = *vs->VPoint + *(vs + 1)->VPoint;
+            var x = vs.intValue & (ApolloClr.StackItem.op_Addition(vs, 1)).intValue;
+
+            this.evaluationStack_Push$2(x);
 
         },
         /**
@@ -651,9 +1324,9 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          */
         or: function () {
             var vs = this.evaluationStack_Pop$1(2);
-            //var x = *vs->IntV + *(vs + 1)->IntV;
-            var x = vs[0].intValue | vs[1].intValue;
-            this.evaluationStack_Push$1(x);
+            //var x = *vs->VPoint + *(vs + 1)->VPoint;
+            var x = vs.intValue | (ApolloClr.StackItem.op_Addition(vs, 1)).intValue;
+            this.evaluationStack_Push$2(x);
 
         },
         /**
@@ -667,10 +1340,10 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          */
         xor: function () {
             var vs = this.evaluationStack_Pop$1(2);
-            //var x = *vs->IntV + *(vs + 1)->IntV;
+            //var x = *vs->VPoint + *(vs + 1)->VPoint;
 
-            var x = vs[0].intValue ^ vs[1].intValue;
-            this.evaluationStack_Push$1(x);
+            var x = vs.intValue ^ (ApolloClr.StackItem.op_Addition(vs, 1)).intValue;
+            this.evaluationStack_Push$2(x);
 
         },
         /**
@@ -684,9 +1357,9 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          */
         shl: function () {
             var vs = this.evaluationStack_Pop$1(2);
-            //var x = *vs->IntV + *(vs + 1)->IntV;
-            var x = vs[0].intValue << vs[1].intValue;
-            this.evaluationStack_Push$1(x);
+            //var x = *vs->VPoint + *(vs + 1)->VPoint;
+            var x = vs.intValue << (ApolloClr.StackItem.op_Addition(vs, 1)).intValue;
+            this.evaluationStack_Push$2(x);
 
         },
         /**
@@ -700,9 +1373,9 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          */
         shr: function () {
             var vs = this.evaluationStack_Pop$1(2);
-            //var x = *vs->IntV + *(vs + 1)->IntV;
-            var x = vs[0].intValue >> vs[1].intValue;
-            this.evaluationStack_Push$1(x);
+            //var x = *vs->VPoint + *(vs + 1)->VPoint;
+            var x = vs.intValue >> (ApolloClr.StackItem.op_Addition(vs, 1)).intValue;
+            this.evaluationStack_Push$2(x);
 
         },
         /**
@@ -716,9 +1389,9 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          */
         neg: function () {
             var vs = this.evaluationStack_Pop();
-            //var x = *vs->IntV + *(vs + 1)->IntV;
+            //var x = *vs->VPoint + *(vs + 1)->VPoint;
             var x = ~vs.intValue;
-            this.evaluationStack_Push$1(x);
+            this.evaluationStack_Push$2(x);
 
         },
         /**
@@ -732,9 +1405,9 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          */
         not: function () {
             var vs = this.evaluationStack_Pop();
-            //var x = *vs->IntV + *(vs + 1)->IntV;
+            //var x = *vs->VPoint + *(vs + 1)->VPoint;
             var x = ~vs.intValue;
-            this.evaluationStack_Push$1(x);
+            this.evaluationStack_Push$2(x);
 
         },
         /**
@@ -748,10 +1421,10 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          */
         ceq: function () {
             var vs = this.evaluationStack_Pop$1(2);
-            if ((vs[0]).intValue === vs[1].intValue) {
-                this.evaluationStack_Push$1(1);
+            if (vs.intValue === (ApolloClr.StackItem.op_Addition(vs, 1)).intValue) {
+                this.evaluationStack_Push$2(1);
             } else {
-                this.evaluationStack_Push$1(0);
+                this.evaluationStack_Push$2(0);
             }
         },
         /**
@@ -765,10 +1438,10 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          */
         cgt: function () {
             var vs = this.evaluationStack_Pop$1(2);
-            if ((vs[0]).intValue > vs[1].intValue) {
-                this.evaluationStack_Push$1(1);
+            if ((vs).intValue > (ApolloClr.StackItem.op_Addition(vs, 1)).intValue) {
+                this.evaluationStack_Push$2(1);
             } else {
-                this.evaluationStack_Push$1(0);
+                this.evaluationStack_Push$2(0);
             }
         },
         /**
@@ -782,203 +1455,34 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
          */
         clt: function () {
             var vs = this.evaluationStack_Pop$1(2);
-            if ((vs[0]).intValue < vs[1].intValue) {
-                this.evaluationStack_Push$1(1);
+            if ((vs).intValue < (ApolloClr.StackItem.op_Addition(vs, 1)).intValue) {
+                this.evaluationStack_Push$2(1);
             } else {
-                this.evaluationStack_Push$1(0);
+                this.evaluationStack_Push$2(0);
             }
         }
     });
 
-    Bridge.define("ApolloClr.ILCode", {
-        lable: null,
-        opCode: null,
-        op: null,
-        opArg0: null,
-        opArg1: null,
-        arg0: null,
-        arg1: null,
-        arg2: null
-    });
-
-    Bridge.define("ApolloClr.IOpTask", {
+    Bridge.define("ApolloClr.Cross.ICrossMethodDelegate", {
         $kind: "interface"
     });
 
-    Bridge.define("ApolloClr.Js.App", {
+    Bridge.define("ApolloClr.Cross.CrossDomain", {
         statics: {
-            run1: function () {
-                var i = 1;
-                var j = 2;
-                var k = 3;
-                var answer = (((i + j) | 0) + k) | 0;
-                return answer;
-            }
-        },
-        $main: function () {
-            var code = "\r\n\tIL_0000: nop\r\n\tIL_0001: ldc.i4.1\r\n\tIL_0002: stloc.0\r\n\tIL_0003: ldc.i4.2\r\n\tIL_0004: stloc.1\r\n\tIL_0005: ldc.i4.3\r\n\tIL_0006: stloc.2\r\n\tIL_0007: ldloc.0\r\n\tIL_0008: ldloc.1\r\n\tIL_0009: add\r\n\tIL_000a: ldloc.2\r\n\tIL_000b: add\r\n\tIL_000c: stloc.3\r\n\tIL_000d: ldloc.3\r\n\tIL_000e: stloc.s 4\r\n\tIL_0010: br.s IL_0012\r\n\r\n\tIL_0012: ldloc.s 4\r\n\tIL_0014: ret\r\n";
-            if (true) {
-                var count = 1000000;
-                var sw = new System.Diagnostics.Stopwatch();
-                var func = ApolloClr.MethodTasks.build$1(code).compile();
-
-
-                sw.restart();
-                sw.start();
-                for (var i = 0; i < count; i = (i + 1) | 0) {
-                    func.run();
+            methods: null,
+            config: {
+                init: function () {
+                    this.methods = new (System.Collections.Generic.Dictionary$2(String,ApolloClr.Cross.CrossMethod))();
                 }
-                sw.stop();
-                Bridge.Console.log(sw.milliseconds().toString());
-                sw.restart();
-                sw.start();
-                for (var i1 = 0; i1 < count; i1 = (i1 + 1) | 0) {
-                    ApolloClr.Js.App.run1();
-                }
-                sw.stop();
-                Bridge.Console.log(sw.milliseconds().toString());
-            }
-
-            $.ajax({ url: "apolloclr.il", data: "", contentType: "application/json; charset=utf-8", success: $asm.$.ApolloClr.Js.App.f1 });
-        }
-    });
-
-    Bridge.ns("ApolloClr.Js.App", $asm.$);
-
-    Bridge.apply($asm.$.ApolloClr.Js.App, {
-        f1: function (data, str, jqxhr) {
-            //Console.WriteLine(str);
-
-            var json = System.String.concat(data, "");
-            Bridge.Console.log(System.String.concat("Result:", json));
-            var result = ApolloClr.TypeDefine.AssemblyDefine.readAndRun(json, "Program", "RunF");
-            Bridge.Console.log(System.String.concat("End:", JSON.stringify(result)));
-        }
-    });
-
-    Bridge.define("ApolloClr.Method.ILCodeParse", {
-        statics: {
-            readILCodes: function (ilcodes) {
-                var lines = ilcodes.split(String.fromCharCode(13));
-                return ApolloClr.Method.ILCodeParse.readILCodes$1(lines);
             },
-            readILCodes$1: function (lines) {
-                var $t;
-
-
-                var list = new (System.Collections.Generic.List$1(ApolloClr.ILCode))();
-                //重置堆栈
-                list.add(Bridge.merge(new ApolloClr.ILCode(), {
-                    opCode: "Reset"
-                } ));
-
-                $t = Bridge.getEnumerator(lines);
-                while ($t.moveNext()) {
-                    var line = $t.getCurrent();
-                    var values = line.trim().split(String.fromCharCode(32));
-
-                    if (values.length === 1) {
-                        continue;
-                    }
-
-                    {
-                        //如果是字符串
-                        var index = System.String.indexOf(line, "\"");
-                        var indexe = line.lastIndexOf("\"");
-                        if (indexe !== -1 && index !== -1) {
-                            var str = line.substr(((index + 1) | 0), ((((indexe - index) | 0) - 1) | 0));
-                            var subline = System.String.concat(line.substr(0, ((index + 1) | 0)), "str", line.substr(indexe));
-                            values = subline.trim().split(String.fromCharCode(32));
-                            var indexx = new (System.Collections.Generic.List$1(String))(values).indexOf("\"str\"");
-                            values[indexx] = str;
-                        }
-                    }
-
-
-                    var illine = new ApolloClr.ILCode();
-                    list.add(illine);
-                    if (System.String.startsWith(line, "call")) {
-
-                    }
-                    for (var i = 0; i < values.length; i = (i + 1) | 0) {
-                        if (i === 0) {
-                            illine.lable = System.String.replaceAll(values[0], ":", "");
-
-                        }
-                        if (i === 1) {
-                            illine.opCode = values[1];
-                            var opcodeValue = illine.opCode.split(String.fromCharCode(46));
-                            illine.op = opcodeValue[0];
-                            if (opcodeValue.length >= 2) {
-                                illine.opArg0 = opcodeValue[1];
-                            }
-                            if (opcodeValue.length >= 3) {
-                                illine.opArg1 = opcodeValue[2];
-
-                            }
-                        }
-                        if (i === 2) {
-                            illine.arg0 = values[2];
-                        }
-                        if (i === 3) {
-                            illine.arg1 = values[3];
-                        }
-                    }
+            build: function (callname) {
+                //TODO ����
+                if (ApolloClr.Cross.CrossDomain.methods.containsKey(callname)) {
+                    return ApolloClr.Cross.CrossDomain.methods.get(callname);
                 }
-                //解析 生成
-                //list = MergeCodes(list);
-                return list;
-            },
-            /**
-             * 指令优化，合并指令
-             *
-             * @static
-             * @public
-             * @this ApolloClr.Method.ILCodeParse
-             * @memberof ApolloClr.Method.ILCodeParse
-             * @param   {System.Collections.Generic.List$1}    input
-             * @return  {System.Collections.Generic.List$1}
-             */
-            mergeCodes: function (input) {
-                var outPut = new (System.Collections.Generic.List$1(ApolloClr.ILCode))();
-
-                for (var i = 0; i < input.getCount(); i = (i + 1) | 0) {
-                    var now = input.getItem(i);
-                    if (Bridge.referenceEquals(now.opCode, "nop")) {
-                        continue;
-                    }
-                    if (i < ((input.getCount() - 2) | 0)) {
-                        var next = input.getItem(((i + 1) | 0));
-                        var newx2 = input.getItem(((i + 2) | 0));
-                        if (Bridge.referenceEquals(now.op, "ldc") && Bridge.referenceEquals(next.op, "stloc")) {
-                            var opcode = Bridge.merge(new ApolloClr.ILCode(), {
-                                opCode: "LdcStloc",
-                                arg0: now.opArg0,
-                                arg1: now.opArg1,
-                                arg2: next.opArg0,
-                                lable: now.lable
-                            } );
-                            i = (i + 1) | 0;
-                            outPut.add(opcode);
-                            continue;
-                        }
-                        if (Bridge.referenceEquals(now.op, "ldloc") && Bridge.referenceEquals(next.op, "ldloc")) {
-                            var opcode1 = Bridge.merge(new ApolloClr.ILCode(), {
-                                opCode: "ldlocldloc",
-                                arg0: now.opArg0,
-                                arg1: next.opArg0,
-                                lable: now.lable
-                            } );
-                            i = (i + 1) | 0;
-                            outPut.add(opcode1);
-                            continue;
-                        }
-                    }
-
-                    outPut.add(now);
-                }
-
-                return outPut;
+                var method = new ApolloClr.Cross.CrossMethod.$ctor1(callname);
+                ApolloClr.Cross.CrossDomain.methods.set(callname, method);
+                return method;
             }
         }
     });
@@ -989,14 +1493,14 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
                 var list = ApolloClr.Method.ILCodeParse.readILCodes(codes);
                 return ApolloClr.MethodTasks.build(ApolloClr.MethodTasks, list);
             },
-            build: function (T, list, lcount, acount, haseResult, maxstack) {
+            build: function (T, list, localvars, pargrams, haseResult, maxstack) {
                 var $t;
-                if (lcount === void 0) { lcount = 5; }
-                if (acount === void 0) { acount = 5; }
+                if (localvars === void 0) { localvars = null; }
+                if (pargrams === void 0) { pargrams = null; }
                 if (haseResult === void 0) { haseResult = true; }
                 if (maxstack === void 0) { maxstack = 5; }
                 var methodDefine = Bridge.merge(new T(), {
-                    clr: new ApolloClr.Clr(lcount, acount, haseResult, maxstack)
+                    clr: new ApolloClr.Clr(localvars == null ? 5 : localvars.getCount(), pargrams == null ? 5 : pargrams.getCount(), haseResult, maxstack)
                 } );
 
                 var clr = methodDefine.clr;
@@ -1004,17 +1508,36 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
                 $t = Bridge.getEnumerator(list);
                 while ($t.moveNext()) {
                     var line = $t.getCurrent();
-                    var opcode = line.opCode;
+                    if (Bridge.referenceEquals(line.opCode, ".try")) {
+
+                    }
+                    var opcode = System.String.replaceAll(line.opCode, ".s", "");
                     var opcodeValue = opcode.split(String.fromCharCode(46));
                     var baseOp = opcodeValue[0];
                     var longOp = true;
+
+
                     var method = ApolloClr.MethodTasks.findMethod1(System.String.replaceAll(opcode, ".", "_"));
+                    //ȫ
+
+                    if (method == null && !Bridge.referenceEquals(System.String.concat(baseOp, "_", line.opArg0), System.String.replaceAll(opcode, ".", "_"))) {
+                        method = ApolloClr.MethodTasks.findMethod1(System.String.concat(baseOp, "_", line.opArg0));
+                        longOp = false;
+                        if (method != null) {
+                            opcodeValue = System.Array.init([System.String.concat(opcodeValue[0], "_", opcodeValue[1]), opcodeValue[2]], String);
+                        }
+                    }
+
+
                     if (method == null) {
                         method = ApolloClr.MethodTasks.findMethod(baseOp);
                         longOp = false;
                     }
                     if (method == null) {
 
+                    }
+                    if (System.String.indexOf(opcode, ".") === -1 && longOp) {
+                        longOp = false;
                     }
                     var methodArg = null;
                     if (longOp) {
@@ -1032,28 +1555,58 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
                         methodArg = ApolloClr.MethodTasks.argsFix(subvalue.toArray(), method, list);
                     }
 
-                    var tasktype = ApolloClr.OpCodeTask;
+                    var tasktype = ApolloClr.MethodDefine.OpCodeTask;
                     var parms = (method.pi || []);
+                    if (parms.length > 0) {
 
-                    if (parms.length === 1) {
-                        tasktype = System.Exction.makeGenericType(ApolloClr.OpCodeTask$1, [parms[0].pt]);
+                        if (false) {
+                            if (parms.length === 1) {
+                                tasktype = System.Exction.makeGenericType(ApolloClr.MethodDefine.OpCodeTaskRef$1, [(parms[0].pt.$elementType || null)]);
 
-                    } else if (parms.length === 2) {
-                        tasktype = System.Exction.makeGenericType(ApolloClr.OpCodeTask$2, [parms[0].pt, parms[1].pt]);
+                            } else if (parms.length === 2) {
+                                tasktype = System.Exction.makeGenericType(ApolloClr.MethodDefine.OpCodeTaskRef$2, [(parms[0].pt.$elementType || null), (parms[1].pt.$elementType || null)]);
 
-                    } else if (parms.length === 3) {
-                        tasktype = System.Exction.makeGenericType(ApolloClr.OpCodeTask$3, [parms[0].pt, parms[1].pt, parms[2].pt]);
-                    } else if (parms.length === 4) {
+                            } else if (parms.length === 3) {
+                                tasktype = System.Exction.makeGenericType(ApolloClr.MethodDefine.OpCodeTaskRef$3, [(parms[0].pt.$elementType || null), (parms[1].pt.$elementType || null), (parms[2].pt.$elementType || null)]);
+                            } else if (parms.length === 4) {
 
+                            }
+                        } else {
+
+
+                            {
+                                if (parms.length === 1) {
+                                    tasktype = System.Exction.makeGenericType(ApolloClr.MethodDefine.OpCodeTask$1, [parms[0].pt]);
+
+                                } else if (parms.length === 2) {
+                                    tasktype = System.Exction.makeGenericType(ApolloClr.MethodDefine.OpCodeTask$2, [parms[0].pt, parms[1].pt]);
+
+                                } else if (parms.length === 3) {
+                                    tasktype = System.Exction.makeGenericType(ApolloClr.MethodDefine.OpCodeTask$3, [parms[0].pt, parms[1].pt, parms[2].pt]);
+                                } else if (parms.length === 4) {
+
+                                }
+                            }
+                        }
                     }
+
+
                     var task = Bridge.as(Bridge.createInstance(tasktype), ApolloClr.IOpTask);
 
                     task.ApolloClr$IOpTask$setOpCode(line);
 
                     var funtask = Bridge.Reflection.getMembers(tasktype, 4, 284, "Func").rt;
-                    var delage = Bridge.Reflection.midel(method, clr);
+                    var gtype = Bridge.Reflection.getMethodGenericArguments(method);
+                    if (gtype.length === 0) {
+                        var delage = Bridge.Reflection.midel(method, clr);
 
-                    Bridge.Reflection.fieldAccess(Bridge.Reflection.getMembers(tasktype, 4, 284, "Func"), task, delage);
+                        Bridge.Reflection.fieldAccess(Bridge.Reflection.getMembers(tasktype, 4, 284, "Func"), task, delage);
+                    } else {
+                        if (methodArg.length <= 0 || !Bridge.referenceEquals(Bridge.getType(methodArg[0]), Function)) {
+                            throw new System.Exception("GenericMethod��First Pargram Type Mast Be System.Type!");
+                        }
+                        throw new System.NotSupportedException("GenericMethod, In BRIDGE Was Not Supported!");
+                    }
                     for (var i = 1; i < 4; i = (i + 1) | 0) {
                         var v = Bridge.Reflection.getMembers(tasktype, 4, 284, "V" + i);
                         if (v != null) {
@@ -1076,15 +1629,35 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
 
                 for (var i = 0; i < args.length; i = (i + 1) | 0) {
                     if (values.length > i) {
-                        args[i] = ApolloClr.MethodTasks.convert(parms[i].pt, values[((i + 1) | 0)], list);
+                        var type = parms[i].pt;
+                        args[i] = ApolloClr.MethodTasks.convert(type, values[((i + 1) | 0)], list);
                     }
                 }
 
                 return args;
             },
             convert: function (type, input, list) {
-                if (Bridge.referenceEquals(type, String)) {
+                if (Bridge.referenceEquals(type, String) || Bridge.referenceEquals(type, Object)) {
                     return input;
+                }
+                if (Bridge.referenceEquals(type, System.Array.type(System.Int32))) {
+                    var lines = input.substr(1, ((input.length - 2) | 0)).split(String.fromCharCode(44));
+                    var resule = System.Array.init(lines.length, 0, System.Int32);
+                    for (var i = 0; i < lines.length; i = (i + 1) | 0) {
+                        resule[i] = System.Nullable.getValue(Bridge.cast(ApolloClr.MethodTasks.convert(System.Int32, lines[i], list), System.Int32));
+                    }
+                    return resule;
+                }
+                if (Bridge.referenceEquals(type, Function)) {
+                    return ApolloClr.Extensions.getTypeByName(input);
+                }
+                if (Bridge.Reflection.isEnum(type)) {
+                    var value = System.Enum.parse(type, input, true);
+                    return value;
+                } else if (Bridge.referenceEquals(type, System.Single)) {
+                    return System.Single.parse(input);
+                } else if (Bridge.referenceEquals(type, System.Double)) {
+                    return System.Double.parse(input);
                 } else if (Bridge.referenceEquals(type, System.Int32)) {
                     if (System.String.startsWith(input, "IL_")) {
                         var find = System.Exction.findIndex(ApolloClr.ILCode, list, function (r) {
@@ -1098,7 +1671,7 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
 
                     }
                     if (input != null) {
-                        if (System.String.startsWith(input, "r") || System.String.startsWith(input, "R")) {
+                        if (System.String.startsWith(input, "m") || System.String.startsWith(input, "M")) {
                             return ((-System.Int32.parse(System.String.replaceAll(System.String.replaceAll(input.substr(1), "i", ""), "V_", ""))) | 0);
                         }
                         if (System.String.startsWith(input, "0x")) {
@@ -1143,6 +1716,8 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
         PC: 0,
         end: 0,
         isEnd: true,
+        trowException: null,
+        isCatched: false,
         subTask: null,
         config: {
             properties: {
@@ -1153,22 +1728,78 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
                 this.subTask = new (System.Collections.Generic.List$1(ApolloClr.MethodTasks))();
             }
         },
-        compile: function (OnCallAction) {
+        compile: function (OnCallAction, OnNewAction) {
             var $t;
             if (OnCallAction === void 0) { OnCallAction = null; }
+            if (OnNewAction === void 0) { OnNewAction = null; }
             this.lines = this.taskList.toArray();
             $t = Bridge.getEnumerator(this.lines);
             while ($t.moveNext()) {
-                var opTask = $t.getCurrent();
-                if (Bridge.referenceEquals(opTask.ApolloClr$IOpTask$getOpCode().op, "call")) {
-                    if (!Bridge.staticEquals(OnCallAction, null)) {
-                        OnCallAction(opTask);
+                (function () {
+                    var opTask = $t.getCurrent();
+                    if (Bridge.referenceEquals(opTask.ApolloClr$IOpTask$getOpCode().op, "call") || Bridge.referenceEquals(opTask.ApolloClr$IOpTask$getOpCode().op, "callvirt")) {
+                        !Bridge.staticEquals(OnCallAction, null) ? OnCallAction(opTask) : null;
                     }
-                }
+                    if (Bridge.referenceEquals(opTask.ApolloClr$IOpTask$getOpCode().op, "newobj")) {
+                        !Bridge.staticEquals(OnNewAction, null) ? OnNewAction(opTask) : null;
+                    }
+                }).call(this);
             }
             this.end = this.lines.length;
-            this.clr.dump(Bridge.fn.bind(this, $asm.$.ApolloClr.MethodTasks.f1));
+            this.clr.dumpAction = (Bridge.fn.bind(this, $asm.$.ApolloClr.MethodTasks.f1));
+            this.clr.throwAction = Bridge.fn.cacheBind(this, this.throwAction);
+
             return this;
+        },
+        /**
+         * ����һ���쳣
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.MethodTasks
+         * @memberof ApolloClr.MethodTasks
+         * @param   {Object}    ex    
+         * @param   {number}    pc
+         * @return  {void}
+         */
+        throwAction: function (ex, pc) {
+            if (pc > 0) {
+                //������һ���Ƿ���Finally
+                if (Bridge.referenceEquals(this.lines[((this.PC + 1) | 0)].ApolloClr$IOpTask$getOpCode().opCode, "finally")) {
+
+                } else {
+                    this.PC = pc;
+                }
+            } else {
+                if (ex != null) {
+                    this.trowException = Bridge.as(ex, System.Exception);
+                }
+                this.isCatched = false;
+                var nowPc = (this.PC - 1) | 0;
+
+                for (var i = this.PC; i > 0; i = (i - 1) | 0) {
+                    if (Bridge.referenceEquals(this.lines[i].ApolloClr$IOpTask$getOpCode().lable, ".try")) {
+                        var value = Bridge.as(this.lines[i], ApolloClr.MethodDefine.OpCodeTask$3(System.Int32,System.Int32,System.Int32));
+                        if (nowPc >= value.V1 && nowPc <= value.V2) {
+                            //��ת
+                            //�����ж� ���ƥ��
+
+                            if (Bridge.referenceEquals(this.lines[value.V3].ApolloClr$IOpTask$getOpCode().opCode, "catch")) {
+                                this.PC = value.V3;
+                                this.isCatched = true;
+                            } else {
+                                this.PC = value.V3;
+                            }
+
+                            break;
+                            //��ƥ�����Ѱ��
+                        }
+                    }
+                }
+
+            }
+
+
         },
         clone: function () {
             var any = System.Exction.find(ApolloClr.MethodTasks, this.subTask, $asm.$.ApolloClr.MethodTasks.f2);
@@ -1185,21 +1816,25 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
             //Console.WriteLine("==========Run===========:" + Name);
             this.PC = 0;
             this.isEnd = false;
-            //foreach (var opTask in Lines)
-            //{
-            //    opTask.Run();
-            //}
             while (this.PC < this.end) {
-                //Console.WriteLine(Lines[PC].OpCode.Lable + " " + Lines[PC].OpCode.OpCode);
-                this.lines[this.PC].ApolloClr$IOpTask$run();
-                //��������̿���
-                //try
-                //�������ת
+                try {
+                    this.lines[this.PC].ApolloClr$IOpTask$run();
+
+                }
+                catch (ex) {
+                    ex = System.Exception.create(ex);
+                    this.clr.evaluationStack_Push$2(0);
+                    this.throwAction(ex, -1);
+                }
                 this.PC = (this.PC + 1) | 0;
             }
 
             this.isEnd = true;
             //Console.WriteLine("==========Run End===========:" + Name);
+            if (this.trowException != null && !this.isCatched) {
+                //�����������֮����Ȼ���쳣�׳�
+                throw this.trowException;
+            }
         }
     });
 
@@ -1211,6 +1846,361 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
         },
         f2: function (r) {
             return r.isEnd;
+        }
+    });
+
+    Bridge.define("ApolloClr.Cross.CrossMethodDelegate$2", function (T1, T2) { return {
+
+    }; });
+
+    Bridge.define("ApolloClr.Cross.CrossMethodDelegate$3", function (T1, T2, T3) { return {
+
+    }; });
+
+    Bridge.define("ApolloClr.Extensions", {
+        statics: {
+            deleageSetFun: null,
+            setTarget: function (delegate, target) {
+                if (Bridge.staticEquals(ApolloClr.Extensions.deleageSetFun, null)) {
+
+
+                    var xfield = Bridge.Reflection.getMembers(Function, 4, 284, "_target");
+                    ApolloClr.Extensions.deleageSetFun = ApolloClr.Extensions.getFSet(xfield);
+                }
+                ApolloClr.Extensions.deleageSetFun(delegate, target);
+            },
+            getFSet: function (field) {
+                var action = function (send, v) {
+                    Bridge.Reflection.fieldAccess(field, send, v);
+                };
+
+                return action;
+
+            },
+            getValueFromStr: function (str, vtype) {
+                var value = null;
+                switch (vtype) {
+                    case ApolloClr.StackValueType.i8: 
+                        value = System.Int64.parse(str);
+                        break;
+                    case ApolloClr.StackValueType.r8: 
+                        value = System.Double.parse(str);
+                        break;
+                    case ApolloClr.StackValueType.i4: 
+                        if (System.String.startsWith(str, "0x")) {
+                            value = System.Convert.toNumberInBase(str, 16, 9);
+                        } else if (System.String.startsWith(str, "M") || System.String.startsWith(str, "m")) {
+                            value = (((-System.Int32.parse(str)) | 0));
+                        } else {
+                            value = System.Int32.parse(str);
+
+                        }
+                        break;
+                    case ApolloClr.StackValueType.r4: 
+                        value = System.Single.parse(str);
+                        break;
+                }
+
+                return value;
+            },
+            getTypeByName: function (name) {
+                name = System.String.replaceAll(name, "[mscorlib]", "");
+                var type = Bridge.Reflection.getType(name);
+
+                if (type != null) {
+                    return type;
+                }
+                if (System.String.startsWith(name, "System")) {
+                    type = Bridge.Reflection.getType(name, Bridge.Reflection.getTypeAssembly(System.Int32));
+
+                }
+                if (type == null && System.String.startsWith(name, "System")) {
+                    type = Bridge.Reflection.getType(name, Bridge.Reflection.getTypeAssembly(System.Diagnostics.Stopwatch));
+
+                }
+                if (type != null) {
+                    return type;
+                }
+                switch (name) {
+                    case "string": 
+                        return String;
+                    case "int32": 
+                        return System.Int32;
+                    case "int64": 
+                        return System.Int64;
+                    case "float64": 
+                        return System.Double;
+                    case "float32": 
+                        return System.Single;
+                }
+                if (type == null) {
+                    throw new System.NotSupportedException(System.String.concat("Type  Was  Not Fount :", name));
+                }
+                return type;
+            }
+        }
+    });
+
+    Bridge.define("ApolloClr.ILCode", {
+        lable: null,
+        opCode: null,
+        op: null,
+        opArg0: null,
+        opArg1: null,
+        arg0: null,
+        arg1: null,
+        arg2: null,
+        line: null,
+        toString: function () {
+            return this.line;
+        }
+    });
+
+    Bridge.define("ApolloClr.IOpTask", {
+        $kind: "interface"
+    });
+
+    Bridge.define("ApolloClr.Js.App", {
+        statics: {
+            run1: function () {
+                var i = 1;
+                var j = 2;
+                var k = 3;
+                var answer = (((i + j) | 0) + k) | 0;
+                return answer;
+            }
+        },
+        $main: function () {
+
+        }
+    });
+
+    Bridge.define("ApolloClr.Method.ILCodeParse", {
+        statics: {
+            readILCodes: function (ilcodes, locals, args) {
+                if (locals === void 0) { locals = null; }
+                if (args === void 0) { args = null; }
+                var lines = ilcodes.split(String.fromCharCode(13));
+                return ApolloClr.Method.ILCodeParse.readILCodes$1(lines);
+            },
+            readILCodes$1: function (lines, locals, args) {
+                var $t;
+                if (locals === void 0) { locals = null; }
+                if (args === void 0) { args = null; }
+
+
+                var list = new (System.Collections.Generic.List$1(ApolloClr.ILCode))();
+                //重置堆栈
+                list.add(Bridge.merge(new ApolloClr.ILCode(), {
+                    opCode: "Reset",
+                    line: "Reset"
+                } ));
+
+                var switchStart = false;
+                var sline = new System.Text.StringBuilder();
+
+
+                $t = Bridge.getEnumerator(lines);
+                while ($t.moveNext()) {
+                    var xline = $t.getCurrent();
+                    var line = xline;
+                    var values = line.trim().split(String.fromCharCode(32));
+
+                    if (values.length >= 2 && Bridge.referenceEquals(values[1], "switch")) {
+                        switchStart = true;
+                        sline = new System.Text.StringBuilder();
+
+                    }
+                    if (switchStart) {
+                        sline.append(line);
+                        if (System.String.endsWith(line, ")")) {
+                            switchStart = false;
+                            line = sline.toString();
+                            values = line.trim().split(String.fromCharCode(32));
+                        } else {
+                            continue;
+                        }
+                    }
+
+
+
+
+                    if (values.length > 4) {
+                        for (var i = 5; i < values.length; i = (i + 1) | 0) {
+                            values[4] = System.String.concat(values[4], (System.String.concat(" ", values[i])));
+                        }
+                    }
+                    {
+                        //如果是字符串
+                        var index = System.String.indexOf(line, "\"");
+                        var indexe = line.lastIndexOf("\"");
+                        if (indexe !== -1 && index !== -1) {
+                            var str = line.substr(((index + 1) | 0), ((((indexe - index) | 0) - 1) | 0));
+                            var subline = System.String.concat(line.substr(0, ((index + 1) | 0)), "str", line.substr(indexe));
+                            values = subline.trim().split(String.fromCharCode(32));
+                            var indexx = new (System.Collections.Generic.List$1(String))(values).indexOf("\"str\"");
+                            values[indexx] = str;
+                        }
+                    }
+
+
+                    var illine = new ApolloClr.ILCode();
+                    illine.line = line;
+                    if (list.getCount() > 0 && (Bridge.referenceEquals(System.Linq.Enumerable.from(list).last().opCode, "try") || Bridge.referenceEquals(System.Linq.Enumerable.from(list).last().opCode, "catch") || Bridge.referenceEquals(System.Linq.Enumerable.from(list).last().opCode, "finally"))) {
+                        System.Linq.Enumerable.from(list).last().arg1 = line;
+                    }
+
+                    list.add(illine);
+
+                    for (var i1 = 0; i1 < values.length; i1 = (i1 + 1) | 0) {
+                        if (i1 === 0) {
+                            illine.lable = System.String.replaceAll(values[0], ":", "");
+
+                        }
+                        if (i1 === 1) {
+                            illine.opCode = values[1];
+                            var opcodeValue = illine.opCode.split(String.fromCharCode(46));
+                            illine.op = opcodeValue[0];
+                            if (opcodeValue.length >= 2) {
+                                illine.opArg0 = opcodeValue[1];
+                            }
+                            if (opcodeValue.length >= 3) {
+                                illine.opArg1 = opcodeValue[2];
+
+                            }
+                        }
+                        if (i1 === 2) {
+                            illine.arg0 = values[2];
+                        }
+                        if (i1 === 3) {
+                            illine.arg1 = values[3];
+                        }
+                        if (i1 === 4) {
+                            illine.arg2 = values[4];
+                        }
+                    }
+
+
+                }
+                list = ApolloClr.Method.ILCodeParse.fixTryCatchFinally(list);
+                //解析 生成
+                list = ApolloClr.Method.ILCodeParse.mergeCodes(list, locals, args);
+                return list;
+            },
+            fixTryCatchFinally: function (input) {
+                var $t;
+                var stack = new (System.Collections.Generic.Stack$1(ApolloClr.ILCode)).ctor();
+                var lastTry = null;
+                for (var i = 0; i < input.getCount(); i = (i + 1) | 0) {
+                    if (input.getItem(i).line == null) {
+                        continue;
+                    }
+                    if (Bridge.referenceEquals(input.getItem(i).line, ".try") || System.String.startsWith(input.getItem(i).line, "catch") || System.String.startsWith(input.getItem(i).line, "finally")) {
+                        input.getItem(i).arg0 = System.Linq.Enumerable.from(input).skip(i).first($asm.$.ApolloClr.Method.ILCodeParse.f1).lable;
+                        stack.push(input.getItem(i));
+                        input.getItem(i).opCode = input.getItem(i).lable;
+                        if (Bridge.referenceEquals(input.getItem(i).line, ".try")) {
+
+                        } else {
+                            lastTry.arg2 = input.getItem(i).arg0;
+                        }
+                    }
+                    if (System.String.startsWith(input.getItem(i).line, "}")) {
+                        var item = stack.pop();
+                        item.arg1 = System.Linq.Enumerable.from(input).take(i).last($asm.$.ApolloClr.Method.ILCodeParse.f1).lable;
+                        if (Bridge.referenceEquals(item.line, ".try")) {
+                            lastTry = item;
+                        } else {
+
+                        }
+                    }
+                }
+                $t = Bridge.getEnumerator(input.toArray());
+                while ($t.moveNext()) {
+                    var ilCode = $t.getCurrent();
+                    if (System.String.startsWith(ilCode.line, "{") || System.String.startsWith(ilCode.line, "}") || System.String.isNullOrEmpty(ilCode.line)) {
+                        input.remove(ilCode);
+                    }
+                }
+
+                return input;
+            },
+            /**
+             * 指令优化，合并指令
+             *
+             * @static
+             * @public
+             * @this ApolloClr.Method.ILCodeParse
+             * @memberof ApolloClr.Method.ILCodeParse
+             * @param   {System.Collections.Generic.List$1}    input     
+             * @param   {System.Collections.Generic.List$1}    locals    
+             * @param   {System.Collections.Generic.List$1}    args
+             * @return  {System.Collections.Generic.List$1}
+             */
+            mergeCodes: function (input, locals, args) {
+                if (locals === void 0) { locals = null; }
+                if (args === void 0) { args = null; }
+                var outPut = new (System.Collections.Generic.List$1(ApolloClr.ILCode))();
+                var opSpeed = new (System.Collections.Generic.List$1(String))(System.Array.init(["add", "sub", "mul", "div"], String));
+                for (var i = 0; i < input.getCount(); i = (i + 1) | 0) {
+                    var now = input.getItem(i);
+                    //if (now.OpCode == "nop")
+                    //{
+                    //    continue;
+                    //}
+                    if (i > 2 && i < ((input.getCount() - 2) | 0)) {
+                        var before2 = input.getItem(((((i - 1) | 0) - 1) | 0));
+                        var before = input.getItem(((i - 1) | 0));
+                        var next = input.getItem(((i + 1) | 0));
+                        var newx2 = input.getItem(((((i + 1) | 0) + 1) | 0));
+                        if (opSpeed.contains(now.op)) {
+                            if (Bridge.referenceEquals(before2.op, "ldc")) {
+                                now.opCode = System.String.concat(now.opCode, (System.String.concat(".", before2.opArg0)));
+                            } else if (Bridge.referenceEquals(before.op, "ldc")) {
+                                now.opCode = System.String.concat(now.opCode, (System.String.concat(".", before.opArg0)));
+                            } else if (Bridge.referenceEquals(before2.op, "ldloc")) {
+                                now.opCode = System.String.concat(now.opCode, (System.String.concat(".", locals.getItem(System.Int32.parse(before2.opArg0)))));
+                            } else if (Bridge.referenceEquals(before.op, "ldloc")) {
+                                now.opCode = System.String.concat(now.opCode, (System.String.concat(".", locals.getItem(System.Int32.parse(before.opArg0)))));
+                            } else if (Bridge.referenceEquals(before2.op, "ldarg")) {
+                                now.opCode = System.String.concat(now.opCode, (System.String.concat(".", args.getItem(System.Int32.parse(before2.opArg0)))));
+                            } else if (Bridge.referenceEquals(before.op, "ldarg")) {
+                                now.opCode = System.String.concat(now.opCode, (System.String.concat(".", args.getItem(System.Int32.parse(before.opArg0)))));
+                            }
+                        }
+                    }
+                    if (i < ((input.getCount() - 2) | 0)) {
+
+                        var next1 = input.getItem(((i + 1) | 0));
+                        var newx21 = input.getItem(((((i + 1) | 0) + 1) | 0));
+                    }
+
+                    outPut.add(now);
+                }
+
+                return outPut;
+            }
+        }
+    });
+
+    Bridge.ns("ApolloClr.Method.ILCodeParse", $asm.$);
+
+    Bridge.apply($asm.$.ApolloClr.Method.ILCodeParse, {
+        f1: function (r) {
+            return r.lable != null && System.String.startsWith(r.lable, "IL");
+        }
+    });
+
+    Bridge.define("ApolloClr.MethodDefine.BaseOpTask", {
+        config: {
+            properties: {
+                Dump: 0,
+                OpCode: null,
+                Method: null
+            }
+        },
+        toString: function () {
+            return System.String.concat("", this.getOpCode());
         }
     });
 
@@ -3595,8 +4585,14 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
     Bridge.define("ApolloClr.StackItem", {
         statics: {
             sPtrEmpty: null,
+            op_Implicit: function (ptr) {
+                throw new System.NotImplementedException();
+            },
+            op_Addition: function (s1, offset) {
+                throw new System.NotImplementedException();
+            },
             op_Equality: function (s1, s2) {
-                if (s1.intValue === s2.intValue || Bridge.referenceEquals(s1.sPtr, s2.sPtr)) {
+                if (s1.intValue === s2.intValue && s1.index === s2.index) {
                     return true;
                 }
                 return false;
@@ -3617,9 +4613,139 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
                 return s1.intValue <= s2.intValue;
             }
         },
-        sPtr: null,
-        id: 0,
-        intValue: 0
+        ptr: null,
+        vPoint: null,
+        valueType: 0,
+        intValue: 0,
+        lValue: 0,
+        index: 0,
+        getValue: function () {
+            switch (this.valueType) {
+                case ApolloClr.StackValueType.i4: 
+                    {
+                        return this.intValue;
+                    }
+                case ApolloClr.StackValueType.r4: 
+                    {
+                        return this.getValueFloat();
+                    }
+                case ApolloClr.StackValueType.i8: 
+                    {
+                        return this.getValueLong();
+                    }
+                case ApolloClr.StackValueType.r8: 
+                    {
+                        return this.getValueDouble();
+                    }
+            }
+            return (this.ptr).object;
+
+        },
+        getValueInt: function () {
+            return this.intValue;
+        },
+        getValueLong: function () {
+            return System.Nullable.getValue(Bridge.cast(this.vPoint, System.Int64));
+        },
+        getValueFloat: function () {
+            return System.Nullable.getValue(Bridge.cast(this.vPoint, System.Single));
+        },
+        getValueDouble: function () {
+            return System.Nullable.getValue(Bridge.cast(this.vPoint, System.Double));
+        },
+        setValue: function (vtype, value) {
+            switch (vtype) {
+                case ApolloClr.StackValueType.i4: 
+                    {
+                        this.intValue = System.Nullable.getValue(Bridge.cast(value, System.Int32));
+                        break;
+                    }
+                case ApolloClr.StackValueType.r4: 
+                case ApolloClr.StackValueType.i8: 
+                case ApolloClr.StackValueType.r8: 
+                    this.vPoint = value;
+                    break;
+            }
+
+        },
+        copyFrom: function (stackItem) {
+            throw new System.NotImplementedException();
+        }
+    });
+
+    /** @namespace ApolloClr */
+
+    /**
+     * ����ָ��
+     *
+     * @public
+     * @class ApolloClr.StackObject
+     */
+    Bridge.define("ApolloClr.StackObject", {
+        statics: {
+            newObject: function (obj) {
+                var so = Bridge.merge(new ApolloClr.StackObject(), {
+                    object: obj
+                } );
+                return so;
+            },
+            getStackObject: function (prt) {
+                return Bridge.as(prt, ApolloClr.StackObject);
+            },
+            toObject: function (stackItem) {
+                switch (stackItem.valueType) {
+                    case ApolloClr.StackValueType.i4: 
+                        return stackItem.intValue;
+                    case ApolloClr.StackValueType.r4: 
+                        return stackItem.getValueFloat();
+                    case ApolloClr.StackValueType.i8: 
+                        return stackItem.getValueLong();
+                    case ApolloClr.StackValueType.r8: 
+                        return stackItem.getValueDouble();
+                    case ApolloClr.StackValueType.Ref: 
+                        return ApolloClr.StackObject.getStackObject(stackItem.ptr).object;
+                }
+
+                return null;
+            },
+            op_Implicit: function (ptr) {
+                var sitem = ptr;
+                return sitem.ptr;
+            },
+            op_Implicit$1: function (ptr) {
+                var sitem = ApolloClr.StackItem.op_Implicit(ptr);
+                return sitem.ptr;
+            }
+        },
+        /**
+         * ָ��Ķ���
+         *
+         * @instance
+         */
+        object: null,
+        ctor: function () {
+            this.$initialize();
+        }
+    });
+
+    Bridge.define("ApolloClr.StackValueType", {
+        $kind: "enum",
+        statics: {
+            i4: 0,
+            i8: 1,
+            r4: 2,
+            r8: 3,
+            i1: 4,
+            i2: 5,
+            u1: 6,
+            u2: 7,
+            u4: 8,
+            u8: 9,
+            I: 10,
+            Ref: 11,
+            Any: 12,
+            Array: 13
+        }
     });
 
     Bridge.define("ApolloClr.TypeDefine.AssemblyDefine", {
@@ -3648,7 +4774,9 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
                                     methodefine.run();
 
                                     return {jump: 3, v: methodefine.clr.resultPoint};
+
                                 }).call(this) || {};
+                                if($t3.jump == 2) break;
                                 if($t3.jump == 3) return {jump: 3, v: $t3.v};
                             }
                         }
@@ -3682,8 +4810,8 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
 
                 methodDefinition.readBody();
                 var lines = methodDefinition.bodyLines;
-                var codes = ApolloClr.Method.ILCodeParse.readILCodes$1(lines.toArray());
-                var method = ApolloClr.MethodTasks.build(ApolloClr.TypeDefine.MethodDefine, codes, methodDefinition.locals.getCount(), methodDefinition.parameters.getCount(), !Bridge.referenceEquals(methodDefinition.returnType.toLowerCase(), Bridge.Reflection.getTypeName(Object).toLowerCase()), methodDefinition.maxStack);
+                var codes = ApolloClr.Method.ILCodeParse.readILCodes$1(lines.toArray(), methodDefinition.localList, methodDefinition.parametersList);
+                var method = ApolloClr.MethodTasks.build(ApolloClr.TypeDefine.MethodDefine, codes, methodDefinition.locals, methodDefinition.parameters, !Bridge.referenceEquals(methodDefinition.returnType.toLowerCase(), Bridge.Reflection.getTypeName(Object).toLowerCase()), methodDefinition.maxStack);
                 method.setMethodDefinition(methodDefinition);
                 method.setTypeDefine(this);
                 this.getMethods().add(method);
@@ -3693,29 +4821,29 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
         var $t;
         $t = Bridge.getEnumerator(this.getMethods());
         while ($t.moveNext()) {
-            (function () {
-                var methodTaskse = $t.getCurrent();
-                methodTaskse.compile(Bridge.fn.bind(this, $asm.$.ApolloClr.TypeDefine.TypeDefine.f1));
-            }).call(this);
+            var methodTaskse = $t.getCurrent();
+            methodTaskse.compile(Bridge.fn.cacheBind(this, this.methodCompile), Bridge.fn.cacheBind(this, this.newCompile));
         }
         return this;
-    }
-    });
-
-    Bridge.ns("ApolloClr.TypeDefine.TypeDefine", $asm.$);
-
-    Bridge.apply($asm.$.ApolloClr.TypeDefine.TypeDefine, {
-        f1: function (r) {
-            var find = System.Exction.find(ApolloClr.TypeDefine.MethodDefine, this.getMethods(), function (rx) {
-                return Bridge.referenceEquals(rx.getMethodDefinition().getCallName(), System.String.concat(r.ApolloClr$IOpTask$getOpCode().arg0, " ", r.ApolloClr$IOpTask$getOpCode().arg1));
+    },
+    methodCompile: function (r) {
+        var find = System.Exction.find(ApolloClr.TypeDefine.MethodDefine, this.getMethods(), function (rx) {
+            return Bridge.referenceEquals(rx.getMethodDefinition().getCallName(), System.String.concat(r.ApolloClr$IOpTask$getOpCode().arg0, " ", r.ApolloClr$IOpTask$getOpCode().arg1));
+        });
+        if (Bridge.referenceEquals(r.ApolloClr$IOpTask$getOpCode().arg0, "instance")) {
+            find = System.Exction.find(ApolloClr.TypeDefine.MethodDefine, this.getMethods(), function (rx) {
+                return Bridge.referenceEquals(rx.getMethodDefinition().getCallName(), System.String.concat(r.ApolloClr$IOpTask$getOpCode().arg1, " ", r.ApolloClr$IOpTask$getOpCode().arg2));
             });
-            if (find != null) {
-                r.ApolloClr$IOpTask$setMethod(find);
-                Bridge.Reflection.fieldAccess(Bridge.Reflection.getMembers(Bridge.getType(r), 4, 284, "V3"), r, find);
-            } else {
-
-            }
         }
+        if (find != null) {
+            r.ApolloClr$IOpTask$setMethod(find);
+            Bridge.Reflection.fieldAccess(Bridge.Reflection.getMembers(Bridge.getType(r), 4, 284, "V3"), r, find);
+        } else {
+            //����clr��Խ
+        }
+    },
+    newCompile: function (r) {
+    }
     });
 
     /** @namespace SilAPI */
@@ -4455,8 +5583,182 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
         }
     }; });
 
-    Bridge.define("ApolloClr.OpCodeTask", {
-        inherits: [ApolloClr.BaseOpTask,ApolloClr.IOpTask],
+    Bridge.define("ApolloClr.Cross.BaseCrossMethodDelegate", {
+        inherits: [ApolloClr.Cross.ICrossMethodDelegate],
+        config: {
+            properties: {
+                Ptr: null,
+                Instance: null,
+                Result: null
+            },
+            alias: [
+            "getPtr", "ApolloClr$Cross$ICrossMethodDelegate$getPtr",
+            "setPtr", "ApolloClr$Cross$ICrossMethodDelegate$setPtr",
+            "getResult", "ApolloClr$Cross$ICrossMethodDelegate$getResult",
+            "setResult", "ApolloClr$Cross$ICrossMethodDelegate$setResult"
+            ]
+        }
+    });
+
+    Bridge.define("ApolloClr.Cross.CrossMethod", {
+        inherits: [ApolloClr.MethodTasks],
+        argCount: 0,
+        haseResult: false,
+        isStatic: false,
+        config: {
+            properties: {
+                CallName: null,
+                CrossMethodDelegate: null
+            }
+        },
+        ctor: function () {
+            this.$initialize();
+            ApolloClr.MethodTasks.ctor.call(this);
+
+        },
+        $ctor1: function (callname) {
+            this.$initialize();
+            ApolloClr.MethodTasks.ctor.call(this);
+            this.setCallName(callname);
+
+            var values = System.String.split(callname, System.Array.init(["::", "[", "]", ",", "(", ")"], String), null, 1);
+            var returnType = values[0];
+            var assemblyname = values[1];
+            var typeName = values[2];
+            var methodName = values[3];
+            var type = ApolloClr.Extensions.getTypeByName(typeName);
+            var args = new (System.Collections.Generic.List$1(Function))();
+            for (var i = 4; i < values.length; i = (i + 1) | 0) {
+                args.add(ApolloClr.Extensions.getTypeByName(values[i]));
+            }
+            var methodInfo = Bridge.Reflection.getMembers(type, 8, 284, methodName, args.toArray());
+            if (methodInfo == null) {
+                var coninfo = Bridge.Reflection.getMembers(type, 1, 284, null, args.toArray());
+                if (coninfo != null) {
+                    this.argCount = (coninfo.pi || []).length;
+                    this.haseResult = true;
+                    this.clr = new ApolloClr.Clr(1, this.argCount, this.haseResult, 1);
+                    this.creatDelegate(coninfo);
+                } else {
+
+                }
+            } else {
+                this.argCount = (methodInfo.pi || []).length;
+                this.haseResult = !Bridge.referenceEquals(methodInfo.rt, Object);
+                if (!(methodInfo.is || false)) {
+                    this.argCount = (this.argCount + 1) | 0;
+                }
+                this.clr = new ApolloClr.Clr(1, this.argCount, this.haseResult, 1);
+                this.creatDelegate$1(methodInfo);
+            }
+            //����CLR
+
+
+        },
+        run: function () {
+            var vs = this.clr.argp;
+            var ptr = ApolloClr.StackObject.op_Implicit(vs);
+            //��ֵ���� ��ֵ
+            if (this.isStatic) {
+                var args = System.Array.init(this.argCount, null, Object);
+                for (var i = 0; i < this.argCount; i = (i + 1) | 0) {
+                    args[i] = ApolloClr.StackObject.toObject(ApolloClr.StackItem.op_Addition(vs, i));
+                }
+                this.getCrossMethodDelegate().ApolloClr$Cross$ICrossMethodDelegate$setArgs(args);
+            } else {
+                var args1 = System.Array.init(this.argCount, null, Object);
+                for (var i1 = 0; i1 < this.argCount; i1 = (i1 + 1) | 0) {
+                    if (i1 === 0) {
+                        if (!Bridge.referenceEquals(ptr, this.getCrossMethodDelegate().ApolloClr$Cross$ICrossMethodDelegate$getPtr())) {
+                            args1[((this.argCount - 1) | 0)] = ApolloClr.StackObject.toObject(ApolloClr.StackItem.op_Addition(vs, i1));
+                        } else {
+                            //�������󴴽�
+                            //�����һ���������ظ�ʹ�ã�����
+                        }
+
+                    } else {
+                        args1[((i1 - 1) | 0)] = ApolloClr.StackObject.toObject(ApolloClr.StackItem.op_Addition(vs, i1));
+                    }
+
+                }
+                this.getCrossMethodDelegate().ApolloClr$Cross$ICrossMethodDelegate$setArgs(args1);
+                if (!this.isStatic && !Bridge.staticEquals(this.getCrossMethodDelegate().ApolloClr$Cross$ICrossMethodDelegate$getDelegate(), null)) {
+                    if (!Bridge.referenceEquals(ptr, this.getCrossMethodDelegate().ApolloClr$Cross$ICrossMethodDelegate$getPtr())) {
+                        this.getCrossMethodDelegate().ApolloClr$Cross$ICrossMethodDelegate$setPtr(ptr);
+                        ApolloClr.Extensions.setTarget(this.getCrossMethodDelegate().ApolloClr$Cross$ICrossMethodDelegate$getDelegate(), args1[((this.argCount - 1) | 0)]);
+                    }
+
+                }
+            }
+
+
+            this.getCrossMethodDelegate().ApolloClr$Cross$ICrossMethodDelegate$run();
+            if (this.haseResult) {
+                this.clr.resultPoint = this.clr.csp;
+                this.clr.resultPoint.valueType = ApolloClr.StackValueType.Ref;
+                this.clr.resultPoint.ptr = ApolloClr.StackObject.newObject(this.getCrossMethodDelegate().ApolloClr$Cross$ICrossMethodDelegate$getResult());
+            }
+        },
+        creatDelegate: function (methodInfo) {
+            var parms = (methodInfo.pi || []);
+            var tasktype = ApolloClr.Cross.ObjectBuild$1;
+            if (parms.length === 0) {
+                tasktype = System.Exction.makeGenericType(ApolloClr.Cross.ObjectBuild$1, [methodInfo.td]);
+
+            } else {
+
+            }
+
+            this.setCrossMethodDelegate(Bridge.as(Bridge.createInstance(tasktype), ApolloClr.Cross.ICrossMethodDelegate));
+
+        },
+        creatDelegate$1: function (methodInfo) {
+            var parms = (methodInfo.pi || []);
+            var tasktype = ApolloClr.Cross.CrossMethodDelegate;
+            var retType = methodInfo.rt;
+            if (Bridge.referenceEquals(methodInfo.rt, Object)) {
+                if (parms.length === 1) {
+                    tasktype = System.Exction.makeGenericType(ApolloClr.Cross.CrossMethodDelegate$1, [parms[0].pt]);
+
+                } else if (parms.length === 2) {
+                    tasktype = System.Exction.makeGenericType(ApolloClr.Cross.CrossMethodDelegate$2, [parms[0].pt, parms[1].pt]);
+
+                } else if (parms.length === 3) {
+                    tasktype = System.Exction.makeGenericType(ApolloClr.Cross.CrossMethodDelegate$3, [parms[0].pt, parms[1].pt, parms[2].pt]);
+                } else if (parms.length >= 4) {
+
+                }
+            } else {
+                if (parms.length === 0) {
+                    tasktype = System.Exction.makeGenericType(ApolloClr.Cross.CrossMethodDelegateRet$1, [retType]);
+
+                } else {
+
+                }
+            }
+
+
+            this.setCrossMethodDelegate(Bridge.as(Bridge.createInstance(tasktype), ApolloClr.Cross.ICrossMethodDelegate));
+            var funtask = Bridge.Reflection.getMembers(tasktype, 4, 284, "Func").rt;
+            // ��̬
+            if ((methodInfo.is || false)) {
+                var delage = Bridge.Reflection.midel(methodInfo, null);
+                Bridge.Reflection.fieldAccess(Bridge.Reflection.getMembers(tasktype, 4, 284, "Func"), this.getCrossMethodDelegate(), delage);
+                this.isStatic = true;
+            } else {
+                //var obj = Activator.CreateInstance(methodInfo.DeclaringType);
+                var delage1 = Bridge.Reflection.midel(methodInfo, null);
+                Bridge.Reflection.fieldAccess(Bridge.Reflection.getMembers(tasktype, 4, 284, "Func"), this.getCrossMethodDelegate(), delage1);
+                this.isStatic = false;
+            }
+
+
+
+        }
+    });
+
+    Bridge.define("ApolloClr.MethodDefine.OpCodeTask", {
+        inherits: [ApolloClr.MethodDefine.BaseOpTask,ApolloClr.IOpTask],
         func: null,
         config: {
             alias: [
@@ -4478,8 +5780,8 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
         }
     });
 
-    Bridge.define("ApolloClr.OpCodeTask$1", function (TV1) { return {
-        inherits: [ApolloClr.BaseOpTask,ApolloClr.IOpTask],
+    Bridge.define("ApolloClr.MethodDefine.OpCodeTask$1", function (TV1) { return {
+        inherits: [ApolloClr.MethodDefine.BaseOpTask,ApolloClr.IOpTask],
         func: null,
         V1: Bridge.getDefaultValue(TV1),
         config: {
@@ -4502,8 +5804,8 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
         }
     }; });
 
-    Bridge.define("ApolloClr.OpCodeTask$2", function (TV1, TV2) { return {
-        inherits: [ApolloClr.BaseOpTask,ApolloClr.IOpTask],
+    Bridge.define("ApolloClr.MethodDefine.OpCodeTask$2", function (TV1, TV2) { return {
+        inherits: [ApolloClr.MethodDefine.BaseOpTask,ApolloClr.IOpTask],
         func: null,
         V1: Bridge.getDefaultValue(TV1),
         V2: Bridge.getDefaultValue(TV2),
@@ -4527,8 +5829,158 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
         }
     }; });
 
-    Bridge.define("ApolloClr.OpCodeTask$3", function (TV1, TV2, TV3) { return {
-        inherits: [ApolloClr.BaseOpTask,ApolloClr.IOpTask],
+    Bridge.define("ApolloClr.MethodDefine.OpCodeTask$3", function (TV1, TV2, TV3) { return {
+        inherits: [ApolloClr.MethodDefine.BaseOpTask,ApolloClr.IOpTask],
+        func: null,
+        V1: Bridge.getDefaultValue(TV1),
+        V2: Bridge.getDefaultValue(TV2),
+        V3: Bridge.getDefaultValue(TV3),
+        config: {
+            alias: [
+            "getBindFunc", "ApolloClr$IOpTask$getBindFunc",
+            "run", "ApolloClr$IOpTask$run",
+            "getDump", "ApolloClr$IOpTask$getDump",
+            "setDump", "ApolloClr$IOpTask$setDump",
+            "getOpCode", "ApolloClr$IOpTask$getOpCode",
+            "setOpCode", "ApolloClr$IOpTask$setOpCode",
+            "getMethod", "ApolloClr$IOpTask$getMethod",
+            "setMethod", "ApolloClr$IOpTask$setMethod"
+            ]
+        },
+        getBindFunc: function () {
+            return this.func;
+        },
+        run: function () {
+            this.func(this.V1, this.V2, this.V3);
+        }
+    }; });
+
+    Bridge.define("ApolloClr.MethodDefine.OpCodeTaskRef$1", function (TV1) { return {
+        inherits: [ApolloClr.MethodDefine.BaseOpTask,ApolloClr.IOpTask],
+        func: null,
+        V1: Bridge.getDefaultValue(TV1),
+        config: {
+            alias: [
+            "getBindFunc", "ApolloClr$IOpTask$getBindFunc",
+            "run", "ApolloClr$IOpTask$run",
+            "getDump", "ApolloClr$IOpTask$getDump",
+            "setDump", "ApolloClr$IOpTask$setDump",
+            "getOpCode", "ApolloClr$IOpTask$getOpCode",
+            "setOpCode", "ApolloClr$IOpTask$setOpCode",
+            "getMethod", "ApolloClr$IOpTask$getMethod",
+            "setMethod", "ApolloClr$IOpTask$setMethod"
+            ]
+        },
+        getBindFunc: function () {
+            return this.func;
+        },
+        run: function () {
+            this.func(Bridge.ref(this, "V1"));
+        }
+    }; });
+
+    Bridge.define("ApolloClr.MethodDefine.OpCodeTaskRef$2", function (TV1, TV2) { return {
+        inherits: [ApolloClr.MethodDefine.BaseOpTask,ApolloClr.IOpTask],
+        func: null,
+        V1: Bridge.getDefaultValue(TV1),
+        V2: Bridge.getDefaultValue(TV2),
+        config: {
+            alias: [
+            "getBindFunc", "ApolloClr$IOpTask$getBindFunc",
+            "run", "ApolloClr$IOpTask$run",
+            "getDump", "ApolloClr$IOpTask$getDump",
+            "setDump", "ApolloClr$IOpTask$setDump",
+            "getOpCode", "ApolloClr$IOpTask$getOpCode",
+            "setOpCode", "ApolloClr$IOpTask$setOpCode",
+            "getMethod", "ApolloClr$IOpTask$getMethod",
+            "setMethod", "ApolloClr$IOpTask$setMethod"
+            ]
+        },
+        getBindFunc: function () {
+            return this.func;
+        },
+        run: function () {
+            this.func(Bridge.ref(this, "V1"), Bridge.ref(this, "V2"));
+        }
+    }; });
+
+    Bridge.define("ApolloClr.MethodDefine.OpCodeTaskRef$3", function (TV1, TV2, TV3) { return {
+        inherits: [ApolloClr.MethodDefine.BaseOpTask,ApolloClr.IOpTask],
+        func: null,
+        V1: Bridge.getDefaultValue(TV1),
+        V2: Bridge.getDefaultValue(TV2),
+        V3: Bridge.getDefaultValue(TV3),
+        config: {
+            alias: [
+            "getBindFunc", "ApolloClr$IOpTask$getBindFunc",
+            "run", "ApolloClr$IOpTask$run",
+            "getDump", "ApolloClr$IOpTask$getDump",
+            "setDump", "ApolloClr$IOpTask$setDump",
+            "getOpCode", "ApolloClr$IOpTask$getOpCode",
+            "setOpCode", "ApolloClr$IOpTask$setOpCode",
+            "getMethod", "ApolloClr$IOpTask$getMethod",
+            "setMethod", "ApolloClr$IOpTask$setMethod"
+            ]
+        },
+        getBindFunc: function () {
+            return this.func;
+        },
+        run: function () {
+            this.func(Bridge.ref(this, "V1"), Bridge.ref(this, "V2"), Bridge.ref(this, "V3"));
+        }
+    }; });
+
+    Bridge.define("ApolloClr.MethodDefine.OpCodeTaskT$1", function (TV1) { return {
+        inherits: [ApolloClr.MethodDefine.BaseOpTask,ApolloClr.IOpTask],
+        func: null,
+        V1: Bridge.getDefaultValue(TV1),
+        config: {
+            alias: [
+            "getBindFunc", "ApolloClr$IOpTask$getBindFunc",
+            "run", "ApolloClr$IOpTask$run",
+            "getDump", "ApolloClr$IOpTask$getDump",
+            "setDump", "ApolloClr$IOpTask$setDump",
+            "getOpCode", "ApolloClr$IOpTask$getOpCode",
+            "setOpCode", "ApolloClr$IOpTask$setOpCode",
+            "getMethod", "ApolloClr$IOpTask$getMethod",
+            "setMethod", "ApolloClr$IOpTask$setMethod"
+            ]
+        },
+        getBindFunc: function () {
+            return this.func;
+        },
+        run: function () {
+            this.func(this.V1);
+        }
+    }; });
+
+    Bridge.define("ApolloClr.MethodDefine.OpCodeTaskT$2", function (TV1, TV2) { return {
+        inherits: [ApolloClr.MethodDefine.BaseOpTask,ApolloClr.IOpTask],
+        func: null,
+        V1: Bridge.getDefaultValue(TV1),
+        V2: Bridge.getDefaultValue(TV2),
+        config: {
+            alias: [
+            "getBindFunc", "ApolloClr$IOpTask$getBindFunc",
+            "run", "ApolloClr$IOpTask$run",
+            "getDump", "ApolloClr$IOpTask$getDump",
+            "setDump", "ApolloClr$IOpTask$setDump",
+            "getOpCode", "ApolloClr$IOpTask$getOpCode",
+            "setOpCode", "ApolloClr$IOpTask$setOpCode",
+            "getMethod", "ApolloClr$IOpTask$getMethod",
+            "setMethod", "ApolloClr$IOpTask$setMethod"
+            ]
+        },
+        getBindFunc: function () {
+            return this.func;
+        },
+        run: function () {
+            this.func(this.V1, this.V2);
+        }
+    }; });
+
+    Bridge.define("ApolloClr.MethodDefine.OpCodeTaskT$3", function (TV1, TV2, TV3) { return {
+        inherits: [ApolloClr.MethodDefine.BaseOpTask,ApolloClr.IOpTask],
         func: null,
         V1: Bridge.getDefaultValue(TV1),
         V2: Bridge.getDefaultValue(TV2),
@@ -4555,6 +6007,7 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
 
     Bridge.define("ApolloClr.TypeDefine.MethodDefine", {
         inherits: [ApolloClr.MethodTasks],
+        codes: null,
         config: {
             properties: {
                 MethodDefinition: null,
@@ -4569,29 +6022,19 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
         cloneOne: function () {
             var methodDefinition = this.getMethodDefinition();
 
-            var lines = this.getMethodDefinition().bodyLines;
-            var codes = ApolloClr.Method.ILCodeParse.readILCodes$1(lines.toArray());
-            var method = ApolloClr.MethodTasks.build(ApolloClr.TypeDefine.MethodDefine, codes, methodDefinition.locals.getCount(), methodDefinition.parameters.getCount(), !Bridge.referenceEquals(methodDefinition.returnType.toLowerCase(), Bridge.Reflection.getTypeName(Object).toLowerCase()), methodDefinition.maxStack);
+            var codes = this.codes;
+
+            if (this.codes == null) {
+                var lines = this.getMethodDefinition().bodyLines;
+                this.codes = (codes = ApolloClr.Method.ILCodeParse.readILCodes$1(lines.toArray(), methodDefinition.localList, methodDefinition.parametersList));
+            }
+
+            var method = ApolloClr.MethodTasks.build(ApolloClr.TypeDefine.MethodDefine, codes, methodDefinition.locals, methodDefinition.parameters, !Bridge.referenceEquals(methodDefinition.returnType.toLowerCase(), Bridge.Reflection.getTypeName(Object).toLowerCase()), methodDefinition.maxStack);
             method.setMethodDefinition(methodDefinition);
-            method.compile(Bridge.fn.bind(this, $asm.$.ApolloClr.TypeDefine.MethodDefine.f1));
+            method.setTypeDefine(this.getTypeDefine());
+            method.compile(Bridge.fn.cacheBind(this.getTypeDefine(), this.getTypeDefine().methodCompile), Bridge.fn.cacheBind(this.getTypeDefine(), this.getTypeDefine().newCompile));
 
             return method;
-        }
-    });
-
-    Bridge.ns("ApolloClr.TypeDefine.MethodDefine", $asm.$);
-
-    Bridge.apply($asm.$.ApolloClr.TypeDefine.MethodDefine, {
-        f1: function (r) {
-            var find = System.Exction.find(ApolloClr.TypeDefine.MethodDefine, this.getTypeDefine().getMethods(), function (rx) {
-                return Bridge.referenceEquals(rx.getMethodDefinition().getCallName(), System.String.concat(r.ApolloClr$IOpTask$getOpCode().arg0, " ", r.ApolloClr$IOpTask$getOpCode().arg1));
-            });
-            if (find != null) {
-                r.ApolloClr$IOpTask$setMethod(find);
-                Bridge.Reflection.fieldAccess(Bridge.Reflection.getMembers(Bridge.getType(r), 4, 284, "V3"), r, find);
-            } else {
-
-            }
         }
     });
 
@@ -5601,6 +7044,15 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
     Bridge.define("SilAPI.DisassembledMethod", {
         inherits: [SilAPI.DisassembledEntity],
         statics: {
+            opTConvert: function (name) {
+                var listA = new (System.Collections.Generic.List$1(String))(System.Array.init(["int32", "float32", "int64", "float64"], String));
+                var listB = new (System.Collections.Generic.List$1(String))(System.Array.init(["i4", "r4", "i8", "r8"], String));
+                var index = listA.indexOf(name);
+                if (index >= 0) {
+                    return listB.getItem(index);
+                }
+                return name;
+            },
             strForm2S: function (sstr, s, e) {
                 var str = "";
                 var num = System.String.indexOf(sstr, s, 0, sstr.length, 3);
@@ -5686,6 +7138,8 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
         parameters: null,
         localsIndex: null,
         parametersIndex: null,
+        localList: null,
+        parametersList: null,
         bodyLines: null,
         config: {
             init: function () {
@@ -5693,6 +7147,8 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
                 this.parameters = new (System.Collections.Generic.Dictionary$2(String,String))();
                 this.localsIndex = new (System.Collections.Generic.Dictionary$2(String,System.Int32))();
                 this.parametersIndex = new (System.Collections.Generic.Dictionary$2(String,System.Int32))();
+                this.localList = new (System.Collections.Generic.List$1(String))();
+                this.parametersList = new (System.Collections.Generic.List$1(String))();
                 this.bodyLines = new (System.Collections.Generic.List$1(String))();
             }
         },
@@ -5742,6 +7198,8 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
             var line;
             this.locals.clear();
             this.bodyLines.clear();
+            this.localList.clear();
+            this.parametersList.clear();
             var reader = new System.IO.StringReader(this.getRawIL());
             try {
                 var localsStart = false;
@@ -5784,6 +7242,8 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
                                 var lvs = localvalue.split(String.fromCharCode(32));
                                 this.parameters.set(lvs[1], lvs[0]);
                                 this.parametersIndex.set(lvs[1], this.parameters.getCount());
+                                this.parametersList.add(lvs[0]);
+
                             }
 
 
@@ -5821,6 +7281,7 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
 
                                 this.locals.set(lvs1[((lvs1.length - 1) | 0)], lvs1[((lvs1.length - 2) | 0)]);
                                 this.localsIndex.set(lvs1[((lvs1.length - 1) | 0)], this.localsIndex.getCount());
+                                this.localList.add(lvs1[((lvs1.length - 2) | 0)]);
                             }
 
                             bodyStart = true;
@@ -5856,6 +7317,13 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
                 if (Bridge.hasValue(reader)) {
                     reader.dispose();
                 }
+            }
+
+            for (var i = 0; i < this.parametersList.getCount(); i = (i + 1) | 0) {
+                this.parametersList.setItem(i, SilAPI.DisassembledMethod.opTConvert(this.parametersList.getItem(i)));
+            }
+            for (var i1 = 0; i1 < this.localList.getCount(); i1 = (i1 + 1) | 0) {
+                this.localList.setItem(i1, SilAPI.DisassembledMethod.opTConvert(this.localList.getItem(i1)));
             }
         }
     });
@@ -6332,6 +7800,94 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
         }
     });
 
+    Bridge.define("ApolloClr.Cross.CrossMethodDelegate", {
+        inherits: [ApolloClr.Cross.BaseCrossMethodDelegate],
+        func: null,
+        config: {
+            alias: [
+            "getDelegate", "ApolloClr$Cross$ICrossMethodDelegate$getDelegate",
+            "setArgs", "ApolloClr$Cross$ICrossMethodDelegate$setArgs",
+            "run", "ApolloClr$Cross$ICrossMethodDelegate$run"
+            ]
+        },
+        getDelegate: function () {
+            return this.func;
+        },
+        setArgs: function (values) {
+
+        },
+        run: function () {
+            this.func();
+
+        }
+    });
+
+    Bridge.define("ApolloClr.Cross.CrossMethodDelegate$1", function (T) { return {
+        inherits: [ApolloClr.Cross.BaseCrossMethodDelegate],
+        func: null,
+        V1: Bridge.getDefaultValue(T),
+        config: {
+            alias: [
+            "getDelegate", "ApolloClr$Cross$ICrossMethodDelegate$getDelegate",
+            "run", "ApolloClr$Cross$ICrossMethodDelegate$run",
+            "setArgs", "ApolloClr$Cross$ICrossMethodDelegate$setArgs"
+            ]
+        },
+        getDelegate: function () {
+            return this.func;
+        },
+        run: function () {
+            this.func(this.V1);
+        },
+        setArgs: function (values) {
+            this.V1 = Bridge.cast(values[0], T);
+        }
+    }; });
+
+    Bridge.define("ApolloClr.Cross.CrossMethodDelegateRet$1", function (T) { return {
+        inherits: [ApolloClr.Cross.BaseCrossMethodDelegate],
+        func: null,
+        config: {
+            alias: [
+            "getDelegate", "ApolloClr$Cross$ICrossMethodDelegate$getDelegate",
+            "run", "ApolloClr$Cross$ICrossMethodDelegate$run",
+            "setArgs", "ApolloClr$Cross$ICrossMethodDelegate$setArgs"
+            ]
+        },
+        getDelegate: function () {
+            return this.func;
+        },
+        run: function () {
+            this.setResult(this.func());
+        },
+        setArgs: function (values) {
+
+        }
+    }; });
+
+    Bridge.define("ApolloClr.Cross.ObjectBuild$1", function (T) { return {
+        inherits: [ApolloClr.Cross.BaseCrossMethodDelegate],
+        config: {
+            alias: [
+            "getDelegate", "ApolloClr$Cross$ICrossMethodDelegate$getDelegate",
+            "run", "ApolloClr$Cross$ICrossMethodDelegate$run",
+            "setArgs", "ApolloClr$Cross$ICrossMethodDelegate$setArgs"
+            ]
+        },
+        getDelegate: function () {
+            return null;
+        },
+        make: function () {
+            return Bridge.createInstance(T);
+        },
+        run: function () {
+            this.setResult(this.make());
+        },
+        setArgs: function (values) {
+
+        }
+    }; });
+
     Bridge.define("SilAPI.DisassembledClass", {
         inherits: [SilAPI.DisassembledIlClass],
         toString: function () {
@@ -6388,7 +7944,7 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
     });
 
     var $m = Bridge.setMetadata,
-        $n = [System.Collections.Generic,System,SilAPI,System.Text,System.IO,ApolloClr,System.Reflection,ApolloClr.TypeDefine,ApolloClr.Js,ApolloClr.Method];
+        $n = [System.Collections.Generic,System,SilAPI,System.Text,System.IO,System.Reflection,ApolloClr,ApolloClr.TypeDefine,ApolloClr.Cross,ApolloClr.Js,ApolloClr.Method,ApolloClr.MethodDefine];
     $m($n[1].Exction, function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"Find","is":true,"t":8,"pi":[{"n":"list","pt":$n[0].IList$1(Object),"ps":0},{"n":"func","pt":Function,"ps":1}],"tpc":1,"tprm":["T"],"sn":"find","rt":Object,"p":[$n[0].IList$1(Object),Function]},{"a":2,"n":"FindIndex","is":true,"t":8,"pi":[{"n":"list","pt":$n[0].IList$1(Object),"ps":0},{"n":"func","pt":Function,"ps":1}],"tpc":1,"tprm":["T"],"sn":"findIndex","rt":$n[1].Int32,"p":[$n[0].IList$1(Object),Function]},{"a":2,"n":"ForEach","is":true,"t":8,"pi":[{"n":"list","pt":$n[0].List$1(Object),"ps":0},{"n":"loopFunc","pt":Function,"ps":1}],"tpc":1,"tprm":["T"],"sn":"forEach","rt":Object,"p":[$n[0].List$1(Object),Function]},{"a":2,"n":"MakeGenericType","is":true,"t":8,"pi":[{"n":"type","pt":Function,"ps":0},{"n":"types","ip":true,"pt":$n[1].Array.type(Function),"ps":1}],"sn":"makeGenericType","rt":Function,"p":[Function,$n[1].Array.type(Function)]}]}; });
     $m($n[1].Lazy$1, function (T) { return {"att":1048577,"a":2,"m":[{"a":2,"n":".ctor","t":1,"p":[Function],"pi":[{"n":"func","pt":Function,"ps":0}],"sn":"ctor"},{"a":2,"n":"Value","t":16,"rt":T,"g":{"a":2,"n":"get_Value","t":8,"sn":"getValue","rt":T}},{"a":1,"n":"Func","t":4,"rt":Function,"sn":"func"},{"a":1,"n":"IsInit","t":4,"rt":Boolean,"sn":"isInit"},{"a":1,"n":"_Value","t":4,"rt":T,"sn":"_Value"}]}; });
     $m($n[4].StringReader, function () { return {"att":1048577,"a":2,"m":[{"a":2,"n":".ctor","t":1,"p":[String],"pi":[{"n":"rawIL","pt":String,"ps":0}],"sn":"ctor"},{"a":2,"n":"Dispose","t":8,"sn":"dispose","rt":Object},{"a":4,"n":"ReadLine","t":8,"sn":"readLine","rt":String},{"a":4,"n":"ReadToEnd","t":8,"sn":"readToEnd","rt":String},{"a":2,"n":"Lines","t":4,"rt":$n[1].Array.type(String),"sn":"lines"},{"a":2,"n":"Postion","t":4,"rt":$n[1].Int32,"sn":"postion"},{"a":1,"n":"rawIL","t":4,"rt":String,"sn":"rawIL"}]}; });
@@ -6403,7 +7959,7 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
     $m($n[2].DisassembledIlClass, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":4,"n":"AddChild","t":8,"pi":[{"n":"ilClass","pt":$n[2].DisassembledIlClass,"ps":0}],"sn":"addChild","rt":Object,"p":[$n[2].DisassembledIlClass]},{"a":4,"n":"GetIlClassesRecursiveOfType","t":8,"tpc":1,"tprm":["T"],"sn":"getIlClassesRecursiveOfType","rt":$n[0].IEnumerable$1(Object)},{"ov":true,"a":2,"n":"InitialiseFromIL","t":8,"sn":"initialiseFromIL","rt":Object},{"a":1,"n":"ReadEvents","t":8,"sn":"readEvents","rt":Object},{"a":1,"n":"ReadFields","t":8,"sn":"readFields","rt":Object},{"a":1,"n":"ReadMethods","t":8,"sn":"readMethods","rt":Object},{"a":1,"n":"ReadProperties","t":8,"sn":"readProperties","rt":Object},{"ov":true,"a":2,"n":"ToString","t":8,"sn":"toString","rt":String},{"a":2,"n":"UpdateFullNamesOfChildren","t":8,"sn":"updateFullNamesOfChildren","rt":Object},{"a":2,"n":"AllClasses","t":16,"rt":$n[0].IEnumerable$1(SilAPI.DisassembledClass),"g":{"a":2,"n":"get_AllClasses","t":8,"sn":"getAllClasses","rt":$n[0].IEnumerable$1(SilAPI.DisassembledClass)}},{"a":2,"n":"AllDelegates","t":16,"rt":$n[0].IEnumerable$1(SilAPI.DisassembledDelegate),"g":{"a":2,"n":"get_AllDelegates","t":8,"sn":"getAllDelegates","rt":$n[0].IEnumerable$1(SilAPI.DisassembledDelegate)}},{"a":2,"n":"AllEnumerations","t":16,"rt":$n[0].IEnumerable$1(SilAPI.DisassembledEnumeration),"g":{"a":2,"n":"get_AllEnumerations","t":8,"sn":"getAllEnumerations","rt":$n[0].IEnumerable$1(SilAPI.DisassembledEnumeration)}},{"a":2,"n":"AllInterfaces","t":16,"rt":$n[0].IEnumerable$1(SilAPI.DisassembledInterface),"g":{"a":2,"n":"get_AllInterfaces","t":8,"sn":"getAllInterfaces","rt":$n[0].IEnumerable$1(SilAPI.DisassembledInterface)}},{"a":2,"n":"AllStructures","t":16,"rt":$n[0].IEnumerable$1(SilAPI.DisassembledStructure),"g":{"a":2,"n":"get_AllStructures","t":8,"sn":"getAllStructures","rt":$n[0].IEnumerable$1(SilAPI.DisassembledStructure)}},{"a":2,"n":"BaseType","t":16,"rt":String,"g":{"a":2,"n":"get_BaseType","t":8,"sn":"getBaseType","rt":String},"s":{"a":1,"n":"set_BaseType","t":8,"pi":[{"n":"value","pt":String,"ps":0}],"sn":"setBaseType","rt":Object,"p":[String]}},{"a":2,"n":"Classes","t":16,"rt":$n[0].IEnumerable$1(SilAPI.DisassembledClass),"g":{"a":2,"n":"get_Classes","t":8,"sn":"getClasses","rt":$n[0].IEnumerable$1(SilAPI.DisassembledClass)}},{"a":2,"n":"Delegates","t":16,"rt":$n[0].IEnumerable$1(SilAPI.DisassembledDelegate),"g":{"a":2,"n":"get_Delegates","t":8,"sn":"getDelegates","rt":$n[0].IEnumerable$1(SilAPI.DisassembledDelegate)}},{"a":2,"n":"Enumerations","t":16,"rt":$n[0].IEnumerable$1(SilAPI.DisassembledEnumeration),"g":{"a":2,"n":"get_Enumerations","t":8,"sn":"getEnumerations","rt":$n[0].IEnumerable$1(SilAPI.DisassembledEnumeration)}},{"a":2,"n":"Events","t":16,"rt":$n[0].IEnumerable$1(SilAPI.DisassembledEvent),"g":{"a":2,"n":"get_Events","t":8,"sn":"getEvents","rt":$n[0].IEnumerable$1(SilAPI.DisassembledEvent)}},{"a":2,"n":"Fields","t":16,"rt":$n[0].IEnumerable$1(SilAPI.DisassembledField),"g":{"a":2,"n":"get_Fields","t":8,"sn":"getFields","rt":$n[0].IEnumerable$1(SilAPI.DisassembledField)}},{"a":2,"n":"Interfaces","t":16,"rt":$n[0].IEnumerable$1(SilAPI.DisassembledInterface),"g":{"a":2,"n":"get_Interfaces","t":8,"sn":"getInterfaces","rt":$n[0].IEnumerable$1(SilAPI.DisassembledInterface)}},{"a":2,"n":"Methods","t":16,"rt":$n[0].IEnumerable$1(SilAPI.DisassembledMethod),"g":{"a":2,"n":"get_Methods","t":8,"sn":"getMethods","rt":$n[0].IEnumerable$1(SilAPI.DisassembledMethod)}},{"a":2,"n":"Modifiers","t":16,"rt":$n[0].IEnumerable$1(String),"g":{"a":2,"n":"get_Modifiers","t":8,"sn":"getModifiers","rt":$n[0].IEnumerable$1(String)}},{"a":2,"n":"Properties","t":16,"rt":$n[0].IEnumerable$1(SilAPI.DisassembledProperty),"g":{"a":2,"n":"get_Properties","t":8,"sn":"getProperties","rt":$n[0].IEnumerable$1(SilAPI.DisassembledProperty)}},{"a":2,"n":"Structures","t":16,"rt":$n[0].IEnumerable$1(SilAPI.DisassembledStructure),"g":{"a":2,"n":"get_Structures","t":8,"sn":"getStructures","rt":$n[0].IEnumerable$1(SilAPI.DisassembledStructure)}},{"a":1,"n":"childIlClasses","t":4,"rt":$n[0].List$1(SilAPI.DisassembledIlClass),"sn":"childIlClasses","ro":true},{"a":1,"n":"events","t":4,"rt":$n[0].List$1(SilAPI.DisassembledEvent),"sn":"events","ro":true},{"a":1,"n":"fields","t":4,"rt":$n[0].List$1(SilAPI.DisassembledField),"sn":"fields","ro":true},{"a":1,"n":"methods","t":4,"rt":$n[0].List$1(SilAPI.DisassembledMethod),"sn":"methods","ro":true},{"a":1,"n":"modifiers","t":4,"rt":$n[0].List$1(String),"sn":"modifiers","ro":true},{"a":1,"n":"properties","t":4,"rt":$n[0].List$1(SilAPI.DisassembledProperty),"sn":"properties","ro":true}]}; });
     $m($n[2].DisassemblyException, function () { return {"att":1048577,"a":2,"m":[{"a":2,"n":".ctor","t":1,"p":[String],"pi":[{"n":"message","pt":String,"ps":0}],"sn":"ctor"},{"a":2,"n":".ctor","t":1,"p":[String,$n[1].Exception],"pi":[{"n":"message","pt":String,"ps":0},{"n":"innerException","pt":$n[1].Exception,"ps":1}],"sn":"$ctor1"}]}; });
     $m($n[2].DisassembledInterface, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"ov":true,"a":2,"n":"InitialiseFromIL","t":8,"sn":"initialiseFromIL","rt":Object},{"ov":true,"a":2,"n":"ToString","t":8,"sn":"toString","rt":String}]}; });
-    $m($n[2].DisassembledMethod, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"ov":true,"a":2,"n":"InitialiseFromIL","t":8,"sn":"initialiseFromIL","rt":Object},{"a":2,"n":"ReadBody","t":8,"sn":"readBody","rt":Object},{"ov":true,"a":2,"n":"ToString","t":8,"sn":"toString","rt":String},{"a":2,"n":"strForm2S","is":true,"t":8,"pi":[{"n":"sstr","pt":String,"ps":0},{"n":"s","pt":String,"ps":1},{"n":"e","pt":String,"ps":2}],"sn":"strForm2S","rt":String,"p":[String,String,String]},{"a":2,"n":"strForm2SA","is":true,"t":8,"pi":[{"n":"sstr","pt":String,"ps":0},{"n":"s","pt":String,"ps":1},{"n":"e","pt":String,"ps":2}],"sn":"strForm2SA","rt":$n[1].Array.type(String),"p":[String,String,String]},{"a":2,"n":"strLeft","is":true,"t":8,"pi":[{"n":"sstr","pt":String,"ps":0},{"n":"lenght","pt":$n[1].Int32,"ps":1}],"sn":"strLeft","rt":String,"p":[String,$n[1].Int32]},{"a":2,"n":"strLenght","is":true,"t":8,"pi":[{"n":"sstr","pt":String,"ps":0}],"sn":"strLenght","rt":$n[1].Int32,"p":[String]},{"a":2,"n":"strRight","is":true,"t":8,"pi":[{"n":"sstr","pt":String,"ps":0},{"n":"lenght","pt":$n[1].Int32,"ps":1}],"sn":"strRight","rt":String,"p":[String,$n[1].Int32]},{"a":2,"n":"strSplit","is":true,"t":8,"pi":[{"n":"baseString","pt":String,"ps":0},{"n":"splitString","pt":String,"ps":1},{"n":"sso","pt":Number,"ps":2}],"sn":"strSplit","rt":$n[1].Array.type(String),"p":[String,String,Number]},{"a":2,"n":"CallName","t":16,"rt":String,"g":{"a":2,"n":"get_CallName","t":8,"sn":"getCallName","rt":String}},{"a":2,"n":"BodyLines","t":4,"rt":$n[0].List$1(String),"sn":"bodyLines"},{"a":2,"n":"Locals","t":4,"rt":$n[0].Dictionary$2(String,String),"sn":"locals"},{"a":2,"n":"LocalsIndex","t":4,"rt":$n[0].Dictionary$2(String,System.Int32),"sn":"localsIndex"},{"a":2,"n":"MaxStack","t":4,"rt":$n[1].Int32,"sn":"maxStack"},{"a":2,"n":"Parameters","t":4,"rt":$n[0].Dictionary$2(String,String),"sn":"parameters"},{"a":2,"n":"ParametersIndex","t":4,"rt":$n[0].Dictionary$2(String,System.Int32),"sn":"parametersIndex"},{"a":2,"n":"ReturnType","t":4,"rt":String,"sn":"returnType"},{"a":2,"n":"Static","t":4,"rt":Boolean,"sn":"static"}]}; });
+    $m($n[2].DisassembledMethod, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"ov":true,"a":2,"n":"InitialiseFromIL","t":8,"sn":"initialiseFromIL","rt":Object},{"a":2,"n":"OpTConvert","is":true,"t":8,"pi":[{"n":"name","pt":String,"ps":0}],"sn":"opTConvert","rt":String,"p":[String]},{"a":2,"n":"ReadBody","t":8,"sn":"readBody","rt":Object},{"ov":true,"a":2,"n":"ToString","t":8,"sn":"toString","rt":String},{"a":2,"n":"strForm2S","is":true,"t":8,"pi":[{"n":"sstr","pt":String,"ps":0},{"n":"s","pt":String,"ps":1},{"n":"e","pt":String,"ps":2}],"sn":"strForm2S","rt":String,"p":[String,String,String]},{"a":2,"n":"strForm2SA","is":true,"t":8,"pi":[{"n":"sstr","pt":String,"ps":0},{"n":"s","pt":String,"ps":1},{"n":"e","pt":String,"ps":2}],"sn":"strForm2SA","rt":$n[1].Array.type(String),"p":[String,String,String]},{"a":2,"n":"strLeft","is":true,"t":8,"pi":[{"n":"sstr","pt":String,"ps":0},{"n":"lenght","pt":$n[1].Int32,"ps":1}],"sn":"strLeft","rt":String,"p":[String,$n[1].Int32]},{"a":2,"n":"strLenght","is":true,"t":8,"pi":[{"n":"sstr","pt":String,"ps":0}],"sn":"strLenght","rt":$n[1].Int32,"p":[String]},{"a":2,"n":"strRight","is":true,"t":8,"pi":[{"n":"sstr","pt":String,"ps":0},{"n":"lenght","pt":$n[1].Int32,"ps":1}],"sn":"strRight","rt":String,"p":[String,$n[1].Int32]},{"a":2,"n":"strSplit","is":true,"t":8,"pi":[{"n":"baseString","pt":String,"ps":0},{"n":"splitString","pt":String,"ps":1},{"n":"sso","pt":Number,"ps":2}],"sn":"strSplit","rt":$n[1].Array.type(String),"p":[String,String,Number]},{"a":2,"n":"CallName","t":16,"rt":String,"g":{"a":2,"n":"get_CallName","t":8,"sn":"getCallName","rt":String}},{"a":2,"n":"BodyLines","t":4,"rt":$n[0].List$1(String),"sn":"bodyLines"},{"a":2,"n":"LocalList","t":4,"rt":$n[0].List$1(String),"sn":"localList"},{"a":2,"n":"Locals","t":4,"rt":$n[0].Dictionary$2(String,String),"sn":"locals"},{"a":2,"n":"LocalsIndex","t":4,"rt":$n[0].Dictionary$2(String,System.Int32),"sn":"localsIndex"},{"a":2,"n":"MaxStack","t":4,"rt":$n[1].Int32,"sn":"maxStack"},{"a":2,"n":"Parameters","t":4,"rt":$n[0].Dictionary$2(String,String),"sn":"parameters"},{"a":2,"n":"ParametersIndex","t":4,"rt":$n[0].Dictionary$2(String,System.Int32),"sn":"parametersIndex"},{"a":2,"n":"ParametersList","t":4,"rt":$n[0].List$1(String),"sn":"parametersList"},{"a":2,"n":"ReturnType","t":4,"rt":String,"sn":"returnType"},{"a":2,"n":"Static","t":4,"rt":Boolean,"sn":"static"}]}; });
     $m($n[2].DisassembledProperty, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"ov":true,"a":2,"n":"InitialiseFromIL","t":8,"sn":"initialiseFromIL","rt":Object},{"ov":true,"a":2,"n":"ToString","t":8,"sn":"toString","rt":String}]}; });
     $m($n[2].DisassembledStructure, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"ov":true,"a":2,"n":"InitialiseFromIL","t":8,"sn":"initialiseFromIL","rt":Object},{"ov":true,"a":2,"n":"ToString","t":8,"sn":"toString","rt":String}]}; });
     $m($n[2].Disassembler, function () { return {"att":1048577,"a":2,"m":[{"a":1,"n":".ctor","t":1,"sn":"ctor"},{"a":1,"n":"CreateMapOfClassNamesToContents","t":8,"pi":[{"n":"identifyClassType","pt":Function,"ps":0}],"sn":"createMapOfClassNamesToContents","rt":$n[0].Dictionary$2(String,String),"p":[Function]},{"a":1,"n":"CreateMapOfFilePathsToContents","t":8,"sn":"createMapOfFilePathsToContents","rt":$n[0].Dictionary$2(String,String)},{"a":2,"n":"DisassembleAssembly","is":true,"t":8,"pi":[{"n":"assemblyPath","pt":String,"ps":0},{"n":"short","dv":true,"o":true,"pt":Boolean,"ps":1}],"sn":"disassembleAssembly","rt":$n[2].DisassembledAssembly,"p":[String,Boolean]},{"a":2,"n":"Dispose","t":8,"sn":"dispose","rt":Object},{"a":2,"n":"GetClassNames","t":8,"sn":"getClassNames","rt":$n[0].IEnumerable$1(String)},{"a":2,"n":"GetFileNames","t":8,"sn":"getFileNames","rt":$n[0].IEnumerable$1(String)},{"a":2,"n":"GetInterfaceNames","t":8,"sn":"getInterfaceNames","rt":$n[0].IEnumerable$1(String)},{"a":2,"n":"GetRawIL","t":8,"sn":"getRawIL","rt":String},{"a":2,"n":"GetStructNames","t":8,"sn":"getStructNames","rt":$n[0].IEnumerable$1(String)},{"a":1,"n":"Initialise","t":8,"pi":[{"n":"assemblyPath","pt":String,"ps":0}],"sn":"initialise","rt":Object,"p":[String]},{"a":1,"n":"assemblyPath","t":4,"rt":String,"sn":"assemblyPath"},{"a":1,"n":"lazyMapClassNamesToContents","t":4,"rt":$n[1].Lazy$1(System.Collections.Generic.Dictionary$2(String,String)),"sn":"lazyMapClassNamesToContents"},{"a":1,"n":"lazyMapFilePathsToContents","t":4,"rt":$n[1].Lazy$1(System.Collections.Generic.Dictionary$2(String,String)),"sn":"lazyMapFilePathsToContents"},{"a":1,"n":"lazyMapInterfaceNamesToContents","t":4,"rt":$n[1].Lazy$1(System.Collections.Generic.Dictionary$2(String,String)),"sn":"lazyMapInterfaceNamesToContents"},{"a":1,"n":"lazyMapStructNamesToContents","t":4,"rt":$n[1].Lazy$1(System.Collections.Generic.Dictionary$2(String,String)),"sn":"lazyMapStructNamesToContents"},{"a":1,"n":"rawIl","t":4,"rt":String,"sn":"rawIl"}]}; });
@@ -6412,21 +7968,40 @@ Bridge.assembly("ApolloClr.Js", function ($asm, globals) {
     $m($n[2].ILParseHelper, function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"GetClassDeclarationParts","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0},{"n":"modifiers","out":true,"pt":$n[0].List$1(String),"ps":1},{"n":"className","out":true,"pt":String,"ps":2},{"n":"templateSpecification","out":true,"pt":String,"ps":3}],"sn":"getClassDeclarationParts","rt":Object,"p":[String,$n[0].List$1(String),String,String]},{"a":2,"n":"GetClassNameFromClassDeclarationLine","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0},{"n":"className","out":true,"pt":String,"ps":1},{"n":"templateSpecification","out":true,"pt":String,"ps":2}],"sn":"getClassNameFromClassDeclarationLine","rt":Object,"p":[String,String,String]},{"a":2,"n":"GetEventNameFromDeclarationLine","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"getEventNameFromDeclarationLine","rt":String,"p":[String]},{"a":2,"n":"GetMethodNameFromDeclarationLine","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"getMethodNameFromDeclarationLine","rt":String,"p":[String]},{"a":2,"n":"GetPropertyNameFromDeclarationLine","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"getPropertyNameFromDeclarationLine","rt":String,"p":[String]},{"a":2,"n":"IsLineAnyLevelIlClassDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"isLineAnyLevelIlClassDeclaration","rt":Boolean,"p":[String]},{"a":2,"n":"IsLineClassDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"isLineClassDeclaration","rt":Boolean,"p":[String]},{"a":2,"n":"IsLineClassEndDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0},{"n":"className","pt":String,"ps":1}],"sn":"isLineClassEndDeclaration","rt":Boolean,"p":[String,String]},{"a":2,"n":"IsLineEventEndDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0},{"n":"ilClassName","pt":String,"ps":1},{"n":"propertyName","pt":String,"ps":2}],"sn":"isLineEventEndDeclaration","rt":Boolean,"p":[String,String,String]},{"a":2,"n":"IsLineEventPropertyDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"isLineEventPropertyDeclaration","rt":Boolean,"p":[String]},{"a":2,"n":"IsLineFieldDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"isLineFieldDeclaration","rt":Boolean,"p":[String]},{"a":2,"n":"IsLineInterfaceDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"isLineInterfaceDeclaration","rt":Boolean,"p":[String]},{"a":2,"n":"IsLineMethodDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"isLineMethodDeclaration","rt":Boolean,"p":[String]},{"a":2,"n":"IsLineMethodEndDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0},{"n":"ilClassName","pt":String,"ps":1},{"n":"methodName","pt":String,"ps":2}],"sn":"isLineMethodEndDeclaration","rt":Boolean,"p":[String,String,String]},{"a":2,"n":"IsLinePropertyDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"isLinePropertyDeclaration","rt":Boolean,"p":[String]},{"a":2,"n":"IsLinePropertyEndDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0},{"n":"ilClassName","pt":String,"ps":1},{"n":"propertyName","pt":String,"ps":2}],"sn":"isLinePropertyEndDeclaration","rt":Boolean,"p":[String,String,String]},{"a":2,"n":"IsLineSourceComment","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"isLineSourceComment","rt":Boolean,"p":[String]},{"a":2,"n":"IsLineStartClassEndToken","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"isLineStartClassEndToken","rt":Boolean,"p":[String]},{"a":2,"n":"IsLineStructDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"isLineStructDeclaration","rt":Boolean,"p":[String]},{"a":2,"n":"IsLineTopLevelIlClassDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"isLineTopLevelIlClassDeclaration","rt":Boolean,"p":[String]},{"a":2,"n":"ReadExtendsLine","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0},{"n":"baseType","out":true,"pt":String,"ps":1}],"sn":"readExtendsLine","rt":Boolean,"p":[String,String]},{"a":1,"n":"Token_EndClass","is":true,"t":4,"rt":String,"sn":"Token_EndClass"},{"a":1,"n":"Token_EndEvent","is":true,"t":4,"rt":String,"sn":"Token_EndEvent"},{"a":1,"n":"Token_EndMethod","is":true,"t":4,"rt":String,"sn":"Token_EndMethod"},{"a":1,"n":"Token_EndProperty","is":true,"t":4,"rt":String,"sn":"Token_EndProperty"},{"a":1,"n":"Token_Event","is":true,"t":4,"rt":String,"sn":"Token_Event"},{"a":1,"n":"Token_Extends","is":true,"t":4,"rt":String,"sn":"Token_Extends"},{"a":1,"n":"Token_Field","is":true,"t":4,"rt":String,"sn":"Token_Field"},{"a":1,"n":"Token_Interface","is":true,"t":4,"rt":String,"sn":"Token_Interface"},{"a":1,"n":"Token_Method","is":true,"t":4,"rt":String,"sn":"Token_Method"},{"a":1,"n":"Token_Property","is":true,"t":4,"rt":String,"sn":"Token_Property"},{"a":1,"n":"Token_SourceComment","is":true,"t":4,"rt":String,"sn":"Token_SourceComment"},{"a":1,"n":"Token_StartClass","is":true,"t":4,"rt":String,"sn":"Token_StartClass"},{"a":1,"n":"Token_Structure","is":true,"t":4,"rt":String,"sn":"Token_Structure"}]}; });
     $m($n[2].ISilProcessor, function () { return {"att":161,"a":2,"m":[{"ab":true,"a":2,"n":"GetFileIL","t":8,"sn":"SilAPI$ISilProcessor$getFileIL","rt":String},{"ab":true,"a":2,"n":"GetModuleIL","t":8,"sn":"SilAPI$ISilProcessor$getModuleIL","rt":String},{"ab":true,"a":2,"n":"GetSelectionIL","t":8,"sn":"SilAPI$ISilProcessor$getSelectionIL","rt":String},{"ab":true,"a":2,"n":"ProcessIL","t":8,"sn":"SilAPI$ISilProcessor$processIL","rt":Boolean}]}; });
     $m($n[2].StreamSilProcessor, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":1,"n":"BurnCommentBlocks","is":true,"t":8,"pi":[{"n":"line","ref":true,"pt":String,"ps":0},{"n":"reader","pt":$n[4].StringReader,"ps":1}],"sn":"burnCommentBlocks","rt":Object,"p":[String,$n[4].StringReader]},{"a":1,"n":"GenerateModuleIL","t":8,"sn":"generateModuleIL","rt":Object},{"a":1,"n":"GetComment","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0},{"n":"comment","out":true,"pt":String,"ps":1},{"n":"linePart1","out":true,"pt":$n[1].Int32,"ps":2}],"sn":"getComment","rt":Boolean,"p":[String,String,$n[1].Int32]},{"a":2,"n":"GetFileIL","t":8,"sn":"getFileIL","rt":String},{"a":1,"n":"GetLineHint","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0},{"n":"firstPart","out":true,"pt":$n[1].Int32,"ps":1},{"n":"secondPart","out":true,"pt":$n[1].Int32,"ps":2}],"sn":"getLineHint","rt":Boolean,"p":[String,$n[1].Int32,$n[1].Int32]},{"a":2,"n":"GetModuleIL","t":8,"sn":"getModuleIL","rt":String},{"a":2,"n":"GetSelectionIL","t":8,"sn":"getSelectionIL","rt":String},{"a":1,"n":"GetSourceFile","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0},{"n":"sourceFilePath","out":true,"pt":String,"ps":1}],"sn":"getSourceFile","rt":Boolean,"p":[String,String]},{"a":1,"n":"ParseFileIL","t":8,"sn":"parseFileIL","rt":Object},{"a":1,"n":"ParseSelectionIL","t":8,"sn":"parseSelectionIL","rt":Object},{"v":true,"a":2,"n":"ProcessIL","t":8,"sn":"processIL","rt":Boolean},{"a":2,"n":"SourceFileFirstLine","t":16,"rt":$n[1].Int32,"g":{"a":2,"n":"get_SourceFileFirstLine","t":8,"sn":"getSourceFileFirstLine","rt":$n[1].Int32},"s":{"a":2,"n":"set_SourceFileFirstLine","t":8,"pi":[{"n":"value","pt":$n[1].Int32,"ps":0}],"sn":"setSourceFileFirstLine","rt":Object,"p":[$n[1].Int32]}},{"a":2,"n":"SourceFileLastLine","t":16,"rt":$n[1].Int32,"g":{"a":2,"n":"get_SourceFileLastLine","t":8,"sn":"getSourceFileLastLine","rt":$n[1].Int32},"s":{"a":2,"n":"set_SourceFileLastLine","t":8,"pi":[{"n":"value","pt":$n[1].Int32,"ps":0}],"sn":"setSourceFileLastLine","rt":Object,"p":[$n[1].Int32]}},{"a":2,"n":"SourceFilePath","t":16,"rt":String,"g":{"a":2,"n":"get_SourceFilePath","t":8,"sn":"getSourceFilePath","rt":String},"s":{"a":2,"n":"set_SourceFilePath","t":8,"pi":[{"n":"value","pt":String,"ps":0}],"sn":"setSourceFilePath","rt":Object,"p":[String]}},{"a":2,"n":"SourceILStream","t":16,"rt":String,"g":{"a":2,"n":"get_SourceILStream","t":8,"sn":"getSourceILStream","rt":String},"s":{"a":2,"n":"set_SourceILStream","t":8,"pi":[{"n":"value","pt":String,"ps":0}],"sn":"setSourceILStream","rt":Object,"p":[String]}},{"a":3,"n":"fileIL","t":4,"rt":String,"sn":"fileIL"},{"a":3,"n":"moduleIL","t":4,"rt":String,"sn":"moduleIL"},{"a":3,"n":"selectionIL","t":4,"rt":String,"sn":"selectionIL"}]}; });
-    $m($n[5].Clr, function () { return {"att":1048577,"a":2,"m":[{"a":2,"n":".ctor","t":1,"p":[$n[1].Int32,$n[1].Int32,Boolean,$n[1].Int32],"pi":[{"n":"localCount","dv":5,"o":true,"pt":$n[1].Int32,"ps":0},{"n":"argCount","dv":5,"o":true,"pt":$n[1].Int32,"ps":1},{"n":"haseResult","dv":true,"o":true,"pt":Boolean,"ps":2},{"n":"maxStack","dv":5,"o":true,"pt":$n[1].Int32,"ps":3}],"sn":"ctor"},{"v":true,"a":2,"n":"Add","t":8,"sn":"add","rt":Object},{"v":true,"a":2,"n":"And","t":8,"sn":"and","rt":Object},{"v":true,"a":2,"n":"Beq","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"beq","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Bge","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"bge","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Bgt","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"bgt","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Ble","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"ble","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Blt","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"blt","rt":Object,"p":[String,String,$n[1].Int32]},{"a":2,"n":"Box","t":8,"sn":"box","rt":Object},{"v":true,"a":2,"n":"Br","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"br","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Brfalse","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"brfalse","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Brtrue","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"brtrue","rt":Object,"p":[String,String,$n[1].Int32]},{"a":2,"n":"Call","t":8,"pi":[{"n":"retType","pt":String,"ps":0},{"n":"method","pt":String,"ps":1},{"n":"task","pt":$n[5].MethodTasks,"ps":2}],"sn":"call","rt":Object,"p":[String,String,$n[5].MethodTasks]},{"a":2,"n":"Callvirt","t":8,"sn":"callvirt","rt":Object},{"v":true,"a":2,"n":"Ceq","t":8,"sn":"ceq","rt":Object},{"v":true,"a":2,"n":"Cgt","t":8,"sn":"cgt","rt":Object},{"v":true,"a":2,"n":"Clt","t":8,"sn":"clt","rt":Object},{"a":2,"n":"Conv","t":8,"sn":"conv","rt":Object},{"a":2,"n":"CopyToArgs","t":8,"pi":[{"n":"clr","pt":$n[5].Clr,"ps":0}],"sn":"copyToArgs","rt":Object,"p":[$n[5].Clr]},{"v":true,"a":2,"n":"Div","t":8,"sn":"div","rt":Object},{"a":2,"n":"Dump","t":8,"pi":[{"n":"action","pt":Function,"ps":0}],"sn":"dump","rt":Object,"p":[Function]},{"a":2,"n":"EvaluationStack_Pop","t":8,"sn":"evaluationStack_Pop","rt":$n[5].StackItem},{"a":2,"n":"EvaluationStack_Pop","t":8,"pi":[{"n":"count","pt":$n[1].Int32,"ps":0}],"sn":"evaluationStack_Pop$1","rt":System.Array.type(ApolloClr.StackItem),"p":[$n[1].Int32]},{"a":2,"n":"EvaluationStack_Push","t":8,"pi":[{"n":"obj","pt":$n[5].StackItem,"ps":0}],"sn":"evaluationStack_Push","rt":Object,"p":[$n[5].StackItem]},{"a":2,"n":"EvaluationStack_Push","t":8,"pi":[{"n":"obj","pt":$n[1].Int32,"ps":0}],"sn":"evaluationStack_Push$1","rt":Object,"p":[$n[1].Int32]},{"a":2,"n":"EvaluationStack_Push","t":8,"pi":[{"n":"args","pt":$n[1].Array.type(System.Int32),"ps":0}],"sn":"evaluationStack_Push$2","rt":Object,"p":[$n[1].Array.type(System.Int32)]},{"v":true,"a":2,"n":"Ldarg","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0}],"sn":"ldarg","rt":Object,"p":[$n[1].Int32]},{"v":true,"a":2,"n":"Ldc","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0},{"n":"v","pt":$n[1].Int32,"ps":1}],"sn":"ldc","rt":Object,"p":[$n[1].Int32,$n[1].Int32]},{"v":true,"a":2,"n":"LdcStloc","t":8,"pi":[{"n":"li","pt":$n[1].Int32,"ps":0},{"n":"lv","pt":$n[1].Int32,"ps":1},{"n":"si","pt":$n[1].Int32,"ps":2}],"sn":"ldcStloc","rt":Object,"p":[$n[1].Int32,$n[1].Int32,$n[1].Int32]},{"v":true,"a":2,"n":"Ldc_R4","t":8,"pi":[{"n":"v","pt":$n[1].Single,"ps":0}],"sn":"ldc_R4","rt":Object,"p":[$n[1].Single]},{"a":2,"n":"Ldfld","t":8,"sn":"ldfld","rt":Object},{"v":true,"a":2,"n":"Ldloc","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0}],"sn":"ldloc","rt":Object,"p":[$n[1].Int32]},{"v":true,"a":2,"n":"Ldloc","t":8,"pi":[{"n":"args","ip":true,"pt":$n[1].Array.type(System.Int32),"ps":0}],"sn":"ldloc$1","rt":Object,"p":[$n[1].Array.type(System.Int32)]},{"v":true,"a":2,"n":"LdlocLdloc","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0},{"n":"i2","pt":$n[1].Int32,"ps":1}],"sn":"ldlocLdloc","rt":Object,"p":[$n[1].Int32,$n[1].Int32]},{"v":true,"a":2,"n":"Ldloc_s","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0}],"sn":"ldloc_s","rt":Object,"p":[$n[1].Int32]},{"v":true,"a":2,"n":"Ldnull","t":8,"sn":"ldnull","rt":Object},{"v":true,"a":2,"n":"Ldstr","t":8,"pi":[{"n":"str","pt":String,"ps":0}],"sn":"ldstr","rt":Object,"p":[String]},{"v":true,"a":2,"n":"Mul","t":8,"sn":"mul","rt":Object},{"v":true,"a":2,"n":"Neg","t":8,"sn":"neg","rt":Object},{"a":2,"n":"Newobj","t":8,"pi":[{"n":"type","pt":String,"ps":0}],"sn":"newobj","rt":Object,"p":[String]},{"v":true,"a":2,"n":"Nop","t":8,"sn":"nop","rt":Object},{"v":true,"a":2,"n":"Not","t":8,"sn":"not","rt":Object},{"v":true,"a":2,"n":"Or","t":8,"sn":"or","rt":Object},{"v":true,"a":2,"n":"Pop","t":8,"sn":"pop","rt":Object},{"v":true,"a":2,"n":"Rem","t":8,"sn":"rem","rt":Object},{"v":true,"a":2,"n":"Reset","t":8,"sn":"reset","rt":Object},{"v":true,"a":2,"n":"Ret","t":8,"sn":"ret","rt":Object},{"v":true,"a":2,"n":"Shl","t":8,"sn":"shl","rt":Object},{"v":true,"a":2,"n":"Shr","t":8,"sn":"shr","rt":Object},{"a":2,"n":"Stfld","t":8,"sn":"stfld","rt":Object},{"v":true,"a":2,"n":"Stloc","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0}],"sn":"stloc","rt":Object,"p":[$n[1].Int32]},{"v":true,"a":2,"n":"Stloc_S","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0}],"sn":"stloc_S","rt":Object,"p":[$n[1].Int32]},{"v":true,"a":2,"n":"Sub","t":8,"sn":"sub","rt":Object},{"a":2,"n":"Throw","t":8,"sn":"throw","rt":Object},{"a":2,"n":"UnBox","t":8,"sn":"unBox","rt":Object},{"v":true,"a":2,"n":"Xor","t":8,"sn":"xor","rt":Object},{"a":2,"n":"Argp","t":4,"rt":$n[1].Int32,"sn":"argp","ro":true},{"a":2,"n":"ArgsVarCount","t":4,"rt":$n[1].Int32,"sn":"argsVarCount","ro":true},{"a":2,"n":"CallStack","t":4,"rt":System.Array.type(ApolloClr.StackItem),"sn":"callStack","ro":true},{"a":2,"n":"Csp","t":4,"rt":$n[1].Int32,"sn":"csp","ro":true},{"a":2,"n":"DumpAction","t":4,"rt":Function,"sn":"dumpAction"},{"a":2,"n":"LocalVarCount","t":4,"rt":$n[1].Int32,"sn":"localVarCount","ro":true},{"a":2,"n":"ResultPoint","t":4,"rt":$n[5].StackItem,"sn":"resultPoint"},{"a":2,"n":"RetResult","t":4,"rt":Boolean,"sn":"retResult"},{"a":1,"n":"Stack","t":4,"rt":$n[5].BaseClrStack,"sn":"stack"}]}; });
-    $m($n[5].OpCodeEnum, function () { return {"att":256,"a":4}; });
-    $m($n[5].BaseClrStack, function () { return {"att":1048577,"a":2,"m":[{"a":2,"n":".ctor","t":1,"p":[$n[1].Int32],"pi":[{"n":"x","dv":10,"o":true,"pt":$n[1].Int32,"ps":0}],"sn":"ctor"},{"v":true,"a":2,"n":"Pop","t":8,"sn":"pop","rt":$n[5].StackItem},{"v":true,"a":2,"n":"Pop","t":8,"pi":[{"n":"count","pt":$n[1].Int32,"ps":0}],"sn":"pop$1","rt":System.Array.type(ApolloClr.StackItem),"p":[$n[1].Int32]},{"v":true,"a":2,"n":"Push","t":8,"pi":[{"n":"obj","pt":$n[5].StackItem,"ps":0}],"sn":"push","rt":Object,"p":[$n[5].StackItem]},{"a":2,"n":"Push","t":8,"pi":[{"n":"obj","pt":$n[1].Int32,"ps":0}],"sn":"push$1","rt":Object,"p":[$n[1].Int32]},{"a":2,"n":"Reset","t":8,"sn":"reset","rt":Object},{"a":1,"n":"Esp","t":4,"rt":$n[1].Int32,"sn":"esp"},{"a":1,"n":"EvaluationStack","t":4,"rt":System.Array.type(ApolloClr.StackItem),"sn":"evaluationStack"}]}; });
-    $m($n[5].StackItem, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"op_Equality","is":true,"t":8,"pi":[{"n":"s1","pt":$n[5].StackItem,"ps":0},{"n":"s2","pt":$n[5].StackItem,"ps":1}],"sn":"op_Equality","rt":Boolean,"p":[$n[5].StackItem,$n[5].StackItem]},{"a":2,"n":"op_GreaterThan","is":true,"t":8,"pi":[{"n":"s1","pt":$n[5].StackItem,"ps":0},{"n":"s2","pt":$n[5].StackItem,"ps":1}],"sn":"op_GreaterThan","rt":Boolean,"p":[$n[5].StackItem,$n[5].StackItem]},{"a":2,"n":"op_GreaterThanOrEqual","is":true,"t":8,"pi":[{"n":"s1","pt":$n[5].StackItem,"ps":0},{"n":"s2","pt":$n[5].StackItem,"ps":1}],"sn":"op_GreaterThanOrEqual","rt":Boolean,"p":[$n[5].StackItem,$n[5].StackItem]},{"a":2,"n":"op_Inequality","is":true,"t":8,"pi":[{"n":"s1","pt":$n[5].StackItem,"ps":0},{"n":"s2","pt":$n[5].StackItem,"ps":1}],"sn":"op_Inequality","rt":Boolean,"p":[$n[5].StackItem,$n[5].StackItem]},{"a":2,"n":"op_LessThan","is":true,"t":8,"pi":[{"n":"s1","pt":$n[5].StackItem,"ps":0},{"n":"s2","pt":$n[5].StackItem,"ps":1}],"sn":"op_LessThan","rt":Boolean,"p":[$n[5].StackItem,$n[5].StackItem]},{"a":2,"n":"op_LessThanOrEqual","is":true,"t":8,"pi":[{"n":"s1","pt":$n[5].StackItem,"ps":0},{"n":"s2","pt":$n[5].StackItem,"ps":1}],"sn":"op_LessThanOrEqual","rt":Boolean,"p":[$n[5].StackItem,$n[5].StackItem]},{"a":2,"n":"Id","t":4,"rt":$n[1].Int32,"sn":"id"},{"a":2,"n":"IntValue","t":4,"rt":$n[1].Int32,"sn":"intValue"},{"a":2,"n":"SPtr","t":4,"rt":Object,"sn":"sPtr"},{"a":2,"n":"SPtrEmpty","is":true,"t":4,"rt":$n[5].StackItem,"sn":"sPtrEmpty"}]}; });
-    $m($n[5].ILCode, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Arg0","t":4,"rt":String,"sn":"arg0"},{"a":2,"n":"Arg1","t":4,"rt":String,"sn":"arg1"},{"a":2,"n":"Arg2","t":4,"rt":String,"sn":"arg2"},{"a":2,"n":"Lable","t":4,"rt":String,"sn":"lable"},{"a":2,"n":"Op","t":4,"rt":String,"sn":"op"},{"a":2,"n":"OpArg0","t":4,"rt":String,"sn":"opArg0"},{"a":2,"n":"OpArg1","t":4,"rt":String,"sn":"opArg1"},{"a":2,"n":"OpCode","t":4,"rt":String,"sn":"opCode"}]}; });
-    $m($n[5].MethodTasks, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"ArgsFix","is":true,"t":8,"pi":[{"n":"values","pt":$n[1].Array.type(String),"ps":0},{"n":"methodInfo","pt":$n[6].MethodInfo,"ps":1},{"n":"list","pt":$n[0].List$1(ApolloClr.ILCode),"ps":2}],"sn":"argsFix","rt":$n[1].Array.type(Object),"p":[$n[1].Array.type(String),$n[6].MethodInfo,$n[0].List$1(ApolloClr.ILCode)]},{"a":2,"n":"Build","is":true,"t":8,"pi":[{"n":"codes","pt":String,"ps":0}],"sn":"build$1","rt":$n[5].MethodTasks,"p":[String]},{"a":2,"n":"Build","is":true,"t":8,"pi":[{"n":"list","pt":$n[0].List$1(ApolloClr.ILCode),"ps":0},{"n":"lcount","dv":5,"o":true,"pt":$n[1].Int32,"ps":1},{"n":"acount","dv":5,"o":true,"pt":$n[1].Int32,"ps":2},{"n":"haseResult","dv":true,"o":true,"pt":Boolean,"ps":3},{"n":"maxstack","dv":5,"o":true,"pt":$n[1].Int32,"ps":4}],"tpc":1,"tprm":["T"],"sn":"build","rt":Object,"p":[$n[0].List$1(ApolloClr.ILCode),$n[1].Int32,$n[1].Int32,Boolean,$n[1].Int32]},{"v":true,"a":2,"n":"Clone","t":8,"sn":"clone","rt":$n[5].MethodTasks},{"v":true,"a":3,"n":"CloneOne","t":8,"sn":"cloneOne","rt":$n[5].MethodTasks},{"a":2,"n":"Compile","t":8,"pi":[{"n":"OnCallAction","dv":null,"o":true,"pt":Function,"ps":0}],"sn":"compile","rt":$n[5].MethodTasks,"p":[Function]},{"a":2,"n":"Convert","is":true,"t":8,"pi":[{"n":"type","pt":Function,"ps":0},{"n":"input","pt":String,"ps":1},{"n":"list","pt":$n[0].List$1(ApolloClr.ILCode),"ps":2}],"sn":"convert","rt":Object,"p":[Function,String,$n[0].List$1(ApolloClr.ILCode)]},{"a":2,"n":"FindMethod","is":true,"t":8,"pi":[{"n":"name","pt":String,"ps":0}],"sn":"findMethod","rt":$n[6].MethodInfo,"p":[String]},{"a":2,"n":"FindMethod1","is":true,"t":8,"pi":[{"n":"name","pt":String,"ps":0}],"sn":"findMethod1","rt":$n[6].MethodInfo,"p":[String]},{"v":true,"a":2,"n":"Run","t":8,"sn":"run","rt":Object},{"v":true,"a":2,"n":"Name","t":16,"rt":String,"g":{"v":true,"a":2,"n":"get_Name","t":8,"sn":"getName","rt":String},"s":{"v":true,"a":2,"n":"set_Name","t":8,"pi":[{"n":"value","pt":String,"ps":0}],"sn":"setName","rt":Object,"p":[String]}},{"a":2,"n":"Clr","t":4,"rt":$n[5].Clr,"sn":"clr"},{"a":2,"n":"End","t":4,"rt":$n[1].Int32,"sn":"end"},{"a":2,"n":"IsEnd","t":4,"rt":Boolean,"sn":"isEnd"},{"a":2,"n":"Lines","t":4,"rt":System.Array.type(ApolloClr.IOpTask),"sn":"lines"},{"a":2,"n":"PC","t":4,"rt":$n[1].Int32,"sn":"PC"},{"a":1,"n":"SubTask","t":4,"rt":$n[0].List$1(ApolloClr.MethodTasks),"sn":"subTask"},{"a":2,"n":"TaskList","t":4,"rt":$n[0].List$1(ApolloClr.IOpTask),"sn":"taskList"}]}; });
-    $m($n[5].OpCodeTask$3, function (TV1, TV2, TV3) { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Run","t":8,"sn":"run","rt":Object},{"a":2,"n":"BindFunc","t":16,"rt":Function,"g":{"a":2,"n":"get_BindFunc","t":8,"sn":"getBindFunc","rt":Function}},{"a":2,"n":"Func","t":4,"rt":Function,"sn":"func"},{"a":2,"n":"V1","t":4,"rt":TV1,"sn":"V1"},{"a":2,"n":"V2","t":4,"rt":TV2,"sn":"V2"},{"a":2,"n":"V3","t":4,"rt":TV3,"sn":"V3"}]}; });
-    $m($n[5].OpCodeTask$2, function (TV1, TV2) { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Run","t":8,"sn":"run","rt":Object},{"a":2,"n":"BindFunc","t":16,"rt":Function,"g":{"a":2,"n":"get_BindFunc","t":8,"sn":"getBindFunc","rt":Function}},{"a":2,"n":"Func","t":4,"rt":Function,"sn":"func"},{"a":2,"n":"V1","t":4,"rt":TV1,"sn":"V1"},{"a":2,"n":"V2","t":4,"rt":TV2,"sn":"V2"}]}; });
-    $m($n[5].OpCodeTask$1, function (TV1) { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Run","t":8,"sn":"run","rt":Object},{"a":2,"n":"BindFunc","t":16,"rt":Function,"g":{"a":2,"n":"get_BindFunc","t":8,"sn":"getBindFunc","rt":Function}},{"a":2,"n":"Func","t":4,"rt":Function,"sn":"func"},{"a":2,"n":"V1","t":4,"rt":TV1,"sn":"V1"}]}; });
-    $m($n[5].OpCodeTask, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Run","t":8,"sn":"run","rt":Object},{"a":2,"n":"BindFunc","t":16,"rt":Function,"g":{"a":2,"n":"get_BindFunc","t":8,"sn":"getBindFunc","rt":Function}},{"a":2,"n":"Func","t":4,"rt":Function,"sn":"func"}]}; });
-    $m($n[5].BaseOpTask, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Dump","t":16,"rt":$n[1].Int32,"g":{"a":2,"n":"get_Dump","t":8,"sn":"getDump","rt":$n[1].Int32},"s":{"a":2,"n":"set_Dump","t":8,"pi":[{"n":"value","pt":$n[1].Int32,"ps":0}],"sn":"setDump","rt":Object,"p":[$n[1].Int32]}},{"a":2,"n":"Method","t":16,"rt":Object,"g":{"a":2,"n":"get_Method","t":8,"sn":"getMethod","rt":Object},"s":{"a":2,"n":"set_Method","t":8,"pi":[{"n":"value","pt":Object,"ps":0}],"sn":"setMethod","rt":Object,"p":[Object]}},{"a":2,"n":"OpCode","t":16,"rt":$n[5].ILCode,"g":{"a":2,"n":"get_OpCode","t":8,"sn":"getOpCode","rt":$n[5].ILCode},"s":{"a":2,"n":"set_OpCode","t":8,"pi":[{"n":"value","pt":$n[5].ILCode,"ps":0}],"sn":"setOpCode","rt":Object,"p":[$n[5].ILCode]}}]}; });
-    $m($n[5].IOpTask, function () { return {"att":161,"a":2,"m":[{"ab":true,"a":2,"n":"Run","t":8,"sn":"ApolloClr$IOpTask$run","rt":Object},{"ab":true,"a":2,"n":"BindFunc","t":16,"rt":Function,"g":{"ab":true,"a":2,"n":"get_BindFunc","t":8,"sn":"ApolloClr$IOpTask$getBindFunc","rt":Function},"s":{"ab":true,"a":1,"n":"set_BindFunc","t":8,"pi":[{"n":"value","pt":Function,"ps":0}],"sn":"ApolloClr$IOpTask$setBindFunc","rt":Object,"p":[Function]}},{"ab":true,"a":2,"n":"Dump","t":16,"rt":$n[1].Int32,"g":{"ab":true,"a":2,"n":"get_Dump","t":8,"sn":"ApolloClr$IOpTask$getDump","rt":$n[1].Int32},"s":{"ab":true,"a":2,"n":"set_Dump","t":8,"pi":[{"n":"value","pt":$n[1].Int32,"ps":0}],"sn":"ApolloClr$IOpTask$setDump","rt":Object,"p":[$n[1].Int32]}},{"ab":true,"a":2,"n":"Method","t":16,"rt":Object,"g":{"ab":true,"a":2,"n":"get_Method","t":8,"sn":"ApolloClr$IOpTask$getMethod","rt":Object},"s":{"ab":true,"a":2,"n":"set_Method","t":8,"pi":[{"n":"value","pt":Object,"ps":0}],"sn":"ApolloClr$IOpTask$setMethod","rt":Object,"p":[Object]}},{"ab":true,"a":2,"n":"OpCode","t":16,"rt":$n[5].ILCode,"g":{"ab":true,"a":2,"n":"get_OpCode","t":8,"sn":"ApolloClr$IOpTask$getOpCode","rt":$n[5].ILCode},"s":{"ab":true,"a":2,"n":"set_OpCode","t":8,"pi":[{"n":"value","pt":$n[5].ILCode,"ps":0}],"sn":"ApolloClr$IOpTask$setOpCode","rt":Object,"p":[$n[5].ILCode]}}]}; });
-    $m($n[8].App, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Main","is":true,"t":8,"sn":"main","rt":Object},{"a":2,"n":"Run1","is":true,"t":8,"sn":"run1","rt":$n[1].Int32}]}; });
+    $m($n[6].Extensions, function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"GetFSet","is":true,"t":8,"pi":[{"n":"field","pt":$n[5].FieldInfo,"ps":0}],"sn":"getFSet","rt":Function,"p":[$n[5].FieldInfo]},{"a":2,"n":"GetTypeByName","is":true,"t":8,"pi":[{"n":"name","pt":String,"ps":0}],"sn":"getTypeByName","rt":Function,"p":[String]},{"a":2,"n":"GetValueFromStr","is":true,"t":8,"pi":[{"n":"str","pt":String,"ps":0},{"n":"vtype","pt":$n[6].StackValueType,"ps":1}],"sn":"getValueFromStr","rt":Object,"p":[String,$n[6].StackValueType]},{"a":2,"n":"SetTarget","is":true,"t":8,"pi":[{"n":"delegate","pt":Function,"ps":0},{"n":"target","pt":Object,"ps":1}],"sn":"setTarget","rt":Object,"p":[Function,Object]},{"a":1,"n":"DeleageSetFun","is":true,"t":4,"rt":Function,"sn":"deleageSetFun"}]}; });
+    $m($n[6].Clr, function () { return {"att":1048577,"a":2,"m":[{"a":2,"n":".ctor","t":1,"p":[$n[1].Int32,$n[1].Int32,Boolean,$n[1].Int32],"pi":[{"n":"localCount","dv":5,"o":true,"pt":$n[1].Int32,"ps":0},{"n":"argCount","dv":5,"o":true,"pt":$n[1].Int32,"ps":1},{"n":"haseResult","dv":true,"o":true,"pt":Boolean,"ps":2},{"n":"maxStack","dv":5,"o":true,"pt":$n[1].Int32,"ps":3}],"sn":"ctor"},{"v":true,"a":2,"n":"Add","t":8,"sn":"add","rt":Object},{"v":true,"a":2,"n":"And","t":8,"sn":"and","rt":Object},{"a":2,"n":"Arglist","t":8,"sn":"arglist","rt":Object},{"v":true,"a":2,"n":"Beq","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"beq","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Bge","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"bge","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Bgt","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"bgt","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Ble","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"ble","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Blt","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"blt","rt":Object,"p":[String,String,$n[1].Int32]},{"a":2,"n":"Box","t":8,"pi":[{"n":"type","pt":Function,"ps":0}],"tpc":1,"tprm":["T"],"sn":"box","rt":Object,"p":[Function]},{"v":true,"a":2,"n":"Br","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"br","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Break","t":8,"sn":"break","rt":Object},{"v":true,"a":2,"n":"Brfalse","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"brfalse","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Brtrue","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"brtrue","rt":Object,"p":[String,String,$n[1].Int32]},{"a":2,"n":"Call","t":8,"pi":[{"n":"retType","pt":String,"ps":0},{"n":"method","pt":String,"ps":1},{"n":"task","pt":$n[6].MethodTasks,"ps":2}],"sn":"call","rt":Object,"p":[String,String,$n[6].MethodTasks]},{"a":2,"n":"Calli","t":8,"sn":"calli","rt":Object},{"a":2,"n":"Callvirt","t":8,"pi":[{"n":"instance","pt":String,"ps":0},{"n":"return","pt":String,"ps":1},{"n":"task","pt":$n[6].MethodTasks,"ps":2}],"sn":"callvirt","rt":Object,"p":[String,String,$n[6].MethodTasks]},{"a":2,"n":"Castclass","t":8,"sn":"castclass","rt":Object},{"v":true,"a":2,"n":"Catch","t":8,"pi":[{"n":"spc","pt":$n[1].Int32,"ps":0},{"n":"epc","pt":$n[1].Int32,"ps":1}],"sn":"catch","rt":Object,"p":[$n[1].Int32,$n[1].Int32]},{"v":true,"a":2,"n":"Ceq","t":8,"sn":"ceq","rt":Object},{"v":true,"a":2,"n":"Cgt","t":8,"sn":"cgt","rt":Object},{"a":2,"n":"Ckfinite","t":8,"sn":"ckfinite","rt":Object},{"v":true,"a":2,"n":"Clt","t":8,"sn":"clt","rt":Object},{"a":2,"n":"Constrained","t":8,"sn":"constrained","rt":Object},{"a":2,"n":"Conv","t":8,"pi":[{"n":"type","pt":$n[6].StackValueType,"ps":0}],"sn":"conv","rt":Object,"p":[$n[6].StackValueType]},{"a":2,"n":"CopyToArgs","t":8,"pi":[{"n":"clr","pt":$n[6].Clr,"ps":0}],"sn":"copyToArgs","rt":Object,"p":[$n[6].Clr]},{"a":2,"n":"Cpblk","t":8,"sn":"cpblk","rt":Object},{"a":2,"n":"Cpobj","t":8,"sn":"cpobj","rt":Object},{"v":true,"a":2,"n":"Div","t":8,"sn":"div","rt":Object},{"a":2,"n":"Dup","t":8,"sn":"dup","rt":Object},{"a":2,"n":"Endfilter","t":8,"sn":"endfilter","rt":Object},{"a":2,"n":"Endfinally","t":8,"sn":"endfinally","rt":Object},{"a":2,"n":"EvaluationStack_Pop","t":8,"sn":"evaluationStack_Pop","rt":$n[6].StackItem},{"a":2,"n":"EvaluationStack_Pop","t":8,"pi":[{"n":"count","pt":$n[1].Int32,"ps":0}],"sn":"evaluationStack_Pop$1","rt":$n[6].StackItem,"p":[$n[1].Int32]},{"a":2,"n":"EvaluationStack_Push","t":8,"pi":[{"n":"obj","pt":$n[6].StackItem,"ps":0}],"sn":"evaluationStack_Push","rt":Object,"p":[$n[6].StackItem]},{"a":2,"n":"EvaluationStack_Push","t":8,"pi":[{"n":"obj","pt":$n[1].Int32,"ps":0}],"sn":"evaluationStack_Push$2","rt":Object,"p":[$n[1].Int32]},{"a":2,"n":"EvaluationStack_Push","t":8,"pi":[{"n":"args","pt":$n[1].Array.type(System.Int32),"ps":0}],"sn":"evaluationStack_Push$3","rt":Object,"p":[$n[1].Array.type(System.Int32)]},{"a":2,"n":"EvaluationStack_Push","t":8,"pi":[{"n":"obj","pt":Object,"ps":0}],"sn":"evaluationStack_Push$4","rt":Object,"p":[Object]},{"a":2,"n":"EvaluationStack_Push","t":8,"pi":[{"n":"vtype","pt":$n[6].StackValueType,"ps":0},{"n":"value","pt":Object,"ps":1}],"sn":"evaluationStack_Push$1","rt":Object,"p":[$n[6].StackValueType,Object]},{"v":true,"a":2,"n":"Finally","t":8,"pi":[{"n":"spc","pt":$n[1].Int32,"ps":0},{"n":"epc","pt":$n[1].Int32,"ps":1}],"sn":"finally","rt":Object,"p":[$n[1].Int32,$n[1].Int32]},{"a":2,"n":"Initblk","t":8,"sn":"initblk","rt":Object},{"a":2,"n":"Initobj","t":8,"sn":"initobj","rt":Object},{"a":2,"n":"Isinst","t":8,"sn":"isinst","rt":Object},{"a":2,"n":"Jmp","t":8,"sn":"jmp","rt":Object},{"v":true,"a":2,"n":"Ldarg","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0}],"sn":"ldarg","rt":Object,"p":[$n[1].Int32]},{"v":true,"a":2,"n":"Ldc","t":8,"pi":[{"n":"vtype","ref":true,"pt":$n[6].StackValueType,"ps":0},{"n":"value","ref":true,"pt":Object,"ps":1}],"sn":"ldc","rt":Object,"p":[$n[6].StackValueType,Object]},{"v":true,"a":2,"n":"Ldc_i4","t":8,"pi":[{"n":"v","pt":$n[1].Int32,"ps":0}],"sn":"ldc_i4","rt":Object,"p":[$n[1].Int32]},{"a":2,"n":"Ldelem","t":8,"pi":[{"n":"type","pt":$n[6].StackValueType,"ps":0}],"sn":"ldelem","rt":Object,"p":[$n[6].StackValueType]},{"a":2,"n":"Ldelema","t":8,"pi":[{"n":"type","pt":Function,"ps":0}],"tpc":1,"tprm":["T"],"sn":"ldelema","rt":Object,"p":[Function]},{"a":2,"n":"Ldfld","t":8,"sn":"ldfld","rt":Object},{"a":2,"n":"Ldflda","t":8,"sn":"ldflda","rt":Object},{"a":2,"n":"Ldftn","t":8,"sn":"ldftn","rt":Object},{"a":2,"n":"Ldind","t":8,"pi":[{"n":"type","pt":$n[6].StackValueType,"ps":0}],"sn":"ldind","rt":Object,"p":[$n[6].StackValueType]},{"a":2,"n":"Ldlen","t":8,"sn":"ldlen","rt":Object},{"v":true,"a":2,"n":"Ldloc","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0}],"sn":"ldloc","rt":Object,"p":[$n[1].Int32]},{"v":true,"a":2,"n":"Ldloc","t":8,"pi":[{"n":"args","ip":true,"pt":$n[1].Array.type(System.Int32),"ps":0}],"sn":"ldloc$1","rt":Object,"p":[$n[1].Array.type(System.Int32)]},{"v":true,"a":2,"n":"Ldloca","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0}],"sn":"ldloca","rt":Object,"p":[$n[1].Int32]},{"v":true,"a":2,"n":"Ldnull","t":8,"sn":"ldnull","rt":Object},{"a":2,"n":"Ldobj","t":8,"sn":"ldobj","rt":Object},{"a":2,"n":"Ldsfld","t":8,"sn":"ldsfld","rt":Object},{"a":2,"n":"Ldsflda","t":8,"sn":"ldsflda","rt":Object},{"v":true,"a":2,"n":"Ldstr","t":8,"pi":[{"n":"str","pt":String,"ps":0}],"sn":"ldstr","rt":Object,"p":[String]},{"a":2,"n":"Ldtoken","t":8,"sn":"ldtoken","rt":Object},{"a":2,"n":"Ldvirtftn","t":8,"sn":"ldvirtftn","rt":Object},{"a":2,"n":"Leave","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0}],"sn":"leave","rt":Object,"p":[$n[1].Int32]},{"a":2,"n":"Localloc","t":8,"sn":"localloc","rt":Object},{"a":2,"n":"Mkrefany","t":8,"sn":"mkrefany","rt":Object},{"v":true,"a":2,"n":"Mul","t":8,"sn":"mul","rt":Object},{"v":true,"a":2,"n":"Neg","t":8,"sn":"neg","rt":Object},{"a":2,"n":"Newarr","t":8,"pi":[{"n":"type","pt":Function,"ps":0}],"tpc":1,"tprm":["T"],"sn":"newarr","rt":Object,"p":[Function]},{"a":2,"n":"Newobj","t":8,"pi":[{"n":"instance","pt":String,"ps":0},{"n":"return","pt":String,"ps":1},{"n":"task","pt":$n[6].MethodTasks,"ps":2}],"sn":"newobj","rt":Object,"p":[String,String,$n[6].MethodTasks]},{"a":2,"n":"No","t":8,"sn":"no","rt":Object},{"v":true,"a":2,"n":"Nop","t":8,"sn":"nop","rt":Object},{"v":true,"a":2,"n":"Not","t":8,"sn":"not","rt":Object},{"v":true,"a":2,"n":"Or","t":8,"sn":"or","rt":Object},{"v":true,"a":2,"n":"Pop","t":8,"sn":"pop","rt":Object},{"a":2,"n":"Readonly","t":8,"sn":"readonly","rt":Object},{"a":2,"n":"Refanytype","t":8,"sn":"refanytype","rt":Object},{"a":2,"n":"Refanyval","t":8,"sn":"refanyval","rt":Object},{"v":true,"a":2,"n":"Rem","t":8,"sn":"rem","rt":Object},{"v":true,"a":2,"n":"Reset","t":8,"sn":"reset","rt":Object},{"v":true,"a":2,"n":"Ret","t":8,"sn":"ret","rt":Object},{"a":2,"n":"Rethrow","t":8,"sn":"rethrow","rt":Object},{"v":true,"a":2,"n":"Shl","t":8,"sn":"shl","rt":Object},{"v":true,"a":2,"n":"Shr","t":8,"sn":"shr","rt":Object},{"a":2,"n":"Sizeof","t":8,"sn":"sizeof","rt":Object},{"a":2,"n":"Starg","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0}],"sn":"starg","rt":Object,"p":[$n[1].Int32]},{"a":2,"n":"Stelem","t":8,"pi":[{"n":"type","pt":$n[6].StackValueType,"ps":0}],"sn":"stelem","rt":Object,"p":[$n[6].StackValueType]},{"a":2,"n":"Stfld","t":8,"sn":"stfld","rt":Object},{"a":2,"n":"Stind","t":8,"pi":[{"n":"type","pt":$n[6].StackValueType,"ps":0}],"sn":"stind","rt":Object,"p":[$n[6].StackValueType]},{"v":true,"a":2,"n":"Stloc","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0}],"sn":"stloc","rt":Object,"p":[$n[1].Int32]},{"a":2,"n":"Stobj","t":8,"sn":"stobj","rt":Object},{"a":2,"n":"Stsfld","t":8,"sn":"stsfld","rt":Object},{"v":true,"a":2,"n":"Sub","t":8,"sn":"sub","rt":Object},{"a":2,"n":"Switch","t":8,"pi":[{"n":"pcs","pt":$n[1].Array.type(System.Int32),"ps":0}],"sn":"switch","rt":Object,"p":[$n[1].Array.type(System.Int32)]},{"a":2,"n":"Tail","t":8,"sn":"tail","rt":Object},{"a":2,"n":"Throw","t":8,"sn":"throw","rt":Object},{"a":2,"n":"UnBox","t":8,"pi":[{"n":"type","pt":Function,"ps":0}],"tpc":1,"tprm":["T"],"sn":"unBox","rt":Object,"p":[Function]},{"a":2,"n":"UnBox_Any","t":8,"pi":[{"n":"type","pt":Function,"ps":0}],"tpc":1,"tprm":["T"],"sn":"unBox_Any","rt":Object,"p":[Function]},{"a":2,"n":"Unaligned","t":8,"sn":"unaligned","rt":Object},{"a":2,"n":"Volatile","t":8,"sn":"volatile","rt":Object},{"v":true,"a":2,"n":"Xor","t":8,"sn":"xor","rt":Object},{"v":true,"a":2,"n":"_Try","t":8,"pi":[{"n":"spc","pt":$n[1].Int32,"ps":0},{"n":"epc","pt":$n[1].Int32,"ps":1},{"n":"pcs","pt":$n[1].Int32,"ps":2}],"sn":"_Try","rt":Object,"p":[$n[1].Int32,$n[1].Int32,$n[1].Int32]},{"a":2,"n":"Argp","t":4,"rt":$n[6].StackItem,"sn":"argp","ro":true},{"a":2,"n":"ArgsVarCount","t":4,"rt":$n[1].Int32,"sn":"argsVarCount","ro":true},{"a":2,"n":"CallStack","t":4,"rt":System.Array.type(ApolloClr.StackItem),"sn":"callStack","ro":true},{"a":2,"n":"Csp","t":4,"rt":$n[6].StackItem,"sn":"csp","ro":true},{"a":2,"n":"DumpAction","t":4,"rt":Function,"sn":"dumpAction"},{"a":2,"n":"LocalVarCount","t":4,"rt":$n[1].Int32,"sn":"localVarCount","ro":true},{"a":2,"n":"ResultPoint","t":4,"rt":$n[6].StackItem,"sn":"resultPoint"},{"a":2,"n":"RetResult","t":4,"rt":Boolean,"sn":"retResult"},{"a":1,"n":"Stack","t":4,"rt":$n[6].BaseClrStack,"sn":"stack"},{"a":2,"n":"ThrowAction","t":4,"rt":Function,"sn":"throwAction"}]}; });
+    $m($n[6].OpCodeEnum, function () { return {"att":256,"a":4}; });
+    $m($n[6].BaseClrStack, function () { return {"att":1048577,"a":2,"m":[{"a":2,"n":".ctor","t":1,"p":[$n[1].Int32],"pi":[{"n":"x","dv":10,"o":true,"pt":$n[1].Int32,"ps":0}],"sn":"ctor"},{"v":true,"a":2,"n":"Pop","t":8,"sn":"pop","rt":$n[6].StackItem},{"v":true,"a":2,"n":"Pop","t":8,"pi":[{"n":"count","pt":$n[1].Int32,"ps":0}],"sn":"pop$1","rt":$n[6].StackItem,"p":[$n[1].Int32]},{"v":true,"a":2,"n":"Push","t":8,"pi":[{"n":"obj","pt":$n[6].StackItem,"ps":0}],"sn":"push","rt":Object,"p":[$n[6].StackItem]},{"a":2,"n":"Push","t":8,"pi":[{"n":"obj","pt":$n[1].Int32,"ps":0}],"sn":"push$1","rt":Object,"p":[$n[1].Int32]},{"a":2,"n":"Reset","t":8,"sn":"reset","rt":Object},{"a":2,"n":"Top","t":8,"sn":"top","rt":$n[6].StackItem},{"a":1,"n":"Esp","t":4,"rt":$n[1].Int32,"sn":"esp"},{"a":1,"n":"EvaluationStack","t":4,"rt":System.Array.type(ApolloClr.StackItem),"sn":"evaluationStack"}]}; });
+    $m($n[6].StackItem, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"CopyFrom","t":8,"pi":[{"n":"stackItem","pt":$n[6].StackItem,"ps":0}],"sn":"copyFrom","rt":Object,"p":[$n[6].StackItem]},{"a":2,"n":"SetValue","t":8,"pi":[{"n":"vtype","pt":$n[6].StackValueType,"ps":0},{"n":"value","pt":Object,"ps":1}],"sn":"setValue","rt":Object,"p":[$n[6].StackValueType,Object]},{"a":2,"n":"op_Addition","is":true,"t":8,"pi":[{"n":"s1","pt":$n[6].StackItem,"ps":0},{"n":"offset","pt":$n[1].Int32,"ps":1}],"sn":"op_Addition","rt":$n[6].StackItem,"p":[$n[6].StackItem,$n[1].Int32]},{"a":2,"n":"op_Equality","is":true,"t":8,"pi":[{"n":"s1","pt":$n[6].StackItem,"ps":0},{"n":"s2","pt":$n[6].StackItem,"ps":1}],"sn":"op_Equality","rt":Boolean,"p":[$n[6].StackItem,$n[6].StackItem]},{"a":2,"n":"op_GreaterThan","is":true,"t":8,"pi":[{"n":"s1","pt":$n[6].StackItem,"ps":0},{"n":"s2","pt":$n[6].StackItem,"ps":1}],"sn":"op_GreaterThan","rt":Boolean,"p":[$n[6].StackItem,$n[6].StackItem]},{"a":2,"n":"op_GreaterThanOrEqual","is":true,"t":8,"pi":[{"n":"s1","pt":$n[6].StackItem,"ps":0},{"n":"s2","pt":$n[6].StackItem,"ps":1}],"sn":"op_GreaterThanOrEqual","rt":Boolean,"p":[$n[6].StackItem,$n[6].StackItem]},{"a":2,"n":"op_Implicit","is":true,"t":8,"pi":[{"n":"ptr","pt":$n[1].Int32,"ps":0}],"sn":"op_Implicit","rt":$n[6].StackItem,"p":[$n[1].Int32]},{"a":2,"n":"op_Inequality","is":true,"t":8,"pi":[{"n":"s1","pt":$n[6].StackItem,"ps":0},{"n":"s2","pt":$n[6].StackItem,"ps":1}],"sn":"op_Inequality","rt":Boolean,"p":[$n[6].StackItem,$n[6].StackItem]},{"a":2,"n":"op_LessThan","is":true,"t":8,"pi":[{"n":"s1","pt":$n[6].StackItem,"ps":0},{"n":"s2","pt":$n[6].StackItem,"ps":1}],"sn":"op_LessThan","rt":Boolean,"p":[$n[6].StackItem,$n[6].StackItem]},{"a":2,"n":"op_LessThanOrEqual","is":true,"t":8,"pi":[{"n":"s1","pt":$n[6].StackItem,"ps":0},{"n":"s2","pt":$n[6].StackItem,"ps":1}],"sn":"op_LessThanOrEqual","rt":Boolean,"p":[$n[6].StackItem,$n[6].StackItem]},{"a":2,"n":"Value","t":16,"rt":Object,"g":{"a":2,"n":"get_Value","t":8,"sn":"getValue","rt":Object}},{"a":2,"n":"ValueDouble","t":16,"rt":$n[1].Double,"g":{"a":2,"n":"get_ValueDouble","t":8,"sn":"getValueDouble","rt":$n[1].Double}},{"a":2,"n":"ValueFloat","t":16,"rt":$n[1].Single,"g":{"a":2,"n":"get_ValueFloat","t":8,"sn":"getValueFloat","rt":$n[1].Single}},{"a":2,"n":"ValueInt","t":16,"rt":$n[1].Int32,"g":{"a":2,"n":"get_ValueInt","t":8,"sn":"getValueInt","rt":$n[1].Int32}},{"a":2,"n":"ValueLong","t":16,"rt":$n[1].Int64,"g":{"a":2,"n":"get_ValueLong","t":8,"sn":"getValueLong","rt":$n[1].Int64}},{"a":2,"n":"Index","t":4,"rt":$n[1].Int32,"sn":"index"},{"a":2,"n":"IntValue","t":4,"rt":$n[1].Int32,"sn":"intValue"},{"a":2,"n":"LValue","t":4,"rt":$n[1].Int32,"sn":"lValue"},{"a":2,"n":"Ptr","t":4,"rt":$n[6].StackObject,"sn":"ptr"},{"a":2,"n":"SPtrEmpty","is":true,"t":4,"rt":$n[6].StackItem,"sn":"sPtrEmpty"},{"a":2,"n":"VPoint","t":4,"rt":Object,"sn":"vPoint"},{"a":2,"n":"ValueType","t":4,"rt":$n[6].StackValueType,"sn":"valueType"}]}; });
+    $m($n[6].StackObject, function () { return {"att":1048577,"a":2,"m":[{"a":2,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"GetStackObject","is":true,"t":8,"pi":[{"n":"prt","pt":Object,"ps":0}],"sn":"getStackObject","rt":$n[6].StackObject,"p":[Object]},{"a":2,"n":"NewObject","is":true,"t":8,"pi":[{"n":"obj","pt":Object,"ps":0}],"sn":"newObject","rt":$n[6].StackObject,"p":[Object]},{"a":2,"n":"ToObject","is":true,"t":8,"pi":[{"n":"stackItem","pt":$n[6].StackItem,"ps":0}],"sn":"toObject","rt":Object,"p":[$n[6].StackItem]},{"a":2,"n":"op_Implicit","is":true,"t":8,"pi":[{"n":"ptr","pt":$n[6].StackItem,"ps":0}],"sn":"op_Implicit","rt":$n[6].StackObject,"p":[$n[6].StackItem]},{"a":2,"n":"op_Implicit","is":true,"t":8,"pi":[{"n":"ptr","pt":$n[1].Int32,"ps":0}],"sn":"op_Implicit$1","rt":$n[6].StackObject,"p":[$n[1].Int32]},{"a":2,"n":"Object","t":4,"rt":Object,"sn":"object"}]}; });
+    $m($n[6].StackValueType, function () { return {"att":257,"a":2}; });
+    $m($n[6].ILCode, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"ov":true,"a":2,"n":"ToString","t":8,"sn":"toString","rt":String},{"a":2,"n":"Arg0","t":4,"rt":String,"sn":"arg0"},{"a":2,"n":"Arg1","t":4,"rt":String,"sn":"arg1"},{"a":2,"n":"Arg2","t":4,"rt":String,"sn":"arg2"},{"a":2,"n":"Lable","t":4,"rt":String,"sn":"lable"},{"a":2,"n":"Line","t":4,"rt":String,"sn":"line"},{"a":2,"n":"Op","t":4,"rt":String,"sn":"op"},{"a":2,"n":"OpArg0","t":4,"rt":String,"sn":"opArg0"},{"a":2,"n":"OpArg1","t":4,"rt":String,"sn":"opArg1"},{"a":2,"n":"OpCode","t":4,"rt":String,"sn":"opCode"}]}; });
+    $m($n[6].IOpTask, function () { return {"att":161,"a":2,"m":[{"ab":true,"a":2,"n":"Run","t":8,"sn":"ApolloClr$IOpTask$run","rt":Object},{"ab":true,"a":2,"n":"BindFunc","t":16,"rt":Function,"g":{"ab":true,"a":2,"n":"get_BindFunc","t":8,"sn":"ApolloClr$IOpTask$getBindFunc","rt":Function},"s":{"ab":true,"a":1,"n":"set_BindFunc","t":8,"pi":[{"n":"value","pt":Function,"ps":0}],"sn":"ApolloClr$IOpTask$setBindFunc","rt":Object,"p":[Function]}},{"ab":true,"a":2,"n":"Dump","t":16,"rt":$n[1].Int32,"g":{"ab":true,"a":2,"n":"get_Dump","t":8,"sn":"ApolloClr$IOpTask$getDump","rt":$n[1].Int32},"s":{"ab":true,"a":2,"n":"set_Dump","t":8,"pi":[{"n":"value","pt":$n[1].Int32,"ps":0}],"sn":"ApolloClr$IOpTask$setDump","rt":Object,"p":[$n[1].Int32]}},{"ab":true,"a":2,"n":"Method","t":16,"rt":Object,"g":{"ab":true,"a":2,"n":"get_Method","t":8,"sn":"ApolloClr$IOpTask$getMethod","rt":Object},"s":{"ab":true,"a":2,"n":"set_Method","t":8,"pi":[{"n":"value","pt":Object,"ps":0}],"sn":"ApolloClr$IOpTask$setMethod","rt":Object,"p":[Object]}},{"ab":true,"a":2,"n":"OpCode","t":16,"rt":$n[6].ILCode,"g":{"ab":true,"a":2,"n":"get_OpCode","t":8,"sn":"ApolloClr$IOpTask$getOpCode","rt":$n[6].ILCode},"s":{"ab":true,"a":2,"n":"set_OpCode","t":8,"pi":[{"n":"value","pt":$n[6].ILCode,"ps":0}],"sn":"ApolloClr$IOpTask$setOpCode","rt":Object,"p":[$n[6].ILCode]}}]}; });
+    $m($n[6].MethodTasks, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"ArgsFix","is":true,"t":8,"pi":[{"n":"values","pt":$n[1].Array.type(String),"ps":0},{"n":"methodInfo","pt":$n[5].MethodInfo,"ps":1},{"n":"list","pt":$n[0].List$1(ApolloClr.ILCode),"ps":2}],"sn":"argsFix","rt":$n[1].Array.type(Object),"p":[$n[1].Array.type(String),$n[5].MethodInfo,$n[0].List$1(ApolloClr.ILCode)]},{"a":2,"n":"Build","is":true,"t":8,"pi":[{"n":"codes","pt":String,"ps":0}],"sn":"build$1","rt":$n[6].MethodTasks,"p":[String]},{"a":2,"n":"Build","is":true,"t":8,"pi":[{"n":"list","pt":$n[0].List$1(ApolloClr.ILCode),"ps":0},{"n":"localvars","dv":null,"o":true,"pt":$n[0].Dictionary$2(String,String),"ps":1},{"n":"pargrams","dv":null,"o":true,"pt":$n[0].Dictionary$2(String,String),"ps":2},{"n":"haseResult","dv":true,"o":true,"pt":Boolean,"ps":3},{"n":"maxstack","dv":5,"o":true,"pt":$n[1].Int32,"ps":4}],"tpc":1,"tprm":["T"],"sn":"build","rt":Object,"p":[$n[0].List$1(ApolloClr.ILCode),$n[0].Dictionary$2(String,String),$n[0].Dictionary$2(String,String),Boolean,$n[1].Int32]},{"v":true,"a":2,"n":"Clone","t":8,"sn":"clone","rt":$n[6].MethodTasks},{"v":true,"a":3,"n":"CloneOne","t":8,"sn":"cloneOne","rt":$n[6].MethodTasks},{"a":2,"n":"Compile","t":8,"pi":[{"n":"OnCallAction","dv":null,"o":true,"pt":Function,"ps":0},{"n":"OnNewAction","dv":null,"o":true,"pt":Function,"ps":1}],"sn":"compile","rt":$n[6].MethodTasks,"p":[Function,Function]},{"a":2,"n":"Convert","is":true,"t":8,"pi":[{"n":"type","pt":Function,"ps":0},{"n":"input","pt":String,"ps":1},{"n":"list","pt":$n[0].List$1(ApolloClr.ILCode),"ps":2}],"sn":"convert","rt":Object,"p":[Function,String,$n[0].List$1(ApolloClr.ILCode)]},{"a":2,"n":"FindMethod","is":true,"t":8,"pi":[{"n":"name","pt":String,"ps":0}],"sn":"findMethod","rt":$n[5].MethodInfo,"p":[String]},{"a":2,"n":"FindMethod1","is":true,"t":8,"pi":[{"n":"name","pt":String,"ps":0}],"sn":"findMethod1","rt":$n[5].MethodInfo,"p":[String]},{"v":true,"a":2,"n":"Run","t":8,"sn":"run","rt":Object},{"a":2,"n":"ThrowAction","t":8,"pi":[{"n":"ex","pt":Object,"ps":0},{"n":"pc","pt":$n[1].Int32,"ps":1}],"sn":"throwAction","rt":Object,"p":[Object,$n[1].Int32]},{"v":true,"a":2,"n":"Name","t":16,"rt":String,"g":{"v":true,"a":2,"n":"get_Name","t":8,"sn":"getName","rt":String},"s":{"v":true,"a":2,"n":"set_Name","t":8,"pi":[{"n":"value","pt":String,"ps":0}],"sn":"setName","rt":Object,"p":[String]}},{"a":2,"n":"Clr","t":4,"rt":$n[6].Clr,"sn":"clr"},{"a":2,"n":"End","t":4,"rt":$n[1].Int32,"sn":"end"},{"a":2,"n":"IsCatched","t":4,"rt":Boolean,"sn":"isCatched"},{"a":2,"n":"IsEnd","t":4,"rt":Boolean,"sn":"isEnd"},{"a":2,"n":"Lines","t":4,"rt":System.Array.type(ApolloClr.IOpTask),"sn":"lines"},{"a":2,"n":"PC","t":4,"rt":$n[1].Int32,"sn":"PC"},{"a":1,"n":"SubTask","t":4,"rt":$n[0].List$1(ApolloClr.MethodTasks),"sn":"subTask"},{"a":2,"n":"TaskList","t":4,"rt":$n[0].List$1(ApolloClr.IOpTask),"sn":"taskList"},{"a":2,"n":"TrowException","t":4,"rt":$n[1].Exception,"sn":"trowException"}]}; });
+    $m($n[9].App, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Main","is":true,"t":8,"sn":"main","rt":Object},{"a":2,"n":"Run1","is":true,"t":8,"sn":"run1","rt":$n[1].Int32}]}; });
     $m($n[7].AssemblyDefine, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"ReadAndRun","is":true,"t":8,"pi":[{"n":"fileName","pt":String,"ps":0},{"n":"type","pt":String,"ps":1},{"n":"method","pt":String,"ps":2}],"sn":"readAndRun","rt":Object,"p":[String,String,String]}]}; });
-    $m($n[7].MethodDefine, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"ov":true,"a":3,"n":"CloneOne","t":8,"sn":"cloneOne","rt":$n[5].MethodTasks},{"a":2,"n":"MethodDefinition","t":16,"rt":$n[2].DisassembledMethod,"g":{"a":2,"n":"get_MethodDefinition","t":8,"sn":"getMethodDefinition","rt":$n[2].DisassembledMethod},"s":{"a":2,"n":"set_MethodDefinition","t":8,"pi":[{"n":"value","pt":$n[2].DisassembledMethod,"ps":0}],"sn":"setMethodDefinition","rt":Object,"p":[$n[2].DisassembledMethod]}},{"ov":true,"a":2,"n":"Name","t":16,"rt":String,"g":{"ov":true,"a":2,"n":"get_Name","t":8,"sn":"getName","rt":String},"s":{"ov":true,"a":2,"n":"set_Name","t":8,"pi":[{"n":"value","pt":String,"ps":0}],"sn":"setName","rt":Object,"p":[String]}},{"a":2,"n":"TypeDefine","t":16,"rt":$n[7].TypeDefine,"g":{"a":2,"n":"get_TypeDefine","t":8,"sn":"getTypeDefine","rt":$n[7].TypeDefine},"s":{"a":2,"n":"set_TypeDefine","t":8,"pi":[{"n":"value","pt":$n[7].TypeDefine,"ps":0}],"sn":"setTypeDefine","rt":Object,"p":[$n[7].TypeDefine]}}]}; });
-    $m($n[7].TypeDefine, function () { return {"att":1048577,"a":2,"m":[{"a":2,"n":".ctor","t":1,"p":[$n[2].DisassembledClass],"pi":[{"n":"inputType","pt":$n[2].DisassembledClass,"ps":0}],"sn":"ctor"},{"a":2,"n":"Compile","t":8,"sn":"compile","rt":$n[7].TypeDefine},{"a":2,"n":"Methods","t":16,"rt":$n[0].List$1(ApolloClr.TypeDefine.MethodDefine),"g":{"a":2,"n":"get_Methods","t":8,"sn":"getMethods","rt":$n[0].List$1(ApolloClr.TypeDefine.MethodDefine)},"s":{"a":2,"n":"set_Methods","t":8,"pi":[{"n":"value","pt":$n[0].List$1(ApolloClr.TypeDefine.MethodDefine),"ps":0}],"sn":"setMethods","rt":Object,"p":[$n[0].List$1(ApolloClr.TypeDefine.MethodDefine)]}},{"a":2,"n":"TypeDefinition","t":16,"rt":$n[2].DisassembledClass,"g":{"a":2,"n":"get_TypeDefinition","t":8,"sn":"getTypeDefinition","rt":$n[2].DisassembledClass},"s":{"a":2,"n":"set_TypeDefinition","t":8,"pi":[{"n":"value","pt":$n[2].DisassembledClass,"ps":0}],"sn":"setTypeDefinition","rt":Object,"p":[$n[2].DisassembledClass]}},{"a":1,"n":"__Property__Initializer__Methods","t":4,"rt":$n[0].List$1(ApolloClr.TypeDefine.MethodDefine),"sn":"__Property__Initializer__Methods"}]}; });
-    $m($n[9].ILCodeParse, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"MergeCodes","is":true,"t":8,"pi":[{"n":"input","pt":$n[0].List$1(ApolloClr.ILCode),"ps":0}],"sn":"mergeCodes","rt":$n[0].List$1(ApolloClr.ILCode),"p":[$n[0].List$1(ApolloClr.ILCode)]},{"a":2,"n":"ReadILCodes","is":true,"t":8,"pi":[{"n":"ilcodes","pt":String,"ps":0}],"sn":"readILCodes","rt":$n[0].List$1(ApolloClr.ILCode),"p":[String]},{"a":2,"n":"ReadILCodes","is":true,"t":8,"pi":[{"n":"lines","pt":$n[1].Array.type(String),"ps":0}],"sn":"readILCodes$1","rt":$n[0].List$1(ApolloClr.ILCode),"p":[$n[1].Array.type(String)]}]}; });
+    $m($n[7].MethodDefine, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"ov":true,"a":3,"n":"CloneOne","t":8,"sn":"cloneOne","rt":$n[6].MethodTasks},{"a":2,"n":"MethodDefinition","t":16,"rt":$n[2].DisassembledMethod,"g":{"a":2,"n":"get_MethodDefinition","t":8,"sn":"getMethodDefinition","rt":$n[2].DisassembledMethod},"s":{"a":2,"n":"set_MethodDefinition","t":8,"pi":[{"n":"value","pt":$n[2].DisassembledMethod,"ps":0}],"sn":"setMethodDefinition","rt":Object,"p":[$n[2].DisassembledMethod]}},{"ov":true,"a":2,"n":"Name","t":16,"rt":String,"g":{"ov":true,"a":2,"n":"get_Name","t":8,"sn":"getName","rt":String},"s":{"ov":true,"a":2,"n":"set_Name","t":8,"pi":[{"n":"value","pt":String,"ps":0}],"sn":"setName","rt":Object,"p":[String]}},{"a":2,"n":"TypeDefine","t":16,"rt":$n[7].TypeDefine,"g":{"a":2,"n":"get_TypeDefine","t":8,"sn":"getTypeDefine","rt":$n[7].TypeDefine},"s":{"a":2,"n":"set_TypeDefine","t":8,"pi":[{"n":"value","pt":$n[7].TypeDefine,"ps":0}],"sn":"setTypeDefine","rt":Object,"p":[$n[7].TypeDefine]}},{"a":1,"n":"Codes","t":4,"rt":$n[0].List$1(ApolloClr.ILCode),"sn":"codes"}]}; });
+    $m($n[7].TypeDefine, function () { return {"att":1048577,"a":2,"m":[{"a":2,"n":".ctor","t":1,"p":[$n[2].DisassembledClass],"pi":[{"n":"inputType","pt":$n[2].DisassembledClass,"ps":0}],"sn":"ctor"},{"a":2,"n":"Compile","t":8,"sn":"compile","rt":$n[7].TypeDefine},{"a":2,"n":"MethodCompile","t":8,"pi":[{"n":"r","pt":$n[6].IOpTask,"ps":0}],"sn":"methodCompile","rt":Object,"p":[$n[6].IOpTask]},{"a":2,"n":"NewCompile","t":8,"pi":[{"n":"r","pt":$n[6].IOpTask,"ps":0}],"sn":"newCompile","rt":Object,"p":[$n[6].IOpTask]},{"a":2,"n":"Methods","t":16,"rt":$n[0].List$1(ApolloClr.TypeDefine.MethodDefine),"g":{"a":2,"n":"get_Methods","t":8,"sn":"getMethods","rt":$n[0].List$1(ApolloClr.TypeDefine.MethodDefine)},"s":{"a":2,"n":"set_Methods","t":8,"pi":[{"n":"value","pt":$n[0].List$1(ApolloClr.TypeDefine.MethodDefine),"ps":0}],"sn":"setMethods","rt":Object,"p":[$n[0].List$1(ApolloClr.TypeDefine.MethodDefine)]}},{"a":2,"n":"TypeDefinition","t":16,"rt":$n[2].DisassembledClass,"g":{"a":2,"n":"get_TypeDefinition","t":8,"sn":"getTypeDefinition","rt":$n[2].DisassembledClass},"s":{"a":2,"n":"set_TypeDefinition","t":8,"pi":[{"n":"value","pt":$n[2].DisassembledClass,"ps":0}],"sn":"setTypeDefinition","rt":Object,"p":[$n[2].DisassembledClass]}},{"a":1,"n":"__Property__Initializer__Methods","t":4,"rt":$n[0].List$1(ApolloClr.TypeDefine.MethodDefine),"sn":"__Property__Initializer__Methods"}]}; });
+    $m($n[10].ILCodeParse, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"FixTryCatchFinally","is":true,"t":8,"pi":[{"n":"input","pt":$n[0].List$1(ApolloClr.ILCode),"ps":0}],"sn":"fixTryCatchFinally","rt":$n[0].List$1(ApolloClr.ILCode),"p":[$n[0].List$1(ApolloClr.ILCode)]},{"a":2,"n":"MergeCodes","is":true,"t":8,"pi":[{"n":"input","pt":$n[0].List$1(ApolloClr.ILCode),"ps":0},{"n":"locals","dv":null,"o":true,"pt":$n[0].List$1(String),"ps":1},{"n":"args","dv":null,"o":true,"pt":$n[0].List$1(String),"ps":2}],"sn":"mergeCodes","rt":$n[0].List$1(ApolloClr.ILCode),"p":[$n[0].List$1(ApolloClr.ILCode),$n[0].List$1(String),$n[0].List$1(String)]},{"a":2,"n":"ReadILCodes","is":true,"t":8,"pi":[{"n":"ilcodes","pt":String,"ps":0},{"n":"locals","dv":null,"o":true,"pt":$n[0].List$1(String),"ps":1},{"n":"args","dv":null,"o":true,"pt":$n[0].List$1(String),"ps":2}],"sn":"readILCodes","rt":$n[0].List$1(ApolloClr.ILCode),"p":[String,$n[0].List$1(String),$n[0].List$1(String)]},{"a":2,"n":"ReadILCodes","is":true,"t":8,"pi":[{"n":"lines","pt":$n[1].Array.type(String),"ps":0},{"n":"locals","dv":null,"o":true,"pt":$n[0].List$1(String),"ps":1},{"n":"args","dv":null,"o":true,"pt":$n[0].List$1(String),"ps":2}],"sn":"readILCodes$1","rt":$n[0].List$1(ApolloClr.ILCode),"p":[$n[1].Array.type(String),$n[0].List$1(String),$n[0].List$1(String)]}]}; });
+    $m($n[11].BaseOpTask, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"ov":true,"a":2,"n":"ToString","t":8,"sn":"toString","rt":String},{"a":2,"n":"Dump","t":16,"rt":$n[1].Int32,"g":{"a":2,"n":"get_Dump","t":8,"sn":"getDump","rt":$n[1].Int32},"s":{"a":2,"n":"set_Dump","t":8,"pi":[{"n":"value","pt":$n[1].Int32,"ps":0}],"sn":"setDump","rt":Object,"p":[$n[1].Int32]}},{"a":2,"n":"Method","t":16,"rt":Object,"g":{"a":2,"n":"get_Method","t":8,"sn":"getMethod","rt":Object},"s":{"a":2,"n":"set_Method","t":8,"pi":[{"n":"value","pt":Object,"ps":0}],"sn":"setMethod","rt":Object,"p":[Object]}},{"a":2,"n":"OpCode","t":16,"rt":$n[6].ILCode,"g":{"a":2,"n":"get_OpCode","t":8,"sn":"getOpCode","rt":$n[6].ILCode},"s":{"a":2,"n":"set_OpCode","t":8,"pi":[{"n":"value","pt":$n[6].ILCode,"ps":0}],"sn":"setOpCode","rt":Object,"p":[$n[6].ILCode]}}]}; });
+    $m($n[11].OpCodeTask$3, function (TV1, TV2, TV3) { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Run","t":8,"sn":"run","rt":Object},{"a":2,"n":"BindFunc","t":16,"rt":Function,"g":{"a":2,"n":"get_BindFunc","t":8,"sn":"getBindFunc","rt":Function}},{"a":2,"n":"Func","t":4,"rt":Function,"sn":"func"},{"a":2,"n":"V1","t":4,"rt":TV1,"sn":"V1"},{"a":2,"n":"V2","t":4,"rt":TV2,"sn":"V2"},{"a":2,"n":"V3","t":4,"rt":TV3,"sn":"V3"}]}; });
+    $m($n[11].OpCodeTask$2, function (TV1, TV2) { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Run","t":8,"sn":"run","rt":Object},{"a":2,"n":"BindFunc","t":16,"rt":Function,"g":{"a":2,"n":"get_BindFunc","t":8,"sn":"getBindFunc","rt":Function}},{"a":2,"n":"Func","t":4,"rt":Function,"sn":"func"},{"a":2,"n":"V1","t":4,"rt":TV1,"sn":"V1"},{"a":2,"n":"V2","t":4,"rt":TV2,"sn":"V2"}]}; });
+    $m($n[11].OpCodeTask$1, function (TV1) { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Run","t":8,"sn":"run","rt":Object},{"a":2,"n":"BindFunc","t":16,"rt":Function,"g":{"a":2,"n":"get_BindFunc","t":8,"sn":"getBindFunc","rt":Function}},{"a":2,"n":"Func","t":4,"rt":Function,"sn":"func"},{"a":2,"n":"V1","t":4,"rt":TV1,"sn":"V1"}]}; });
+    $m($n[11].OpCodeTask, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Run","t":8,"sn":"run","rt":Object},{"a":2,"n":"BindFunc","t":16,"rt":Function,"g":{"a":2,"n":"get_BindFunc","t":8,"sn":"getBindFunc","rt":Function}},{"a":2,"n":"Func","t":4,"rt":Function,"sn":"func"}]}; });
+    $m($n[11].OpCodeTaskRef$3, function (TV1, TV2, TV3) { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Run","t":8,"sn":"run","rt":Object},{"a":2,"n":"BindFunc","t":16,"rt":Function,"g":{"a":2,"n":"get_BindFunc","t":8,"sn":"getBindFunc","rt":Function}},{"a":2,"n":"Func","t":4,"rt":Function,"sn":"func"},{"a":2,"n":"V1","t":4,"rt":TV1,"sn":"V1"},{"a":2,"n":"V2","t":4,"rt":TV2,"sn":"V2"},{"a":2,"n":"V3","t":4,"rt":TV3,"sn":"V3"}]}; });
+    $m($n[11].OpCodeTaskRef$2, function (TV1, TV2) { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Run","t":8,"sn":"run","rt":Object},{"a":2,"n":"BindFunc","t":16,"rt":Function,"g":{"a":2,"n":"get_BindFunc","t":8,"sn":"getBindFunc","rt":Function}},{"a":2,"n":"Func","t":4,"rt":Function,"sn":"func"},{"a":2,"n":"V1","t":4,"rt":TV1,"sn":"V1"},{"a":2,"n":"V2","t":4,"rt":TV2,"sn":"V2"}]}; });
+    $m($n[11].OpCodeTaskRef$1, function (TV1) { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Run","t":8,"sn":"run","rt":Object},{"a":2,"n":"BindFunc","t":16,"rt":Function,"g":{"a":2,"n":"get_BindFunc","t":8,"sn":"getBindFunc","rt":Function}},{"a":2,"n":"Func","t":4,"rt":Function,"sn":"func"},{"a":2,"n":"V1","t":4,"rt":TV1,"sn":"V1"}]}; });
+    $m($n[11].OpCodeTaskT$3, function (TV1, TV2, TV3) { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Run","t":8,"sn":"run","rt":Object},{"a":2,"n":"BindFunc","t":16,"rt":Function,"g":{"a":2,"n":"get_BindFunc","t":8,"sn":"getBindFunc","rt":Function}},{"a":2,"n":"Func","t":4,"rt":Function,"sn":"func"},{"a":2,"n":"V1","t":4,"rt":TV1,"sn":"V1"},{"a":2,"n":"V2","t":4,"rt":TV2,"sn":"V2"},{"a":2,"n":"V3","t":4,"rt":TV3,"sn":"V3"}]}; });
+    $m($n[11].OpCodeTaskT$2, function (TV1, TV2) { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Run","t":8,"sn":"run","rt":Object},{"a":2,"n":"BindFunc","t":16,"rt":Function,"g":{"a":2,"n":"get_BindFunc","t":8,"sn":"getBindFunc","rt":Function}},{"a":2,"n":"Func","t":4,"rt":Function,"sn":"func"},{"a":2,"n":"V1","t":4,"rt":TV1,"sn":"V1"},{"a":2,"n":"V2","t":4,"rt":TV2,"sn":"V2"}]}; });
+    $m($n[11].OpCodeTaskT$1, function (TV1) { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Run","t":8,"sn":"run","rt":Object},{"a":2,"n":"BindFunc","t":16,"rt":Function,"g":{"a":2,"n":"get_BindFunc","t":8,"sn":"getBindFunc","rt":Function}},{"a":2,"n":"Func","t":4,"rt":Function,"sn":"func"},{"a":2,"n":"V1","t":4,"rt":TV1,"sn":"V1"}]}; });
+    $m($n[8].BaseCrossMethodDelegate, function () { return {"att":1048705,"a":2,"m":[{"a":3,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"ab":true,"a":2,"n":"Run","t":8,"sn":"run","rt":Object},{"ab":true,"a":2,"n":"SetArgs","t":8,"pi":[{"n":"values","pt":$n[1].Array.type(Object),"ps":0}],"sn":"setArgs","rt":Object,"p":[$n[1].Array.type(Object)]},{"ab":true,"a":2,"n":"Delegate","t":16,"rt":Function,"g":{"ab":true,"a":2,"n":"get_Delegate","t":8,"sn":"getDelegate","rt":Function}},{"a":2,"n":"Instance","t":16,"rt":Object,"g":{"a":2,"n":"get_Instance","t":8,"sn":"getInstance","rt":Object},"s":{"a":2,"n":"set_Instance","t":8,"pi":[{"n":"value","pt":Object,"ps":0}],"sn":"setInstance","rt":Object,"p":[Object]}},{"a":2,"n":"Ptr","t":16,"rt":$n[6].StackObject,"g":{"a":2,"n":"get_Ptr","t":8,"sn":"getPtr","rt":$n[6].StackObject},"s":{"a":2,"n":"set_Ptr","t":8,"pi":[{"n":"value","pt":$n[6].StackObject,"ps":0}],"sn":"setPtr","rt":Object,"p":[$n[6].StackObject]}},{"a":2,"n":"Result","t":16,"rt":Object,"g":{"a":2,"n":"get_Result","t":8,"sn":"getResult","rt":Object},"s":{"a":2,"n":"set_Result","t":8,"pi":[{"n":"value","pt":Object,"ps":0}],"sn":"setResult","rt":Object,"p":[Object]}}]}; });
+    $m($n[8].CrossDomain, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Build","is":true,"t":8,"pi":[{"n":"callname","pt":String,"ps":0}],"sn":"build","rt":$n[8].CrossMethod,"p":[String]},{"a":1,"n":"Methods","is":true,"t":4,"rt":$n[0].Dictionary$2(String,ApolloClr.Cross.CrossMethod),"sn":"methods"}]}; });
+    $m($n[8].CrossMethod, function () { return {"att":1048577,"a":2,"m":[{"a":2,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":".ctor","t":1,"p":[String],"pi":[{"n":"callname","pt":String,"ps":0}],"sn":"$ctor1"},{"a":2,"n":"CreatDelegate","t":8,"pi":[{"n":"methodInfo","pt":$n[5].ConstructorInfo,"ps":0}],"sn":"creatDelegate","rt":Object,"p":[$n[5].ConstructorInfo]},{"a":2,"n":"CreatDelegate","t":8,"pi":[{"n":"methodInfo","pt":$n[5].MethodInfo,"ps":0}],"sn":"creatDelegate$1","rt":Object,"p":[$n[5].MethodInfo]},{"ov":true,"a":2,"n":"Run","t":8,"sn":"run","rt":Object},{"a":2,"n":"CallName","t":16,"rt":String,"g":{"a":2,"n":"get_CallName","t":8,"sn":"getCallName","rt":String},"s":{"a":2,"n":"set_CallName","t":8,"pi":[{"n":"value","pt":String,"ps":0}],"sn":"setCallName","rt":Object,"p":[String]}},{"a":2,"n":"CrossMethodDelegate","t":16,"rt":$n[8].ICrossMethodDelegate,"g":{"a":2,"n":"get_CrossMethodDelegate","t":8,"sn":"getCrossMethodDelegate","rt":$n[8].ICrossMethodDelegate},"s":{"a":2,"n":"set_CrossMethodDelegate","t":8,"pi":[{"n":"value","pt":$n[8].ICrossMethodDelegate,"ps":0}],"sn":"setCrossMethodDelegate","rt":Object,"p":[$n[8].ICrossMethodDelegate]}},{"a":1,"n":"ArgCount","t":4,"rt":$n[1].Int32,"sn":"argCount"},{"a":1,"n":"HaseResult","t":4,"rt":Boolean,"sn":"haseResult"},{"a":1,"n":"IsStatic","t":4,"rt":Boolean,"sn":"isStatic"}]}; });
+    $m($n[8].CrossMethodDelegate$3, function (T1, T2, T3) { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"}]}; });
+    $m($n[8].CrossMethodDelegate$2, function (T1, T2) { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"}]}; });
+    $m($n[8].CrossMethodDelegate$1, function (T) { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"ov":true,"a":2,"n":"Run","t":8,"sn":"run","rt":Object},{"ov":true,"a":2,"n":"SetArgs","t":8,"pi":[{"n":"values","pt":$n[1].Array.type(Object),"ps":0}],"sn":"setArgs","rt":Object,"p":[$n[1].Array.type(Object)]},{"ov":true,"a":2,"n":"Delegate","t":16,"rt":Function,"g":{"ov":true,"a":2,"n":"get_Delegate","t":8,"sn":"getDelegate","rt":Function}},{"a":2,"n":"Func","t":4,"rt":Function,"sn":"func"},{"a":2,"n":"V1","t":4,"rt":T,"sn":"V1"}]}; });
+    $m($n[8].CrossMethodDelegate, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"ov":true,"a":2,"n":"Run","t":8,"sn":"run","rt":Object},{"ov":true,"a":2,"n":"SetArgs","t":8,"pi":[{"n":"values","pt":$n[1].Array.type(Object),"ps":0}],"sn":"setArgs","rt":Object,"p":[$n[1].Array.type(Object)]},{"ov":true,"a":2,"n":"Delegate","t":16,"rt":Function,"g":{"ov":true,"a":2,"n":"get_Delegate","t":8,"sn":"getDelegate","rt":Function}},{"a":2,"n":"Func","t":4,"rt":Function,"sn":"func"}]}; });
+    $m($n[8].CrossMethodDelegateRet$1, function (T) { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"ov":true,"a":2,"n":"Run","t":8,"sn":"run","rt":Object},{"ov":true,"a":2,"n":"SetArgs","t":8,"pi":[{"n":"values","pt":$n[1].Array.type(Object),"ps":0}],"sn":"setArgs","rt":Object,"p":[$n[1].Array.type(Object)]},{"ov":true,"a":2,"n":"Delegate","t":16,"rt":Function,"g":{"ov":true,"a":2,"n":"get_Delegate","t":8,"sn":"getDelegate","rt":Function}},{"a":2,"n":"Func","t":4,"rt":Function,"sn":"func"}]}; });
+    $m($n[8].ICrossMethodDelegate, function () { return {"att":161,"a":2,"m":[{"ab":true,"a":2,"n":"Run","t":8,"sn":"ApolloClr$Cross$ICrossMethodDelegate$run","rt":Object},{"ab":true,"a":2,"n":"SetArgs","t":8,"pi":[{"n":"values","pt":$n[1].Array.type(Object),"ps":0}],"sn":"ApolloClr$Cross$ICrossMethodDelegate$setArgs","rt":Object,"p":[$n[1].Array.type(Object)]},{"ab":true,"a":2,"n":"Delegate","t":16,"rt":Function,"g":{"ab":true,"a":2,"n":"get_Delegate","t":8,"sn":"ApolloClr$Cross$ICrossMethodDelegate$getDelegate","rt":Function},"s":{"ab":true,"a":1,"n":"set_Delegate","t":8,"pi":[{"n":"value","pt":Function,"ps":0}],"sn":"ApolloClr$Cross$ICrossMethodDelegate$setDelegate","rt":Object,"p":[Function]}},{"ab":true,"a":2,"n":"Ptr","t":16,"rt":$n[6].StackObject,"g":{"ab":true,"a":2,"n":"get_Ptr","t":8,"sn":"ApolloClr$Cross$ICrossMethodDelegate$getPtr","rt":$n[6].StackObject},"s":{"ab":true,"a":2,"n":"set_Ptr","t":8,"pi":[{"n":"value","pt":$n[6].StackObject,"ps":0}],"sn":"ApolloClr$Cross$ICrossMethodDelegate$setPtr","rt":Object,"p":[$n[6].StackObject]}},{"ab":true,"a":2,"n":"Result","t":16,"rt":Object,"g":{"ab":true,"a":2,"n":"get_Result","t":8,"sn":"ApolloClr$Cross$ICrossMethodDelegate$getResult","rt":Object},"s":{"ab":true,"a":1,"n":"set_Result","t":8,"pi":[{"n":"value","pt":Object,"ps":0}],"sn":"ApolloClr$Cross$ICrossMethodDelegate$setResult","rt":Object,"p":[Object]}}]}; });
+    $m($n[8].ObjectBuild$1, function (T) { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Make","t":8,"sn":"make","rt":T},{"ov":true,"a":2,"n":"Run","t":8,"sn":"run","rt":Object},{"ov":true,"a":2,"n":"SetArgs","t":8,"pi":[{"n":"values","pt":$n[1].Array.type(Object),"ps":0}],"sn":"setArgs","rt":Object,"p":[$n[1].Array.type(Object)]},{"ov":true,"a":2,"n":"Delegate","t":16,"rt":Function,"g":{"ov":true,"a":2,"n":"get_Delegate","t":8,"sn":"getDelegate","rt":Function}}]}; });
 });

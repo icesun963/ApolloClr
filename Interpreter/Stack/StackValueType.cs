@@ -2,7 +2,7 @@ namespace ApolloClr
 {
     public enum StackValueType
     {
-        i4,
+        i4=0,
         i8,
         r4,
         r8,
@@ -17,4 +17,6 @@ namespace ApolloClr
         Any,
         Array,
     }
+
+  
 }

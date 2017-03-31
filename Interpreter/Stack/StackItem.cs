@@ -14,19 +14,36 @@ namespace ApolloClr
 #endif
         StackItem
     {
+        public StackValueType ValueType;
+        public int IntValue;
+        //在指针环境仅仅为了保留数据
+        //非指针指向当前所在堆栈位置
+        public readonly int LValue;
+        public int Index;
 #if JS
         public static StackItem SPtrEmpty = null;
         public StackObject Ptr;
         public object VPoint;
+        public readonly BaseClrStack Current = null;
+
 #else
         public static StackItem* SPtrEmpty = null;
         public int* VPoint;
         public GCHandle Ptr;
+     
 #endif
-        public StackValueType ValueType;
-        public int IntValue;
-        public int LValue;
-        public int Index;
+#if JS
+        public StackItem(int lindex,BaseClrStack current)
+        {
+            LValue = lindex;
+            Current = current;
+        }
+
+        public StackItem()
+        {
+
+        }
+#endif
 
 
 
@@ -144,18 +161,26 @@ namespace ApolloClr
 #if JS
         public void CopyFrom(StackItem stackItem)
         {
-            throw new NotImplementedException();
+            this.Index = stackItem.Index;
+            this.IntValue = stackItem.IntValue;
+            this.Ptr = stackItem.Ptr;
+            this.VPoint = stackItem.VPoint;
+            this.ValueType = stackItem.ValueType;
         }
 
         public static implicit operator StackItem(int ptr)
         {
-            throw new NotImplementedException();
+           return BaseClrStack.Current[ptr];
         }
 
 
         public static StackItem operator +(StackItem s1, int offset)
         {
-            throw new NotImplementedException();
+            if (offset == 0)
+            {
+                return s1;
+            }
+            return s1.Current[s1.LValue + offset];
         }
 
   

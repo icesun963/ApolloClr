@@ -84,14 +84,14 @@ namespace SilAPI
         
         public static DisassembledAssembly DisassembleAssembly(string assemblyPath,bool @short=true)
         {
-#if JS
+#if JS && BRIDGE
             var disassembledAssembly = new DisassembledAssembly();
             disassembledAssembly.AssemblyPath = assemblyPath;
             disassembledAssembly.RawIL = assemblyPath;
 
             return disassembledAssembly;
 #else
-    //  Create a disassembled assembly.
+            //  Create a disassembled assembly.
             var disassembledAssembly = new DisassembledAssembly();
 
             //  Set the key properties.

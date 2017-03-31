@@ -15,16 +15,16 @@ namespace ApolloClr
     {
 
 
- 
+
 
 
         static unsafe void Main(string[] args)
         {
-         
+
             int count = 10000*1000;
 
             var sw = new Stopwatch();
-          
+
 
             long p1 = 0;
             long p2 = 0;
@@ -49,15 +49,16 @@ namespace ApolloClr
 ";
             {
 #if JS
-                var file = File.ReadAllText(AppDomain.CurrentDomain.BaseDirectory + "ApolloClr.il");
-                TypeDefine.AssemblyDefine.ReadAndRun(file, "Program", "RunF");
+               
+                TypeDefine.AssemblyDefine.ReadAndRun(AppDomain.CurrentDomain.BaseDirectory + "ApolloClr.exe", "Test", "Run1");
 #endif
                 //Test.RunArray();
-                TypeDefine.AssemblyDefine.ReadAndRun(AppDomain.CurrentDomain.BaseDirectory + "ApolloClr.exe", "Test", "RunOut");
+                TypeDefine.AssemblyDefine.ReadAndRun(AppDomain.CurrentDomain.BaseDirectory + "ApolloClr.exe", "Test",
+                    "RunF1");
 
                 Console.ReadLine();
                 var func = MethodTasks.Build(code).Compile();
-             
+
 
                 sw.Restart();
                 sw.Start();
@@ -105,101 +106,29 @@ namespace ApolloClr
 
     public class Test
     {
-        //public static float RunF1()
-        //{
-        //    var sw = new Stopwatch();
-        //    sw.Start();
-        //    Double xxx = -22;
-        //    for (int i = 0; i < 10000 * 100; i++)
-        //    {
-        //        Run1();
-        //    }
-        //    Console.WriteLine(xxx);
-        //    sw.Stop();
-        //    sw.Stop();
-        //    Console.WriteLine(sw.ElapsedMilliseconds);
-        //    return (float)xxx;
-        //}
-
-        //static int Run1()
-        //{
-        //    int i = 1;
-        //    int j = 2;
-        //    int k = 3;
-        //    int answer = i + j + k;
-        //    return answer;
-        //}
-        public static void RunOut()
+        public static float RunF1()
         {
-            var x = 1;
-            try
+            var sw = new Stopwatch();
+            sw.Start();
+            Double xxx = -22;
+            for (int i = 0; i < 10000*100; i++)
             {
-                x = RunArray();
+                Run1();
             }
-            catch (Exception)
-            {
-                
-               
-            }
-           
+            Console.WriteLine(xxx);
+            sw.Stop();
+            sw.Stop();
+            Console.WriteLine(sw.ElapsedMilliseconds);
+            return (float) xxx;
         }
-        public static int RunArray()
+
+        public static int Run1()
         {
-            Console.WriteLine("==============");
-            int x = 0;
-
-            x++;
-            try
-            {
-                throw new Exception();
-            }
-            catch (Exception)
-            {
-                Console.WriteLine("Line1");
-                try
-                {
-                    try
-                    {
-                        x++;
-                        Console.WriteLine("x++");
-                        throw;
-                    }
-                    catch (Exception)
-                    {
-                        throw;
-
-                    }
-                 
-                }
-              
-                catch (Exception)
-                {
-                    
-                    throw;
-                }
-                
-            }
-            finally
-            {
-                try
-                {
-                    Console.WriteLine("x--");
-                    x--;
-                }
-                catch (Exception)
-                {
-                    
-                    throw;
-                }
-                x++;
-                Console.WriteLine("finally");
-            }
-
-            x++;
-
-            Console.WriteLine("==============" );
-            return 0;
-
+            int i = 1;
+            int j = 2;
+            int k = 3;
+            int answer = i + j + k;
+            return answer;
         }
     }
 }

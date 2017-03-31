@@ -12,7 +12,16 @@ namespace ApolloClr
     {
 
 #if JS
-        private BaseClrStack Stack;
+        private BaseClrStack _Stack;
+
+        private BaseClrStack Stack
+        {
+            get
+            {
+                _Stack.SetCurrent();
+                return _Stack;
+            }
+        }
 #else
         private ClrStack Stack;
 #endif
@@ -25,16 +34,33 @@ namespace ApolloClr
 
 
 #if JS
-
-    /// <summary>
-    /// 头指针
-    /// </summary>
-        public readonly StackItem Csp;
+        //为了包装
+        private readonly BaseClrStack CallStackClr;
+        private readonly StackItem _Csp;
+        private readonly StackItem _Argp;
+        /// <summary>
+        /// 头指针
+        /// </summary>
+        public  StackItem Csp
+        {
+            get
+            {
+                CallStackClr.SetCurrent();
+                return _Csp;
+            }
+        }
 
         /// <summary>
         /// 参数指针
         /// </summary>
-        public readonly StackItem Argp;
+        public StackItem Argp
+        {
+            get
+            {
+                CallStackClr.SetCurrent();
+                return _Argp;
+            }
+        }
 
         /// <summary>
         /// 当前的返回值
@@ -97,13 +123,13 @@ namespace ApolloClr
 
         public void EvaluationStack_Push(StackValueType vtype, object value)
         {
-          
+            Stack.Push(vtype, value);
         }
 
         public void EvaluationStack_Push(object obj)
         {
             var iptr = StackObject.NewObject(obj);
-            //Stack.Push(iptr);
+            Stack.Push(StackValueType.Ref, iptr);
         }
 
 
@@ -206,7 +232,7 @@ namespace ApolloClr
         public Clr(int localCount = 5, int argCount = 5, bool haseResult = true, int maxStack = 5)
         {
 #if JS
-            Stack = new BaseClrStack(maxStack);
+            _Stack = new BaseClrStack(maxStack);
 
 #else
             Stack = new ClrStack(maxStack);
@@ -214,15 +240,17 @@ namespace ApolloClr
             RetResult = haseResult;
             LocalVarCount = localCount;
             ArgsVarCount = argCount;
-            CallStack = new StackItem[localCount + argCount];
+            CallStackClr = new BaseClrStack(localCount + argCount);
+            CallStack = CallStackClr.EvaluationStack;
             if (CallStack.Length <= 0)
             {
                 return;
             }
+         
 
 #if JS
-             Csp = 0;
-            Argp = Csp + localCount;
+            _Csp = 0;
+            _Argp = Csp + localCount;
 #else
             fixed (StackItem* csp = &CallStack[0])
             {
