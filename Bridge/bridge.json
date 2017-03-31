@@ -1,0 +1,14 @@
+{
+    "output": "Bridge/output"
+
+  // Uncomment to add TypeScript Definition file (.d.ts) generation to your project.
+    ,
+  "generateTypeScript": true,
+  "fileName": "clr.js",
+  "reflection": {
+    "enabled": true
+  }
+
+  // More options available at:
+  // http://bridge.net/docs/global-configuration
+}

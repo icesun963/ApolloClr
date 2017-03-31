@@ -1,0 +1,109 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{3097227D-BFC6-4818-B6A3-4D6E59719E90}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ApolloClr</RootNamespace>
+    <AssemblyName>ApolloClr</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;!JS;SILAPI;!SPEED;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Cross\BaseCrossMethodDelegate.cs" />
+    <Compile Include="Cross\CrossDomain.cs" />
+    <Compile Include="Cross\CrossMethod.cs" />
+    <Compile Include="Cross\CrossMethodDelegateRet.cs" />
+    <Compile Include="Cross\ICrossMethodDelegate.cs" />
+    <Compile Include="Cross\CrossMethodDelegate.cs" />
+    <Compile Include="Cross\ObjectBuild.cs" />
+    <Compile Include="Interpreter\Clr_Array.cs" />
+    <Compile Include="Interpreter\Clr_Conv.cs" />
+    <Compile Include="Interpreter\Clr_Speed.cs" />
+    <Compile Include="Interpreter\Stack\BaseClrStack.cs" />
+    <Compile Include="Interpreter\Clr_CallType.cs" />
+    <Compile Include="Interpreter\Clr_Operation.cs" />
+    <Compile Include="Interpreter\Clr_Br.cs" />
+    <Compile Include="Interpreter\Stack\StackObject.cs" />
+    <Compile Include="Interpreter\Stack\StackValueType.cs" />
+    <Compile Include="MethodDefine\BaseOpTask.cs" />
+    <Compile Include="MethodDefine\IOpTask.cs" />
+    <Compile Include="MethodDefine\OpCodeTaskRef.cs" />
+    <Compile Include="MethodDefine\OpCodeTaskT.cs" />
+    <Compile Include="MethodDefine\ILCodeParse.cs" />
+    <Compile Include="MethodDefine\MethodTasks.cs" />
+    <Compile Include="MethodDefine\ILCode.cs" />
+    <Compile Include="MethodDefine\OpCodeTask.cs" />
+    <Compile Include="Interpreter\Clr.cs" />
+    <Compile Include="Interpreter\Stack\ClrStack.cs" />
+    <Compile Include="Interpreter\OpCodeEnum.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Interpreter\Stack\StackItem.cs" />
+    <Compile Include="SilAPI\DisassembledAssembly.cs" />
+    <Compile Include="SilAPI\DisassembledClass.cs" />
+    <Compile Include="SilAPI\DisassembledDelegate.cs" />
+    <Compile Include="SilAPI\DisassembledEntity.cs" />
+    <Compile Include="SilAPI\DisassembledEnumeration.cs" />
+    <Compile Include="SilAPI\DisassembledEvent.cs" />
+    <Compile Include="SilAPI\DisassembledField.cs" />
+    <Compile Include="SilAPI\DisassembledIlClass.cs" />
+    <Compile Include="SilAPI\DisassembledInterface.cs" />
+    <Compile Include="SilAPI\DisassembledMethod.cs" />
+    <Compile Include="SilAPI\DisassembledProperty.cs" />
+    <Compile Include="SilAPI\DisassembledStructure.cs" />
+    <Compile Include="SilAPI\Disassembler.cs" />
+    <Compile Include="SilAPI\DisassemblyTarget.cs" />
+    <Compile Include="SilAPI\ILDASM.cs" />
+    <Compile Include="SilAPI\ILParseHelper.cs" />
+    <Compile Include="SilAPI\ISilProcessor.cs" />
+    <Compile Include="SilAPI\StreamSilProcessor.cs" />
+    <Compile Include="TypeDefine\AssemblyDefine.cs" />
+    <Compile Include="TypeDefine\MethodDefine.cs" />
+    <Compile Include="TypeDefine\TypeDefine.cs" />
+    <Compile Include="Extensions.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="ReadMe.txt" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
