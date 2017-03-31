@@ -33,3 +33,4 @@
 *.su
 /bin/Debug
 /obj/Debug
+/packages
