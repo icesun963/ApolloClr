@@ -1,0 +1,12 @@
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApplloClr.Js\obj\Debug\ApplloClr.Js.csprojResolveAssemblyReference.cache
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApplloClr.Js\bin\Debug\ApplloClr.Js.dll
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApplloClr.Js\bin\Debug\ApplloClr.Js.pdb
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApplloClr.Js\bin\Debug\Bridge.Collections.dll
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApplloClr.Js\bin\Debug\Bridge.dll
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApplloClr.Js\bin\Debug\Bridge.Html5.dll
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApplloClr.Js\bin\Debug\Bridge.jQuery2.dll
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApplloClr.Js\bin\Debug\Bridge.xml
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApplloClr.Js\bin\Debug\Bridge.Html5.xml
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApplloClr.Js\bin\Debug\Bridge.jQuery2.xml
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApplloClr.Js\obj\Debug\ApplloClr.Js.dll
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApplloClr.Js\obj\Debug\ApplloClr.Js.pdb

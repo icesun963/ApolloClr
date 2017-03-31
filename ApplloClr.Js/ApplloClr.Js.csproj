@@ -1,0 +1,226 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <NoStdLib>true</NoStdLib>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{CB4F89C4-637F-4B8F-93ED-705543DDAADE}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ApplloClr.Js</RootNamespace>
+    <AssemblyName>ApplloClr.Js</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;JS;SILAPI;!SPEED;BRIDGE;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\Cross\BaseCrossMethodDelegate.cs">
+      <Link>Cross\BaseCrossMethodDelegate.cs</Link>
+    </Compile>
+    <Compile Include="..\Cross\CrossDomain.cs">
+      <Link>Cross\CrossDomain.cs</Link>
+    </Compile>
+    <Compile Include="..\Cross\CrossMethod.cs">
+      <Link>Cross\CrossMethod.cs</Link>
+    </Compile>
+    <Compile Include="..\Cross\CrossMethodDelegate.cs">
+      <Link>Cross\CrossMethodDelegate.cs</Link>
+    </Compile>
+    <Compile Include="..\Cross\CrossMethodDelegateRet.cs">
+      <Link>Cross\CrossMethodDelegateRet.cs</Link>
+    </Compile>
+    <Compile Include="..\Cross\ICrossMethodDelegate.cs">
+      <Link>Cross\ICrossMethodDelegate.cs</Link>
+    </Compile>
+    <Compile Include="..\Cross\ObjectBuild.cs">
+      <Link>Cross\ObjectBuild.cs</Link>
+    </Compile>
+    <Compile Include="..\Extensions.cs">
+      <Link>Extensions.cs</Link>
+    </Compile>
+    <Compile Include="..\Interpreter\Clr.cs">
+      <Link>Interpreter\Clr.cs</Link>
+    </Compile>
+    <Compile Include="..\Interpreter\Clr_Array.cs">
+      <Link>Interpreter\Clr_Array.cs</Link>
+    </Compile>
+    <Compile Include="..\Interpreter\Clr_Br.cs">
+      <Link>Interpreter\Clr_Br.cs</Link>
+    </Compile>
+    <Compile Include="..\Interpreter\Clr_CallType.cs">
+      <Link>Interpreter\Clr_CallType.cs</Link>
+    </Compile>
+    <Compile Include="..\Interpreter\Clr_Conv.cs">
+      <Link>Interpreter\Clr_Conv.cs</Link>
+    </Compile>
+    <Compile Include="..\Interpreter\Clr_Operation.cs">
+      <Link>Interpreter\Clr_Operation.cs</Link>
+    </Compile>
+    <Compile Include="..\Interpreter\Clr_Speed.cs">
+      <Link>Interpreter\Clr_Speed.cs</Link>
+    </Compile>
+    <Compile Include="..\Interpreter\OpCodeEnum.cs">
+      <Link>Interpreter\OpCodeEnum.cs</Link>
+    </Compile>
+    <Compile Include="..\Interpreter\Stack\BaseClrStack.cs">
+      <Link>Interpreter\Stack\BaseClrStack.cs</Link>
+    </Compile>
+    <Compile Include="..\Interpreter\Stack\ClrStack.cs">
+      <Link>Interpreter\Stack\ClrStack.cs</Link>
+    </Compile>
+    <Compile Include="..\Interpreter\Stack\StackItem.cs">
+      <Link>Interpreter\Stack\StackItem.cs</Link>
+    </Compile>
+    <Compile Include="..\Interpreter\Stack\StackObject.cs">
+      <Link>Interpreter\Stack\StackObject.cs</Link>
+    </Compile>
+    <Compile Include="..\Interpreter\Stack\StackValueType.cs">
+      <Link>Interpreter\Stack\StackValueType.cs</Link>
+    </Compile>
+    <Compile Include="..\MethodDefine\BaseOpTask.cs">
+      <Link>MethodDefine\BaseOpTask.cs</Link>
+    </Compile>
+    <Compile Include="..\MethodDefine\ILCode.cs">
+      <Link>MethodDefine\ILCode.cs</Link>
+    </Compile>
+    <Compile Include="..\MethodDefine\ILCodeParse.cs">
+      <Link>MethodDefine\ILCodeParse.cs</Link>
+    </Compile>
+    <Compile Include="..\MethodDefine\IOpTask.cs">
+      <Link>MethodDefine\IOpTask.cs</Link>
+    </Compile>
+    <Compile Include="..\MethodDefine\MethodTasks.cs">
+      <Link>MethodDefine\MethodTasks.cs</Link>
+    </Compile>
+    <Compile Include="..\MethodDefine\OpCodeTask.cs">
+      <Link>MethodDefine\OpCodeTask.cs</Link>
+    </Compile>
+    <Compile Include="..\MethodDefine\OpCodeTaskRef.cs">
+      <Link>MethodDefine\OpCodeTaskRef.cs</Link>
+    </Compile>
+    <Compile Include="..\MethodDefine\OpCodeTaskT.cs">
+      <Link>MethodDefine\OpCodeTaskT.cs</Link>
+    </Compile>
+    <Compile Include="..\SilAPI\DisassembledAssembly.cs">
+      <Link>SilAPI\DisassembledAssembly.cs</Link>
+    </Compile>
+    <Compile Include="..\SilAPI\DisassembledClass.cs">
+      <Link>SilAPI\DisassembledClass.cs</Link>
+    </Compile>
+    <Compile Include="..\SilAPI\DisassembledDelegate.cs">
+      <Link>SilAPI\DisassembledDelegate.cs</Link>
+    </Compile>
+    <Compile Include="..\SilAPI\DisassembledEntity.cs">
+      <Link>SilAPI\DisassembledEntity.cs</Link>
+    </Compile>
+    <Compile Include="..\SilAPI\DisassembledEnumeration.cs">
+      <Link>SilAPI\DisassembledEnumeration.cs</Link>
+    </Compile>
+    <Compile Include="..\SilAPI\DisassembledEvent.cs">
+      <Link>SilAPI\DisassembledEvent.cs</Link>
+    </Compile>
+    <Compile Include="..\SilAPI\DisassembledField.cs">
+      <Link>SilAPI\DisassembledField.cs</Link>
+    </Compile>
+    <Compile Include="..\SilAPI\DisassembledIlClass.cs">
+      <Link>SilAPI\DisassembledIlClass.cs</Link>
+    </Compile>
+    <Compile Include="..\SilAPI\DisassembledInterface.cs">
+      <Link>SilAPI\DisassembledInterface.cs</Link>
+    </Compile>
+    <Compile Include="..\SilAPI\DisassembledMethod.cs">
+      <Link>SilAPI\DisassembledMethod.cs</Link>
+    </Compile>
+    <Compile Include="..\SilAPI\DisassembledProperty.cs">
+      <Link>SilAPI\DisassembledProperty.cs</Link>
+    </Compile>
+    <Compile Include="..\SilAPI\DisassembledStructure.cs">
+      <Link>SilAPI\DisassembledStructure.cs</Link>
+    </Compile>
+    <Compile Include="..\SilAPI\Disassembler.cs">
+      <Link>SilAPI\Disassembler.cs</Link>
+    </Compile>
+    <Compile Include="..\SilAPI\DisassemblyTarget.cs">
+      <Link>SilAPI\DisassemblyTarget.cs</Link>
+    </Compile>
+    <Compile Include="..\SilAPI\ILDASM.cs">
+      <Link>SilAPI\ILDASM.cs</Link>
+    </Compile>
+    <Compile Include="..\SilAPI\ILParseHelper.cs">
+      <Link>SilAPI\ILParseHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\SilAPI\ISilProcessor.cs">
+      <Link>SilAPI\ISilProcessor.cs</Link>
+    </Compile>
+    <Compile Include="..\SilAPI\StreamSilProcessor.cs">
+      <Link>SilAPI\StreamSilProcessor.cs</Link>
+    </Compile>
+    <Compile Include="..\TypeDefine\AssemblyDefine.cs">
+      <Link>TypeDefine\AssemblyDefine.cs</Link>
+    </Compile>
+    <Compile Include="..\TypeDefine\MethodDefine.cs">
+      <Link>TypeDefine\MethodDefine.cs</Link>
+    </Compile>
+    <Compile Include="..\TypeDefine\TypeDefine.cs">
+      <Link>TypeDefine\TypeDefine.cs</Link>
+    </Compile>
+    <Compile Include="App.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Bridge\output\readme.txt" />
+    <Content Include="Bridge\www\demo.html" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Bridge\bridge.json" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Bridge, Version=15.7.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Bridge.Core.15.7.0\lib\net40\Bridge.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Bridge.Collections, Version=1.3.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Bridge.Collections.1.3.4\lib\net40\Bridge.Collections.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Bridge.Html5, Version=15.7.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Bridge.Html5.15.7.0\lib\net40\Bridge.Html5.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Bridge.jQuery2, Version=2.9.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Bridge.jQuery.2.9.3\lib\net40\Bridge.jQuery2.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="..\packages\Bridge.Min.15.7.0\build\Bridge.Min.targets" Condition="Exists('..\packages\Bridge.Min.15.7.0\build\Bridge.Min.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>这台计算机上缺少此项目引用的 NuGet 程序包。使用“NuGet 程序包还原”可下载这些程序包。有关更多信息，请参见 http://go.microsoft.com/fwlink/?LinkID=322105。缺少的文件是 {0}。</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Bridge.Min.15.7.0\build\Bridge.Min.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Bridge.Min.15.7.0\build\Bridge.Min.targets'))" />
+  </Target>
+</Project>

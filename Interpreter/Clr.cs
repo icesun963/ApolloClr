@@ -29,12 +29,12 @@ namespace ApolloClr
     /// <summary>
     /// 头指针
     /// </summary>
-        public readonly int Csp;
+        public readonly StackItem Csp;
 
         /// <summary>
         /// 参数指针
         /// </summary>
-        public readonly int Argp;
+        public readonly StackItem Argp;
 
         /// <summary>
         /// 当前的返回值
@@ -90,10 +90,24 @@ namespace ApolloClr
             return Stack.Pop();
         }
 
-        public StackItem[] EvaluationStack_Pop(int count)
+        public StackItem EvaluationStack_Pop(int count)
         {
             return Stack.Pop(count);
         }
+
+        public void EvaluationStack_Push(StackValueType vtype, object value)
+        {
+          
+        }
+
+        public void EvaluationStack_Push(object obj)
+        {
+            var iptr = StackObject.NewObject(obj);
+            //Stack.Push(iptr);
+        }
+
+
+
 #else
         public void EvaluationStack_Push( StackValueType vtype, object value)
         {
@@ -260,11 +274,7 @@ namespace ApolloClr
         /// <param name="i"></param>
         public virtual void Ldarg(int i)
         {
-#if JS
-            EvaluationStack_Push(CallStack[Argp + i]);
-#else
             EvaluationStack_Push(Argp + i);
-#endif
         }
 
 
@@ -294,8 +304,12 @@ namespace ApolloClr
         public void Starg(int i)
         {
             var v = EvaluationStack_Pop();
+#if JS
+            (Argp + 1).CopyFrom(v);
+#else
             *(Argp + i) = *v;
             (Argp + i)->VPoint = &(Argp + i)->IntValue;
+#endif
         }
 
         /// <summary>
@@ -323,11 +337,7 @@ namespace ApolloClr
         /// <returns></returns>
         public virtual void Ldloc(int i)
         {
-#if JS
-            EvaluationStack_Push(CallStack[Csp + i]);
-#else
             EvaluationStack_Push(Csp + i);
-#endif
         }
 
         /// <summary>
@@ -366,7 +376,7 @@ namespace ApolloClr
         {
             var result = EvaluationStack_Pop();
 #if JS
-            CallStack[(Csp + i)] = result;
+            (Csp + i).CopyFrom(result);
 #else
             *(Csp + i) = *result;
             (Csp + i)->VPoint = &((Csp + i)->IntValue);

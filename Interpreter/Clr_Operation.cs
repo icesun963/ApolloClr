@@ -26,7 +26,7 @@ namespace ApolloClr
             var vs = EvaluationStack_Pop(2);
             //var x = *vs->VPoint + *(vs + 1)->VPoint;
 #if JS
-            var x = vs[0].IntValue + vs[1].IntValue;
+            var x = vs.IntValue + (vs + 1).IntValue;
 #else
             switch (vs->ValueType)
             {
@@ -71,7 +71,7 @@ namespace ApolloClr
             var vs = EvaluationStack_Pop(2);
             //var x = *vs->VPoint + *(vs + 1)->VPoint;
 #if JS
-            var x = vs[0].IntValue - vs[1].IntValue;
+            var x = vs.IntValue - (vs + 1).IntValue;
 #else
             switch (vs->ValueType)
             {
@@ -113,7 +113,7 @@ namespace ApolloClr
             var vs = EvaluationStack_Pop(2);
             //var x = *vs->VPoint + *(vs + 1)->VPoint;
 #if JS
-            var x = vs[0].IntValue * vs[1].IntValue;
+            var x = vs.IntValue * (vs + 1).IntValue;
 #else
             switch (vs->ValueType)
             {
@@ -155,7 +155,7 @@ namespace ApolloClr
             var vs = EvaluationStack_Pop(2);
             //var x = *vs->VPoint + *(vs + 1)->VPoint;
 #if JS
-            var x = vs[0].IntValue / vs[1].IntValue;
+            var x = vs.IntValue / (vs + 1).IntValue;
 #else
             switch (vs->ValueType)
             {
@@ -198,7 +198,7 @@ namespace ApolloClr
             var vs = EvaluationStack_Pop(2);
             //var x = *vs->VPoint + *(vs + 1)->VPoint;
 #if JS
-            var x = vs[0].IntValue % vs[1].IntValue;
+            var x = vs.IntValue % (vs + 1).IntValue;
 #else
             switch (vs->ValueType)
             {
@@ -243,7 +243,7 @@ namespace ApolloClr
             var vs = EvaluationStack_Pop(2);
             //var x = *vs->VPoint + *(vs + 1)->VPoint;
 #if JS
-            var x = vs[0].IntValue & vs[1].IntValue;
+            var x = vs.IntValue & (vs + 1).IntValue;
 #else
             var x = (vs)->IntValue & (vs + 1)->IntValue;
 #endif
@@ -261,7 +261,7 @@ namespace ApolloClr
             var vs = EvaluationStack_Pop(2);
             //var x = *vs->VPoint + *(vs + 1)->VPoint;
 #if JS
-            var x = vs[0].IntValue | vs[1].IntValue;
+            var x = vs.IntValue | (vs + 1).IntValue;
 #else
             var x = (vs)->IntValue | (vs + 1)->IntValue;
 #endif
@@ -278,7 +278,7 @@ namespace ApolloClr
             //var x = *vs->VPoint + *(vs + 1)->VPoint;
 
 #if JS
-            var x = vs[0].IntValue ^ vs[1].IntValue;
+            var x = vs.IntValue ^ (vs + 1).IntValue;
 #else
             var x = (vs)->IntValue ^ (vs + 1)->IntValue;
 #endif
@@ -295,7 +295,7 @@ namespace ApolloClr
             var vs = EvaluationStack_Pop(2);
             //var x = *vs->VPoint + *(vs + 1)->VPoint;
 #if JS
-            var x = vs[0].IntValue << vs[1].IntValue;
+            var x = vs.IntValue << (vs + 1).IntValue;
 #else
             var x = (vs)->IntValue << (vs + 1)->IntValue;
 #endif
@@ -312,7 +312,7 @@ namespace ApolloClr
             var vs = EvaluationStack_Pop(2);
             //var x = *vs->VPoint + *(vs + 1)->VPoint;
 #if JS
-            var x = vs[0].IntValue >> vs[1].IntValue;
+            var x = vs.IntValue >> (vs + 1).IntValue;
 #else
             var x = (vs )->IntValue >> (vs + 1)->IntValue;
 #endif
@@ -361,7 +361,7 @@ namespace ApolloClr
         {
             var vs = EvaluationStack_Pop(2);
 #if JS
-            if ((vs[0]).IntValue == vs[1].IntValue)
+            if (vs.IntValue == (vs + 1).IntValue)
 #else
             if ((vs )->IntValue == (vs + 1)->IntValue)
 #endif
@@ -381,7 +381,7 @@ namespace ApolloClr
         {
             var vs = EvaluationStack_Pop(2);
 #if JS
-            if ((vs[0]).IntValue > vs[1].IntValue)
+            if ((vs).IntValue > (vs + 1).IntValue)
 #else
             if ((vs)->IntValue > (vs + 1)->IntValue)
 #endif
@@ -401,7 +401,7 @@ namespace ApolloClr
         {
             var vs = EvaluationStack_Pop(2);
 #if JS
-            if ((vs[0]).IntValue < vs[1].IntValue)
+            if ((vs).IntValue < (vs + 1).IntValue)
 #else
             if ((vs)->IntValue < (vs + 1)->IntValue)
 #endif

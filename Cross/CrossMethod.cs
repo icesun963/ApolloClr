@@ -1,10 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-
+using static ApolloClr.PtrFix;
 namespace ApolloClr.Cross
 {
-    public unsafe class CrossMethod : MethodTasks
+    public
+#if !JS
+        unsafe 
+#endif
+        class CrossMethod : MethodTasks
     {
         public string CallName { get; set; }
 
@@ -19,6 +23,11 @@ namespace ApolloClr.Cross
         public override void Run()
         {
             var vs = Clr.Argp;
+#if JS
+            StackObject ptr = vs;
+#else
+            var ptr =vs->Ptr;
+#endif
             //对值对象 赋值
             if (IsStatic)
             {
@@ -36,7 +45,7 @@ namespace ApolloClr.Cross
                 {
                     if (i == 0 )
                     {
-                        if ((vs + 0)->Ptr != CrossMethodDelegate.Ptr)
+                        if (ptr != CrossMethodDelegate.Ptr)
                         {
                             args[ArgCount - 1] = StackObject.ToObject(vs + i);
                         }
@@ -56,9 +65,9 @@ namespace ApolloClr.Cross
                 CrossMethodDelegate.SetArgs(args);
                 if (!IsStatic && CrossMethodDelegate.Delegate != null)
                 {
-                    if ((vs + 0)->Ptr != CrossMethodDelegate.Ptr)
+                    if (ptr != CrossMethodDelegate.Ptr)
                     {
-                        CrossMethodDelegate.Ptr = (vs + 0)->Ptr;
+                        CrossMethodDelegate.Ptr = ptr;
                         CrossMethodDelegate.Delegate.SetTarget(args[ArgCount - 1]);
                     }
                     
@@ -70,8 +79,13 @@ namespace ApolloClr.Cross
             if (HaseResult)
             {
                 Clr.ResultPoint = Clr.Csp;
+#if JS
+                Clr.ResultPoint.ValueType = StackValueType.Ref;
+                Clr.ResultPoint.Ptr = StackObject.NewObject(CrossMethodDelegate.Result);
+#else
                 Clr.ResultPoint->ValueType = StackValueType.Ref;
                 Clr.ResultPoint->Ptr = StackObject.NewObject(CrossMethodDelegate.Result);
+#endif
             }
         }
 
@@ -194,7 +208,7 @@ namespace ApolloClr.Cross
             // 静态
             if (methodInfo.IsStatic)
             {
-                var @delage = Delegate.CreateDelegate(funtask, methodInfo);
+                var @delage = Delegate.CreateDelegate(funtask,null, methodInfo);
                 tasktype.GetField("Func").SetValue(CrossMethodDelegate, @delage);
                 IsStatic = true;
             }

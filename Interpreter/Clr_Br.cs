@@ -66,7 +66,7 @@ namespace ApolloClr
         {
             var vs = EvaluationStack_Pop(2);
 #if JS
-            if (vs[0]==vs[1])
+            if (vs==vs+1)
 #else
             if (*vs == *(vs + 1))
 #endif
@@ -82,7 +82,7 @@ namespace ApolloClr
         {
             var vs = EvaluationStack_Pop(2);
 #if JS
-            if (vs[0] >= vs[1])
+            if (vs >= vs+1)
 #else
             if (*(vs) >= *(vs + 1))
 #endif
@@ -98,7 +98,7 @@ namespace ApolloClr
         {
             var vs = EvaluationStack_Pop(2);
 #if JS
-            if (vs[0] > vs[1])
+            if (vs > vs+1)
 #else
             if (*(vs) > *(vs + 1))
 #endif
@@ -114,7 +114,7 @@ namespace ApolloClr
         {
             var vs = EvaluationStack_Pop(2);
 #if JS
-            if (vs[0] <= vs[1])
+            if (vs <= vs+1)
 #else
             if (*(vs) <= *(vs + 1))
 #endif
@@ -130,7 +130,7 @@ namespace ApolloClr
         {
             var vs = EvaluationStack_Pop(2);
 #if JS
-            if (vs[0] < vs[1])
+            if (vs < vs+1)
 #else
             if (*(vs) < *(vs + 1))
 #endif
@@ -146,7 +146,11 @@ namespace ApolloClr
         {
             var vs = EvaluationStack_Pop();
             EvaluationStack_Push(vs);
+#if JS
+            ThrowAction(vs.Value, -1);
+#else
             ThrowAction(vs->Value,-1);
+#endif
         }
 
         /// <summary>

@@ -26,6 +26,9 @@ namespace ApolloClr
         {
             var v = EvaluationStack_Pop();
             var rv = new StackItem();
+#if JS
+            throw new NotImplementedException();
+#else
             rv.VPoint = &rv.IntValue;
             switch (type)
             {
@@ -260,9 +263,10 @@ namespace ApolloClr
                     }
                     break;
             }
-
-
             EvaluationStack_Push(&rv);
+#endif
+
+
         }
 
         /// <summary>
@@ -272,6 +276,27 @@ namespace ApolloClr
         public void Ldind(StackValueType type)
         {
             var vs = Stack.Top();
+#if JS
+            switch (vs.ValueType)
+            {
+                case StackValueType.Array:
+                    {
+                        var array = vs.Ptr.Object as Array;
+                        vs.SetValue(type, array.GetValue(vs.Index));
+                        break;
+                    }
+                case StackValueType.i4:
+                case StackValueType.r4:
+                case StackValueType.i8:
+                case StackValueType.r8:
+                case StackValueType.Ref:
+                    {
+                        break;
+                    }
+                default:
+                    throw new NotSupportedException();
+            }
+#else
             switch (vs->ValueType)
             {
                 case StackValueType.Array:
@@ -291,6 +316,7 @@ namespace ApolloClr
                 default:
                     throw new NotSupportedException();
             }
+#endif
         }
 
         /// <summary>
@@ -301,6 +327,27 @@ namespace ApolloClr
         {
             var vs = Stack.Pop(2);
             var vsv = vs + 1;
+#if JS
+            switch (vs.ValueType)
+            {
+                case StackValueType.Array:
+                    {
+                        var array = vs.Ptr.Object as Array;
+                        array.SetValue(vsv.Value, vs.Index);
+                        break;
+                    }
+                case StackValueType.i4:
+                case StackValueType.r4:
+                case StackValueType.i8:
+                case StackValueType.r8:
+                case StackValueType.Ref:
+                    {
+                        break;
+                    }
+                default:
+                    throw new NotSupportedException();
+            }
+#else
             switch (vs->ValueType)
             {
                 case StackValueType.Array:
@@ -320,6 +367,7 @@ namespace ApolloClr
                 default:
                     throw new NotSupportedException();
             }
+#endif
         }
 
 

@@ -25,7 +25,11 @@ namespace ApolloClr
         public void Ldlen()
         {
             var vs = EvaluationStack_Pop();
+#if JS
+            var array = vs.Value as Array;
+#else
             var array = vs->Value as Array;
+#endif
             EvaluationStack_Push(array.Length);
         }
 
@@ -37,7 +41,11 @@ namespace ApolloClr
         public void Newarr<T>(Type type)
         {
             var vs = EvaluationStack_Pop();
+#if JS
+            var array = new T[vs.IntValue];
+#else
             var array = new T[vs->IntValue];
+#endif
             EvaluationStack_Push(array);
         }
 
@@ -48,6 +56,18 @@ namespace ApolloClr
         public void Ldelema<T>(Type type)
         {
             var vs = EvaluationStack_Pop(2);
+#if JS
+            var ptr = (vs).Ptr;
+            var index = (vs + 1).IntValue;
+            var sptr = new StackItem()
+            {
+                Ptr = ptr,
+                Index = index,
+                ValueType = StackValueType.Array
+            };
+
+            EvaluationStack_Push(sptr);
+#else
             var ptr = (vs)->Ptr;
             var index = (vs + 1)->IntValue;
             var stack = new StackItem()
@@ -59,6 +79,7 @@ namespace ApolloClr
 
             StackItem* sptr = &stack;
             EvaluationStack_Push(sptr);
+#endif
         }
 
         /// <summary>
@@ -68,11 +89,17 @@ namespace ApolloClr
         public void Ldelem(StackValueType type)
         {
             var vs = EvaluationStack_Pop(2);
+#if JS
+            var array = (vs).Ptr.Object as Array;
+            var index = (vs + 1).IntValue;
+
+
+#else
             var array = ((StackObject) (vs)->Ptr.Target).Object as Array;
             var index = (vs + 1)->IntValue;
 
+#endif
             EvaluationStack_Push(type, array.GetValue(index));
-
         }
 
         /// <summary>
@@ -81,7 +108,27 @@ namespace ApolloClr
         public void Stelem(StackValueType type)
         {
             var vs = EvaluationStack_Pop(3);
+#if JS
+            var array = vs.Ptr.Object as Array;
+            var index = (vs + 1).IntValue;
+            var optr = (vs + 1 + 1);
+            switch (optr.ValueType)
+            {
+                case StackValueType.Ref:
+                    {
+                        var obj = optr.Ptr.Object;
+                        array.SetValue(obj, index);
+                        break;
+                    }
+                default:
+                    {
+                        var obj = optr.Value;
+                        array.SetValue(obj, index);
+                        break;
+                    }
 
+            }
+#else
             var array = ((StackObject) (vs)->Ptr.Target).Object as Array;
             var index = (vs + 1)->IntValue;
 
@@ -103,6 +150,7 @@ namespace ApolloClr
                 }
 
             }
+#endif
         }
     }
 }

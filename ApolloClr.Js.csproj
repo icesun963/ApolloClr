@@ -10,11 +10,11 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{D7E6AEDC-90EF-4BF7-8174-0E6AFD94F34D}</ProjectGuid>
+    <ProjectGuid>{B907DD7B-EB96-494E-B36E-5E976962EB5F}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ApolloClr.Js</RootNamespace>
-    <AssemblyName>ApolloClr.Js</AssemblyName>
+    <RootNamespace>ApolloClr.JS</RootNamespace>
+    <AssemblyName>ApolloClr.JS</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -23,10 +23,9 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;JS</DefineConstants>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -37,105 +36,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\ApolloClr\Interpreter\Clr.cs">
-      <Link>Interpreter\Clr.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\Interpreter\Clr_Br.cs">
-      <Link>Interpreter\Clr_Br.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\Interpreter\Clr_CallType.cs">
-      <Link>Interpreter\Clr_CallType.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\Interpreter\Clr_Operation.cs">
-      <Link>Interpreter\Clr_Operation.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\Interpreter\OpCodeEnum.cs">
-      <Link>Interpreter\OpCodeEnum.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\Interpreter\Stack\BaseClrStack.cs">
-      <Link>Interpreter\Stack\BaseClrStack.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\Interpreter\Stack\ClrStack.cs">
-      <Link>Interpreter\Stack\ClrStack.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\Interpreter\Stack\StackItem.cs">
-      <Link>Interpreter\Stack\StackItem.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\MethodDefine\ILCode.cs">
-      <Link>MethodDefine\ILCode.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\MethodDefine\ILCodeParse.cs">
-      <Link>MethodDefine\ILCodeParse.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\MethodDefine\MethodTasks.cs">
-      <Link>MethodDefine\MethodTasks.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\MethodDefine\OpCodeTasks.cs">
-      <Link>MethodDefine\OpCodeTasks.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\SilAPI\DisassembledAssembly.cs">
-      <Link>SilAPI\DisassembledAssembly.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\SilAPI\DisassembledClass.cs">
-      <Link>SilAPI\DisassembledClass.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\SilAPI\DisassembledDelegate.cs">
-      <Link>SilAPI\DisassembledDelegate.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\SilAPI\DisassembledEntity.cs">
-      <Link>SilAPI\DisassembledEntity.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\SilAPI\DisassembledEnumeration.cs">
-      <Link>SilAPI\DisassembledEnumeration.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\SilAPI\DisassembledEvent.cs">
-      <Link>SilAPI\DisassembledEvent.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\SilAPI\DisassembledField.cs">
-      <Link>SilAPI\DisassembledField.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\SilAPI\DisassembledIlClass.cs">
-      <Link>SilAPI\DisassembledIlClass.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\SilAPI\DisassembledInterface.cs">
-      <Link>SilAPI\DisassembledInterface.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\SilAPI\DisassembledMethod.cs">
-      <Link>SilAPI\DisassembledMethod.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\SilAPI\DisassembledProperty.cs">
-      <Link>SilAPI\DisassembledProperty.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\SilAPI\DisassembledStructure.cs">
-      <Link>SilAPI\DisassembledStructure.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\SilAPI\Disassembler.cs">
-      <Link>SilAPI\Disassembler.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\SilAPI\DisassemblyTarget.cs">
-      <Link>SilAPI\DisassemblyTarget.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\SilAPI\ILDASM.cs">
-      <Link>SilAPI\ILDASM.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\SilAPI\ILParseHelper.cs">
-      <Link>SilAPI\ILParseHelper.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\SilAPI\ISilProcessor.cs">
-      <Link>SilAPI\ISilProcessor.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\SilAPI\StreamSilProcessor.cs">
-      <Link>SilAPI\StreamSilProcessor.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\TypeDefine\AssemblyDefine.cs">
-      <Link>TypeDefine\AssemblyDefine.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\TypeDefine\MethodDefine.cs">
-      <Link>TypeDefine\MethodDefine.cs</Link>
-    </Compile>
-    <Compile Include="..\ApolloClr\TypeDefine\TypeDefine.cs">
-      <Link>TypeDefine\TypeDefine.cs</Link>
-    </Compile>
     <Compile Include="App.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -148,15 +48,16 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Bridge">
-      <HintPath>packages\Bridge.Core.15.7.0\lib\net40\Bridge.dll</HintPath>
+    <Reference Include="Bridge, Version=15.7.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Bridge.Core.15.7.0\lib\net40\Bridge.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Bridge.Html5">
-      <HintPath>packages\Bridge.Html5.15.7.0\lib\net40\Bridge.Html5.dll</HintPath>
+    <Reference Include="Bridge.Html5, Version=15.7.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Bridge.Html5.15.7.0\lib\net40\Bridge.Html5.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Bridge.Min.15.7.0\build\Bridge.Min.targets" Condition="Exists('..\packages\Bridge.Min.15.7.0\build\Bridge.Min.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

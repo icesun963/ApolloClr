@@ -243,7 +243,14 @@ namespace ApolloClr
                 var parms = method.GetParameters();
                 if (parms.Length > 0)
                 {
-                    if (parms.Last().ParameterType.IsByRef)
+
+                    if (
+#if BRIDGE
+                        false
+#else
+                        parms.Last().ParameterType.IsByRef
+#endif
+                        )
                     {
                         if (parms.Length == 1)
                         {
@@ -320,11 +327,15 @@ namespace ApolloClr
                     {
                         throw  new Exception("GenericMethod£¬First Pargram Type Mast Be System.Type!");
                     }
+#if BRIDGE
+                    throw new NotSupportedException("GenericMethod, In BRIDGE Was Not Supported!");
+#else
                     var genmethod = method.MakeGenericMethod(methodArg[0] as Type);
 
                     var @delage = Delegate.CreateDelegate(funtask, clr, genmethod);
                   
                     tasktype.GetField("Func").SetValue(task, @delage);
+#endif
                 }
                 for (int i = 1; i < 4; i++)
                 {
@@ -359,10 +370,12 @@ namespace ApolloClr
                 if (values.Length > i)
                 {
                     var type = parms[i].ParameterType;
+#if !BRIDGE
                     if (type.IsByRef)
                     {
                         type = type.GetElementType();
                     }
+#endif
                     args[i] = Convert(type, values[i + 1],list);
                 }
             }

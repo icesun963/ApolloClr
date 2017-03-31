@@ -16,7 +16,8 @@ namespace ApolloClr
     {
 #if JS
         public static StackItem SPtrEmpty = null;
-        public object SPtr;
+        public StackObject Ptr;
+        public object VPoint;
 #else
         public static StackItem* SPtrEmpty = null;
         public int* VPoint;
@@ -26,6 +27,8 @@ namespace ApolloClr
         public int IntValue;
         public int LValue;
         public int Index;
+
+
 
         public object Value
         {
@@ -50,11 +53,43 @@ namespace ApolloClr
                         return ValueDouble;
                     }
                 }
+#if JS
+                return (Ptr as StackObject).Object;
+#else
+               return (Ptr.Target as StackObject).Object;
+#endif
 
-                return (Ptr.Target as StackObject).Object;
             }
         }
 
+#if JS
+        public void SetValue(StackValueType vtype, object value)
+        {
+            switch (vtype)
+            {
+                case StackValueType.i4:
+                {
+                    IntValue = (int) value;
+                    break;
+                }
+                case StackValueType.r4:
+                case StackValueType.i8:
+                case StackValueType.r8:
+                    VPoint = value;
+                    break;
+            }
+
+        }
+
+        public int ValueInt => IntValue;
+
+
+        public long ValueLong => (long)VPoint;
+        public float ValueFloat => (float)VPoint;
+
+        public double ValueDouble => (double)VPoint;
+#else
+        
         public void SetValue(StackValueType vtype, object value)
         {
             switch (vtype)
@@ -85,7 +120,6 @@ namespace ApolloClr
             }
         
         }
-
         public int ValueInt
         {
             get { return *VPoint; }
@@ -105,8 +139,28 @@ namespace ApolloClr
         {
             get { return *(double*)VPoint; }
         }
+#endif
 
-       
+#if JS
+        public void CopyFrom(StackItem stackItem)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static implicit operator StackItem(int ptr)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        public static StackItem operator +(StackItem s1, int offset)
+        {
+            throw new NotImplementedException();
+        }
+
+  
+#endif
+
         public static bool operator ==(StackItem s1, StackItem s2)
         {
             if (s1.IntValue == s2.IntValue && s1.Index == s2.Index )

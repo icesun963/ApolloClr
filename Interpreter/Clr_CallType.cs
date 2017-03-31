@@ -30,7 +30,7 @@ namespace ApolloClr
             for (int i = 0; i < count; i++)
             {
 #if JS
-                clr.CallStack[clr.Argp + i] = vs[i];
+                (clr.Argp + i).CopyFrom(vs+ i);
 #else
                 *(clr.Argp + i) = *(vs + i);
                 (clr.Argp + i)->VPoint = &(clr.Argp + i)->IntValue;
@@ -119,7 +119,11 @@ namespace ApolloClr
         public void Switch(int[] pcs)
         {
             var vs = EvaluationStack_Pop();
+#if JS
+            DumpAction(pcs[vs.IntValue]);
+#else
             DumpAction(pcs[vs->IntValue]);
+#endif
         }
 
         /// <summary>

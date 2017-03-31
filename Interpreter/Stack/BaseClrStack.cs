@@ -1,3 +1,5 @@
+using System;
+
 namespace ApolloClr
 {
 #if JS
@@ -40,16 +42,16 @@ namespace ApolloClr
             return result;
         }
 
-        public virtual StackItem[] Pop(int count)
+        public virtual StackItem Pop(int count)
         {
-            StackItem [] result = new StackItem[count];
-            for (int i = 0; i < count; i++)
-            {
-                result[count-i-1] = EvaluationStack[--Esp];
-            }
-            return result;
+            Esp -= count;
+            return EvaluationStack[Esp];
         }
 
+        public StackItem Top()
+        {
+            return EvaluationStack[Esp];
+        }
     }
 #endif
 }
