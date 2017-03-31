@@ -49,9 +49,25 @@ namespace ApolloClr
         public void Push(StackValueType vtype, object value)
         {
             var p = EvaluationStack[Esp++];
-            p.ValueType = vtype;
-            p.VPoint = value;
+            if (vtype == StackValueType.Ref || vtype== StackValueType.i4)
+            {
+                throw new NotSupportedException();
+            }
+            else
+            {
+                p.ValueType = vtype;
+                p.VPoint = value;
+            }
+          
         }
+
+        public void Push(StackValueType vtype, int value)
+        {
+            var p = EvaluationStack[Esp++];
+            p.ValueType = vtype;
+            p.IntValue = value;
+        }
+
 
         public virtual void Push(StackItem obj)
         {

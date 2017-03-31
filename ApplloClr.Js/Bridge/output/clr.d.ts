@@ -2,8 +2,12 @@
 
 declare module ApolloClr {
     export interface BaseClrStack {
+        getItem(index: number): ApolloClr.StackItem;
         reset(): void;
-        push$1(obj: number): void;
+        setCurrent(): void;
+        push$3(obj: number): void;
+        push$2(vtype: ApolloClr.StackValueType, value: Object): void;
+        push$1(vtype: ApolloClr.StackValueType, value: number): void;
         push(obj: ApolloClr.StackItem): void;
         pop(): ApolloClr.StackItem;
         pop$1(count: number): ApolloClr.StackItem;
@@ -12,6 +16,12 @@ declare module ApolloClr {
     export interface BaseClrStackFunc extends Function {
         prototype: BaseClrStack;
         new (x: number): BaseClrStack;
+        /**
+         * ��ǰ��ջ
+         *
+         * @instance
+         */
+        current: ApolloClr.BaseClrStack;
     }
     var BaseClrStack: BaseClrStackFunc;
 
@@ -24,18 +34,6 @@ declare module ApolloClr {
          */
         callStack: ApolloClr.StackItem[];
         /**
-         * ͷָ��
-         *
-         * @instance
-         */
-        csp: ApolloClr.StackItem;
-        /**
-         * ����ָ��
-         *
-         * @instance
-         */
-        argp: ApolloClr.StackItem;
-        /**
          * ��ǰ�ķ���ֵ
          *
          * @instance
@@ -46,6 +44,41 @@ declare module ApolloClr {
         localVarCount: number;
         argsVarCount: number;
         retResult: boolean;
+        getStack(): ApolloClr.BaseClrStack;
+        /**
+         * ͷָ��
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @function getCsp
+         * @return  {ApolloClr.StackItem}
+         */
+        /**
+         * ͷָ��
+         *
+         * @instance
+         * @function setCsp
+         */
+        getCsp(): ApolloClr.StackItem;
+        /**
+         * ����ָ��
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @function getArgp
+         * @return  {ApolloClr.StackItem}
+         */
+        /**
+         * ����ָ��
+         *
+         * @instance
+         * @function setArgp
+         */
+        getArgp(): ApolloClr.StackItem;
         evaluationStack_Push(obj: ApolloClr.StackItem): void;
         evaluationStack_Push$2(obj: number): void;
         evaluationStack_Push$3(args: number[]): void;
@@ -108,17 +141,6 @@ declare module ApolloClr {
          */
         ldc_i4(v: number): void;
         /**
-         * ��λ�ڼ����ջ������ֵ�洢�ڲ������е�ָ�����������̸�ʽ����
-         *
-         * @instance
-         * @public
-         * @this ApolloClr.Clr
-         * @memberof ApolloClr.Clr
-         * @param   {number}    i
-         * @return  {void}
-         */
-        starg(i: number): void;
-        /**
          * ѹ������ ѹ��Evaluation Stack��
          *
          * @instance
@@ -129,7 +151,18 @@ declare module ApolloClr {
          * @param   {Object}                      value
          * @return  {void}
          */
-        ldc(vtype: {v: ApolloClr.StackValueType}, value: {v: Object}): void;
+        ldc(vtype: ApolloClr.StackValueType, value: Object): void;
+        /**
+         * ��λ�ڼ����ջ������ֵ�洢�ڲ������е�ָ�����������̸�ʽ����
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @param   {number}    i
+         * @return  {void}
+         */
+        starg(i: number): void;
         /**
          * ��һ���������� ��ѹ��Evaluation Stack�У�
          *
@@ -196,20 +229,9 @@ declare module ApolloClr {
          * @return  {void}
          */
         ldlen(): void;
-        /**
-         * 将对新的从零开始的一维数组（其元素属于特定类型）的对象引用推送到计算堆栈上。
-         *
-         * @instance
-         * @public
-         * @this ApolloClr.Clr
-         * @memberof ApolloClr.Clr
-         * @param   {Function}    T       
-         * @param   {Function}    type
-         * @return  {void}
-         */
-        newarr<T>(T: {prototype: T}, type: Function): void;
+        newarr(type: Function): void;
         
-        ldelema<T>(T: {prototype: T}, type: Function): void;
+        ldelema(type: Function): void;
         /**
          * 将位于指定数组索引处的 int8 类型的元素作为 int32 加载到计算堆栈的顶部。
          *
@@ -1031,6 +1053,7 @@ declare module ApolloClr {
         setTarget(delegate: Function, target: Object): void;
         getFSet(field: System.Reflection.FieldInfo): {(arg1: Object, arg2: Object): void};
         getValueFromStr(str: string, vtype: ApolloClr.StackValueType): Object;
+        getMethodInfo(type: Function, name: string, types: Function[]): System.Reflection.MethodInfo;
         getTypeByName(name: string): Function;
     }
     var Extensions: ExtensionsFunc;
@@ -1333,12 +1356,13 @@ declare module ApolloClr {
     }
 
     export interface StackItem {
-        ptr: ApolloClr.StackObject;
-        vPoint: Object;
         valueType: ApolloClr.StackValueType;
         intValue: number;
         lValue: number;
         index: number;
+        ptr: ApolloClr.StackObject;
+        vPoint: Object;
+        current: ApolloClr.BaseClrStack;
         getValue(): Object;
         getValueInt(): number;
         getValueLong(): number;
@@ -1349,7 +1373,12 @@ declare module ApolloClr {
     }
     export interface StackItemFunc extends Function {
         prototype: StackItem;
-        new (): StackItem;
+        $ctor1: {
+            new (lindex: number, current: ApolloClr.BaseClrStack): StackItem
+        };
+        ctor: {
+            new (): StackItem
+        };
         sPtrEmpty: ApolloClr.StackItem;
         op_Implicit(ptr: number): ApolloClr.StackItem;
         op_Addition(s1: ApolloClr.StackItem, offset: number): ApolloClr.StackItem;

@@ -112,9 +112,16 @@ namespace ApolloClr.Cross
                 args.Add(Extensions.GetTypeByName(values[i]));
             }
             var methodInfo = type.GetMethod(methodName, args.ToArray());
+#if BRIDGE
+            if (methodInfo == null)
+            {
+                methodInfo = type.GetMethodInfo(methodName, args.ToArray());
+            }
+#endif
             if (methodInfo == null)
             {
                 var coninfo = type.GetConstructor(args.ToArray());
+
                 if (coninfo != null)
                 {
                     ArgCount = coninfo.GetParameters().Length;
@@ -124,13 +131,35 @@ namespace ApolloClr.Cross
                 }
                 else
                 {
-                  
+#if BRIDGE
+
+                    if (methodName == ".ctor")
+                    {
+                        //这个无法找到构造函数，只能直接构造了
+                        ArgCount = 0;
+                        HaseResult = true;
+                        Clr = new Clr(1, ArgCount, HaseResult, 1);
+
+                        var tasktype = typeof(ObjectBuild<>).MakeGenericType(type);
+                        CrossMethodDelegate = Activator.CreateInstance(tasktype) as ICrossMethodDelegate;
+                        return;
+                    }
+
+#endif
+                    throw new NotSupportedException(callname + " methodInfo or coninfo Mast Be Not Null!");
                 }
             }
-            else
+
+            if (methodInfo != null)
             {
                 ArgCount = methodInfo.GetParameters().Length;
                 HaseResult = methodInfo.ReturnType != typeof(void);
+#if BRIDGE
+                if (methodName == "ctor" || methodName == ".ctor")
+                {
+                    HaseResult = true;
+                }
+#endif
                 if (!methodInfo.IsStatic)
                 {
                     ArgCount++;
@@ -139,9 +168,10 @@ namespace ApolloClr.Cross
                 CreatDelegate(methodInfo);
             }
             //构建CLR
-        
-          
+
+
         }
+
 
         public void CreatDelegate(ConstructorInfo methodInfo)
         {

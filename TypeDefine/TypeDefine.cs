@@ -58,23 +58,22 @@ namespace ApolloClr.TypeDefine
             }
             else
             {
-                //≥¢ ‘clr¥©‘Ω
-#if !BRIDGE
+                //try clr cross
                 var method = Cross.CrossDomain.Build(r.OpCode.Arg0 == "instance" ? r.OpCode.Arg1 + " " + r.OpCode.Arg2 : r.OpCode.Arg0 + " " + r.OpCode.Arg1);
                 r.Method = method;
                 r.GetType().GetField("V3").SetValue(r, method);
-#endif
+
             }
         }
 
         public void NewCompile(IOpTask r)
         {
-#if !BRIDGE
-            //≥¢ ‘clr¥©‘Ω
+
+            //try clr cross
             var method = Cross.CrossDomain.Build(r.OpCode.Arg1 + " " + r.OpCode.Arg2);
             r.Method = method;
             r.GetType().GetField("V3").SetValue(r, method);
-#endif
+
         }
     }
 }

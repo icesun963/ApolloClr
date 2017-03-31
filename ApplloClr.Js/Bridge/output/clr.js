@@ -7,6 +7,14 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
     "use strict";
 
     Bridge.define("ApolloClr.BaseClrStack", {
+        statics: {
+            /**
+             * ��ǰ��ջ
+             *
+             * @instance
+             */
+            current: null
+        },
         evaluationStack: null,
         esp: 0,
         ctor: function (x) {
@@ -16,22 +24,43 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
             x = (x + 1) | 0;
             this.evaluationStack = System.Array.init(x, null, ApolloClr.StackItem);
             for (var i = 0; i < x; i = (i + 1) | 0) {
-                this.evaluationStack[i] = new ApolloClr.StackItem();
+                this.evaluationStack[i] = new ApolloClr.StackItem.$ctor1(i, this);
             }
+            this.setCurrent();
+        },
+        getItem: function (index) {
+            return this.evaluationStack[index];
         },
         reset: function () {
             this.esp = 0;
+            ApolloClr.BaseClrStack.current = this;
         },
-        push$1: function (obj) {
+        setCurrent: function () {
+            ApolloClr.BaseClrStack.current = this;
+        },
+        push$3: function (obj) {
             this.evaluationStack[Bridge.identity(this.esp, (this.esp = (this.esp + 1) | 0))].intValue = obj;
         },
+        push$2: function (vtype, value) {
+            var p = this.evaluationStack[Bridge.identity(this.esp, (this.esp = (this.esp + 1) | 0))];
+            if (vtype === ApolloClr.StackValueType.Ref || vtype === ApolloClr.StackValueType.i4) {
+                throw new System.NotSupportedException();
+            } else {
+                p.valueType = vtype;
+                p.vPoint = value;
+            }
+
+        },
+        push$1: function (vtype, value) {
+            var p = this.evaluationStack[Bridge.identity(this.esp, (this.esp = (this.esp + 1) | 0))];
+            p.valueType = vtype;
+            p.intValue = value;
+        },
         push: function (obj) {
-            this.evaluationStack[Bridge.identity(this.esp, (this.esp = (this.esp + 1) | 0))] = obj;
+            this.evaluationStack[Bridge.identity(this.esp, (this.esp = (this.esp + 1) | 0))].copyFrom(obj);
         },
         pop: function () {
             var result = this.evaluationStack[((this.esp = (this.esp - 1) | 0))];
-            this.evaluationStack[this.esp] = new ApolloClr.StackItem();
-
             return result;
         },
         pop$1: function (count) {
@@ -44,7 +73,7 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
     });
 
     Bridge.define("ApolloClr.Clr", {
-        stack: null,
+        _Stack: null,
         /**
          * ����ƨ���� ����λ��Ϊ ����
          ����=��ǰ�ֲ�����+����ֵ+��������
@@ -52,18 +81,9 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
          * @instance
          */
         callStack: null,
-        /**
-         * ͷָ��
-         *
-         * @instance
-         */
-        csp: null,
-        /**
-         * ����ָ��
-         *
-         * @instance
-         */
-        argp: null,
+        callStackClr: null,
+        _Csp: null,
+        _Argp: null,
         /**
          * ��ǰ�ķ���ֵ
          *
@@ -75,6 +95,12 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
         localVarCount: 0,
         argsVarCount: 0,
         retResult: false,
+        conveTypes: null,
+        config: {
+            init: function () {
+                this.conveTypes = System.Array.init([System.Int32, System.Int64, System.Single, System.Double, System.SByte, System.Int16, System.Byte, System.UInt16, System.UInt32, System.UInt64], Function);
+            }
+        },
         ctor: function (localCount, argCount, haseResult, maxStack) {
             if (localCount === void 0) { localCount = 5; }
             if (argCount === void 0) { argCount = 5; }
@@ -82,43 +108,94 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
             if (maxStack === void 0) { maxStack = 5; }
 
             this.$initialize();
-            this.stack = new ApolloClr.BaseClrStack(maxStack);
+            this._Stack = new ApolloClr.BaseClrStack(maxStack);
 
             this.retResult = haseResult;
             this.localVarCount = localCount;
             this.argsVarCount = argCount;
-            this.callStack = System.Array.init(((localCount + argCount) | 0), null, ApolloClr.StackItem);
+            this.callStackClr = new ApolloClr.BaseClrStack(((localCount + argCount) | 0));
+            this.callStack = this.callStackClr.evaluationStack;
             if (this.callStack.length <= 0) {
                 return;
             }
 
-            this.csp = ApolloClr.StackItem.op_Implicit(0);
-            this.argp = ApolloClr.StackItem.op_Addition(this.csp, localCount);
+
+            this._Csp = ApolloClr.StackItem.op_Implicit(0);
+            this._Argp = ApolloClr.StackItem.op_Addition(this.getCsp(), localCount);
+        },
+        getStack: function () {
+            this._Stack.setCurrent();
+            return this._Stack;
+        },
+        /**
+         * ͷָ��
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @function getCsp
+         * @return  {ApolloClr.StackItem}
+         */
+        /**
+         * ͷָ��
+         *
+         * @instance
+         * @function setCsp
+         */
+        getCsp: function () {
+            this.callStackClr.setCurrent();
+            return this._Csp;
+        },
+        /**
+         * ����ָ��
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @function getArgp
+         * @return  {ApolloClr.StackItem}
+         */
+        /**
+         * ����ָ��
+         *
+         * @instance
+         * @function setArgp
+         */
+        getArgp: function () {
+            this.callStackClr.setCurrent();
+            return this._Argp;
         },
         evaluationStack_Push: function (obj) {
-            this.stack.push(obj);
+            this.getStack().push(obj);
         },
         evaluationStack_Push$2: function (obj) {
-            this.stack.push$1(obj);
+            this.getStack().push$3(obj);
         },
         evaluationStack_Push$3: function (args) {
             for (var i = 0; i < args.length; i = (i + 1) | 0) {
-                this.stack.push(ApolloClr.StackItem.op_Addition(this.csp, args[i]));
+                this.getStack().push(ApolloClr.StackItem.op_Addition(this.getCsp(), args[i]));
             }
 
         },
         evaluationStack_Push$1: function (vtype, value) {
+            if (vtype === ApolloClr.StackValueType.i4) {
+                this.getStack().push$1(vtype, System.Nullable.getValue(Bridge.cast(value, System.Int32)));
+            } else {
+                this.getStack().push$2(vtype, value);
+            }
 
         },
         evaluationStack_Push$4: function (obj) {
             var iptr = ApolloClr.StackObject.newObject(obj);
-            //Stack.Push(iptr);
+            this.getStack().push$2(ApolloClr.StackValueType.Ref, iptr);
         },
         evaluationStack_Pop: function () {
-            return this.stack.pop();
+            return this.getStack().pop();
         },
         evaluationStack_Pop$1: function (count) {
-            return this.stack.pop$1(count);
+            return this.getStack().pop$1(count);
         },
         /**
          * �Ƴ���ǰλ�ڼ����ջ������ֵ
@@ -142,7 +219,7 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
          * @return  {void}
          */
         dup: function () {
-            var vs = this.stack.top();
+            var vs = this.getStack().top();
             this.evaluationStack_Push(vs);
         },
         /**
@@ -168,7 +245,7 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
          * @return  {void}
          */
         ldarg: function (i) {
-            this.evaluationStack_Push(ApolloClr.StackItem.op_Addition(this.argp, i));
+            this.evaluationStack_Push(ApolloClr.StackItem.op_Addition(this.getArgp(), i));
         },
         ldstr: function (str) {
             this.evaluationStack_Push$4(str);
@@ -190,20 +267,6 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
             this.evaluationStack_Push$2(v);
         },
         /**
-         * ��λ�ڼ����ջ������ֵ�洢�ڲ������е�ָ�����������̸�ʽ����
-         *
-         * @instance
-         * @public
-         * @this ApolloClr.Clr
-         * @memberof ApolloClr.Clr
-         * @param   {number}    i
-         * @return  {void}
-         */
-        starg: function (i) {
-            var v = this.evaluationStack_Pop();
-            (ApolloClr.StackItem.op_Addition(this.argp, 1)).copyFrom(v);
-        },
-        /**
          * ѹ������ ѹ��Evaluation Stack��
          *
          * @instance
@@ -215,14 +278,28 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
          * @return  {void}
          */
         ldc: function (vtype, value) {
-            if (Bridge.is(value.v, String)) {
-                value.v = ApolloClr.Extensions.getValueFromStr(Bridge.as(value.v, String), vtype.v);
+            if (Bridge.is(value, String)) {
+                value = ApolloClr.Extensions.getValueFromStr(Bridge.as(value, String), vtype);
             }
 
             {
-                this.evaluationStack_Push$1(vtype.v, value.v);
+                this.evaluationStack_Push$1(vtype, value);
             }
 
+        },
+        /**
+         * ��λ�ڼ����ջ������ֵ�洢�ڲ������е�ָ�����������̸�ʽ����
+         *
+         * @instance
+         * @public
+         * @this ApolloClr.Clr
+         * @memberof ApolloClr.Clr
+         * @param   {number}    i
+         * @return  {void}
+         */
+        starg: function (i) {
+            var v = this.evaluationStack_Pop();
+            (ApolloClr.StackItem.op_Addition(this.getArgp(), 1)).copyFrom(v);
         },
         /**
          * ��һ���������� ��ѹ��Evaluation Stack�У�
@@ -235,7 +312,7 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
          * @return  {void}
          */
         ldloc: function (i) {
-            this.evaluationStack_Push(ApolloClr.StackItem.op_Addition(this.csp, i));
+            this.evaluationStack_Push(ApolloClr.StackItem.op_Addition(this.getCsp(), i));
         },
         /**
          * ��һ���������� ��ѹ��Evaluation Stack�У�
@@ -279,7 +356,7 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
          */
         stloc: function (i) {
             var result = this.evaluationStack_Pop();
-            (ApolloClr.StackItem.op_Addition(this.csp, i)).copyFrom(result);
+            (ApolloClr.StackItem.op_Addition(this.getCsp(), i)).copyFrom(result);
         },
         /**
          * ���ô�
@@ -294,7 +371,7 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
 
         },
         reset: function () {
-            this.stack.reset();
+            this.getStack().reset();
             this.resultPoint = null;
         },
         /**
@@ -311,30 +388,17 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
             var array = Bridge.as(vs.getValue(), Array);
             this.evaluationStack_Push$2(array.length);
         },
-        /**
-         * 将对新的从零开始的一维数组（其元素属于特定类型）的对象引用推送到计算堆栈上。
-         *
-         * @instance
-         * @public
-         * @this ApolloClr.Clr
-         * @memberof ApolloClr.Clr
-         * @param   {Function}    T       
-         * @param   {Function}    type
-         * @return  {void}
-         */
-        newarr: function (T, type) {
+        newarr: function (type) {
             var vs = this.evaluationStack_Pop();
-            var array = System.Array.init(vs.intValue, function (){
-                return Bridge.getDefaultValue(T);
-            }, T);
+            var array = System.Array.init(vs.intValue, Bridge.getDefaultValue(type), type);
             this.evaluationStack_Push$4(array);
         },
         
-        ldelema: function (T, type) {
+        ldelema: function (type) {
             var vs = this.evaluationStack_Pop$1(2);
             var ptr = (vs).ptr;
             var index = (ApolloClr.StackItem.op_Addition(vs, 1)).intValue;
-            var sptr = Bridge.merge(new ApolloClr.StackItem(), {
+            var sptr = Bridge.merge(new ApolloClr.StackItem.ctor(), {
                 ptr: ptr,
                 index: index,
                 valueType: ApolloClr.StackValueType.Array
@@ -606,7 +670,7 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
             var count = clr.argsVarCount;
             var vs = this.evaluationStack_Pop$1(count);
             for (var i = 0; i < count; i = (i + 1) | 0) {
-                (ApolloClr.StackItem.op_Addition(clr.argp, i)).copyFrom(ApolloClr.StackItem.op_Addition(vs, i));
+                (ApolloClr.StackItem.op_Addition(clr.getArgp(), i)).copyFrom(ApolloClr.StackItem.op_Addition(vs, i));
             }
 
         },
@@ -1149,8 +1213,231 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
          */
         conv: function (type) {
             var v = this.evaluationStack_Pop();
-            var rv = new ApolloClr.StackItem();
-            throw new System.NotImplementedException();
+
+            var value = v.intValue;
+            if (v.valueType !== ApolloClr.StackValueType.i4) {
+                value = v.vPoint;
+            }
+            switch (type) {
+                case ApolloClr.StackValueType.u1: 
+                    switch (v.valueType) {
+                        case ApolloClr.StackValueType.i4: 
+                            value = (v.intValue & 255);
+                            break;
+                        case ApolloClr.StackValueType.i8: 
+                            value = System.Int64.clipu8(v.getValueLong());
+                            break;
+                        case ApolloClr.StackValueType.r4: 
+                            value = Bridge.Int.clipu8(v.getValueFloat());
+                            break;
+                        case ApolloClr.StackValueType.r8: 
+                            value = Bridge.Int.clipu8(v.getValueDouble());
+                            break;
+                    }
+                    break;
+                case ApolloClr.StackValueType.i1: 
+                    switch (v.valueType) {
+                        case ApolloClr.StackValueType.i4: 
+                            value = Bridge.Int.sxb(v.intValue & 255);
+                            break;
+                        case ApolloClr.StackValueType.i8: 
+                            value = System.Int64.clip8(v.getValueLong());
+                            break;
+                        case ApolloClr.StackValueType.r4: 
+                            value = Bridge.Int.clip8(v.getValueFloat());
+                            break;
+                        case ApolloClr.StackValueType.r8: 
+                            value = Bridge.Int.clip8(v.getValueDouble());
+                            break;
+                    }
+                    break;
+                case ApolloClr.StackValueType.u2: 
+                    switch (v.valueType) {
+                        case ApolloClr.StackValueType.i4: 
+                            value = (v.intValue & 65535);
+                            break;
+                        case ApolloClr.StackValueType.i8: 
+                            value = System.Int64.clipu16(v.getValueLong());
+                            break;
+                        case ApolloClr.StackValueType.r4: 
+                            value = Bridge.Int.clipu16(v.getValueFloat());
+                            break;
+                        case ApolloClr.StackValueType.r8: 
+                            value = Bridge.Int.clipu16(v.getValueDouble());
+                            break;
+                    }
+                    break;
+                case ApolloClr.StackValueType.i2: 
+                    switch (v.valueType) {
+                        case ApolloClr.StackValueType.i4: 
+                            value = Bridge.Int.sxs(v.intValue & 65535);
+                            break;
+                        case ApolloClr.StackValueType.i8: 
+                            value = System.Int64.clip16(v.getValueLong());
+                            break;
+                        case ApolloClr.StackValueType.r4: 
+                            value = Bridge.Int.clip16(v.getValueFloat());
+                            break;
+                        case ApolloClr.StackValueType.r8: 
+                            value = Bridge.Int.clip16(v.getValueDouble());
+                            break;
+                    }
+                    break;
+                case ApolloClr.StackValueType.u4: 
+                    switch (v.valueType) {
+                        case ApolloClr.StackValueType.i4: 
+                            value = ((v.intValue >>> 0)) | 0;
+                            break;
+                        case ApolloClr.StackValueType.i8: 
+                            value = (System.Int64.clipu32(v.getValueLong())) | 0;
+                            break;
+                        case ApolloClr.StackValueType.r4: 
+                            value = (Bridge.Int.clipu32(v.getValueFloat())) | 0;
+                            break;
+                        case ApolloClr.StackValueType.r8: 
+                            value = (Bridge.Int.clipu32(v.getValueDouble())) | 0;
+                            break;
+                    }
+                    break;
+                case ApolloClr.StackValueType.i4: 
+                    switch (v.valueType) {
+                        case ApolloClr.StackValueType.i4: 
+                            value = v.intValue;
+                            break;
+                        case ApolloClr.StackValueType.i8: 
+                            value = System.Int64.clip32(v.getValueLong());
+                            break;
+                        case ApolloClr.StackValueType.r4: 
+                            value = Bridge.Int.clip32(v.getValueFloat());
+                            break;
+                        case ApolloClr.StackValueType.r8: 
+                            value = Bridge.Int.clip32(v.getValueDouble());
+                            break;
+                    }
+                    break;
+                case ApolloClr.StackValueType.r4: 
+                    switch (v.valueType) {
+                        case ApolloClr.StackValueType.i4: 
+                            {
+                                value = v.intValue;
+
+                                break;
+                            }
+                        case ApolloClr.StackValueType.i8: 
+                            {
+                                value = System.Int64.toNumber(v.getValueLong());
+
+                                break;
+                            }
+                        case ApolloClr.StackValueType.r4: 
+                            {
+                                value = v.getValueFloat();
+
+                                break;
+                            }
+                        case ApolloClr.StackValueType.r8: 
+                            {
+                                value = v.getValueDouble();
+
+                                break;
+                            }
+                    }
+                    break;
+                case ApolloClr.StackValueType.u8: 
+                    switch (v.valueType) {
+                        case ApolloClr.StackValueType.i4: 
+                            {
+                                value = Bridge.Int.clipu64(v.intValue);
+
+                                break;
+                            }
+                        case ApolloClr.StackValueType.i8: 
+                            {
+                                value = System.Int64.clipu64(v.getValueLong());
+
+                                break;
+                            }
+                        case ApolloClr.StackValueType.r4: 
+                            {
+                                value = Bridge.Int.clipu64(v.getValueFloat());
+
+                                break;
+                            }
+                        case ApolloClr.StackValueType.r8: 
+                            {
+                                value = Bridge.Int.clipu64(v.getValueDouble());
+
+                                break;
+                            }
+                    }
+                    break;
+                case ApolloClr.StackValueType.i8: 
+                    switch (v.valueType) {
+                        case ApolloClr.StackValueType.i4: 
+                            {
+                                value = System.Int64(v.intValue);
+
+                                break;
+                            }
+                        case ApolloClr.StackValueType.i8: 
+                            {
+                                value = v.getValueLong();
+
+                                break;
+                            }
+                        case ApolloClr.StackValueType.r4: 
+                            {
+                                value = Bridge.Int.clip64(v.getValueFloat());
+
+                                break;
+                            }
+                        case ApolloClr.StackValueType.r8: 
+                            {
+                                value = Bridge.Int.clip64(v.getValueDouble());
+
+                                break;
+                            }
+                    }
+                    break;
+                case ApolloClr.StackValueType.r8: 
+                    switch (v.valueType) {
+                        case ApolloClr.StackValueType.i4: 
+                            {
+                                value = v.intValue;
+
+                                break;
+                            }
+                        case ApolloClr.StackValueType.i8: 
+                            {
+                                value = System.Int64.toNumber(v.getValueLong());
+
+                                break;
+                            }
+                        case ApolloClr.StackValueType.r4: 
+                            {
+                                value = v.getValueFloat();
+
+                                break;
+                            }
+                        case ApolloClr.StackValueType.r8: 
+                            {
+                                value = v.getValueDouble();
+
+                                break;
+                            }
+                    }
+                    break;
+            }
+            switch (type) {
+                case ApolloClr.StackValueType.i8: 
+                case ApolloClr.StackValueType.r8: 
+                case ApolloClr.StackValueType.r4: 
+                    this.evaluationStack_Push$1(type, value);
+                    break;
+                default: 
+                    this.evaluationStack_Push$1(type, System.Nullable.getValue(Bridge.cast(value, System.Int32)));
+                    break;
+            }
 
 
         },
@@ -1165,7 +1452,7 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
          * @return  {void}
          */
         ldind: function (type) {
-            var vs = this.stack.top();
+            var vs = this.getStack().top();
             switch (vs.valueType) {
                 case ApolloClr.StackValueType.Array: 
                     {
@@ -1196,7 +1483,7 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
          * @return  {void}
          */
         stind: function (type) {
-            var vs = this.stack.pop$1(2);
+            var vs = this.getStack().pop$1(2);
             var vsv = ApolloClr.StackItem.op_Addition(vs, 1);
             switch (vs.valueType) {
                 case ApolloClr.StackValueType.Array: 
@@ -1230,6 +1517,7 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
             var vs = this.evaluationStack_Pop$1(2);
             //var x = *vs->VPoint + *(vs + 1)->VPoint;
             var x = (vs.intValue + (ApolloClr.StackItem.op_Addition(vs, 1)).intValue) | 0;
+            this.evaluationStack_Push$2(x);
 
         },
         /**
@@ -1245,6 +1533,7 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
             var vs = this.evaluationStack_Pop$1(2);
             //var x = *vs->VPoint + *(vs + 1)->VPoint;
             var x = (vs.intValue - (ApolloClr.StackItem.op_Addition(vs, 1)).intValue) | 0;
+            this.evaluationStack_Push$2(x);
 
 
         },
@@ -1261,6 +1550,7 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
             var vs = this.evaluationStack_Pop$1(2);
             //var x = *vs->VPoint + *(vs + 1)->VPoint;
             var x = (vs.intValue * (ApolloClr.StackItem.op_Addition(vs, 1)).intValue) | 0;
+            this.evaluationStack_Push$2(x);
 
 
         },
@@ -1277,6 +1567,7 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
             var vs = this.evaluationStack_Pop$1(2);
             //var x = *vs->VPoint + *(vs + 1)->VPoint;
             var x = (Bridge.Int.div(vs.intValue, (ApolloClr.StackItem.op_Addition(vs, 1)).intValue)) | 0;
+            this.evaluationStack_Push$2(x);
 
 
         },
@@ -1293,6 +1584,7 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
             var vs = this.evaluationStack_Pop$1(2);
             //var x = *vs->VPoint + *(vs + 1)->VPoint;
             var x = vs.intValue % (ApolloClr.StackItem.op_Addition(vs, 1)).intValue;
+            this.evaluationStack_Push$2(x);
 
 
         },
@@ -1508,6 +1800,9 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
                 $t = Bridge.getEnumerator(list);
                 while ($t.moveNext()) {
                     var line = $t.getCurrent();
+                    if (System.String.isNullOrEmpty(line.opCode)) {
+                        continue;
+                    }
                     if (Bridge.referenceEquals(line.opCode, ".try")) {
 
                     }
@@ -1817,15 +2112,18 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
             this.PC = 0;
             this.isEnd = false;
             while (this.PC < this.end) {
-                try {
-                    this.lines[this.PC].ApolloClr$IOpTask$run();
 
-                }
-                catch (ex) {
-                    ex = System.Exception.create(ex);
-                    this.clr.evaluationStack_Push$2(0);
-                    this.throwAction(ex, -1);
-                }
+                //try
+                //{
+                this.lines[this.PC].ApolloClr$IOpTask$run();
+
+                //}
+                //catch (Exception ex)
+                //{
+                //    Clr.EvaluationStack_Push(0);
+                //    ThrowAction(ex, -1);
+                //}
+
                 this.PC = (this.PC + 1) | 0;
             }
 
@@ -1865,6 +2163,9 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
 
 
                     var xfield = Bridge.Reflection.getMembers(Function, 4, 284, "_target");
+                    if (xfield == null) {
+                        throw new System.NotSupportedException("_target field was not found!");
+                    }
                     ApolloClr.Extensions.deleageSetFun = ApolloClr.Extensions.getFSet(xfield);
                 }
                 ApolloClr.Extensions.deleageSetFun(delegate, target);
@@ -1903,6 +2204,26 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
 
                 return value;
             },
+            getMethodInfo: function (type, name, types) {
+                var $t;
+                var mi = Bridge.Reflection.getMembers(type, 8, 284, name, types);
+                if (mi != null) {
+                    return mi;
+                }
+                mi = Bridge.Reflection.getMembers(type, 8, 284, name.toLowerCase(), types);
+
+                if (mi == null) {
+                    $t = Bridge.getEnumerator(Bridge.Reflection.getMembers(type, 8, 28));
+                    while ($t.moveNext()) {
+                        var methodInfo = $t.getCurrent();
+                        Bridge.Console.log(methodInfo.n);
+                        if (Bridge.referenceEquals(methodInfo.n.toLowerCase(), name.toLowerCase())) {
+                            return methodInfo;
+                        }
+                    }
+                }
+                return mi;
+            },
             getTypeByName: function (name) {
                 name = System.String.replaceAll(name, "[mscorlib]", "");
                 var type = Bridge.Reflection.getType(name);
@@ -1932,6 +2253,9 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
                         return System.Double;
                     case "float32": 
                         return System.Single;
+                }
+                if (Bridge.referenceEquals(name, "System.Console")) {
+                    return console;
                 }
                 if (type == null) {
                     throw new System.NotSupportedException(System.String.concat("Type  Was  Not Fount :", name));
@@ -1971,7 +2295,43 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
             }
         },
         $main: function () {
+            var code = "\r\n\tIL_0000: nop\r\n\tIL_0001: ldc.i4.1\r\n\tIL_0002: stloc.0\r\n\tIL_0003: ldc.i4.2\r\n\tIL_0004: stloc.1\r\n\tIL_0005: ldc.i4.3\r\n\tIL_0006: stloc.2\r\n\tIL_0007: ldloc.0\r\n\tIL_0008: ldloc.1\r\n\tIL_0009: add\r\n\tIL_000a: ldloc.2\r\n\tIL_000b: add\r\n\tIL_000c: stloc.3\r\n\tIL_000d: ldloc.3\r\n\tIL_000e: stloc.s 4\r\n\tIL_0010: br.s IL_0012\r\n\r\n\tIL_0012: ldloc.s 4\r\n\tIL_0014: ret\r\n";
+            if (true) {
+                var count = 1000000;
+                var sw = new System.Diagnostics.Stopwatch();
+                var func = ApolloClr.MethodTasks.build$1(code).compile();
 
+
+                sw.restart();
+                sw.start();
+                for (var i = 0; i < count; i = (i + 1) | 0) {
+                    func.run();
+                }
+                sw.stop();
+                Bridge.Console.log(sw.milliseconds().toString());
+                sw.restart();
+                sw.start();
+                for (var i1 = 0; i1 < count; i1 = (i1 + 1) | 0) {
+                    ApolloClr.Js.App.run1();
+                }
+                sw.stop();
+                Bridge.Console.log(sw.milliseconds().toString());
+            }
+
+            $.ajax({ url: "out.il", data: "", contentType: "application/json; charset=utf-8", success: $asm.$.ApolloClr.Js.App.f1 });
+        }
+    });
+
+    Bridge.ns("ApolloClr.Js.App", $asm.$);
+
+    Bridge.apply($asm.$.ApolloClr.Js.App, {
+        f1: function (data, str, jqxhr) {
+            //Console.WriteLine(str);
+
+            var json = System.String.concat(data, "");
+            Bridge.Console.log(System.String.concat("Result:", json));
+            var result = ApolloClr.TypeDefine.AssemblyDefine.readAndRun(json, "Test", "RunF1");
+            Bridge.Console.log(System.String.concat("End:", JSON.stringify(result)));
         }
     });
 
@@ -2153,7 +2513,7 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
                         var before = input.getItem(((i - 1) | 0));
                         var next = input.getItem(((i + 1) | 0));
                         var newx2 = input.getItem(((((i + 1) | 0) + 1) | 0));
-                        if (opSpeed.contains(now.op)) {
+                        if (opSpeed.contains(now.op) && locals != null) {
                             if (Bridge.referenceEquals(before2.op, "ldc")) {
                                 now.opCode = System.String.concat(now.opCode, (System.String.concat(".", before2.opArg0)));
                             } else if (Bridge.referenceEquals(before.op, "ldc")) {
@@ -4586,10 +4946,13 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
         statics: {
             sPtrEmpty: null,
             op_Implicit: function (ptr) {
-                throw new System.NotImplementedException();
+                return ApolloClr.BaseClrStack.current.getItem(ptr);
             },
             op_Addition: function (s1, offset) {
-                throw new System.NotImplementedException();
+                if (offset === 0) {
+                    return s1;
+                }
+                return s1.current.getItem(((s1.lValue + offset) | 0));
             },
             op_Equality: function (s1, s2) {
                 if (s1.intValue === s2.intValue && s1.index === s2.index) {
@@ -4613,12 +4976,22 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
                 return s1.intValue <= s2.intValue;
             }
         },
-        ptr: null,
-        vPoint: null,
         valueType: 0,
         intValue: 0,
         lValue: 0,
         index: 0,
+        ptr: null,
+        vPoint: null,
+        current: null,
+        $ctor1: function (lindex, current) {
+            this.$initialize();
+            this.lValue = lindex;
+            this.current = current;
+        },
+        ctor: function () {
+            this.$initialize();
+
+        },
         getValue: function () {
             switch (this.valueType) {
                 case ApolloClr.StackValueType.i4: 
@@ -4669,7 +5042,11 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
 
         },
         copyFrom: function (stackItem) {
-            throw new System.NotImplementedException();
+            this.index = stackItem.index;
+            this.intValue = stackItem.intValue;
+            this.ptr = stackItem.ptr;
+            this.vPoint = stackItem.vPoint;
+            this.valueType = stackItem.valueType;
         }
     });
 
@@ -4839,10 +5216,20 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
             r.ApolloClr$IOpTask$setMethod(find);
             Bridge.Reflection.fieldAccess(Bridge.Reflection.getMembers(Bridge.getType(r), 4, 284, "V3"), r, find);
         } else {
-            //����clr��Խ
+            //try clr cross
+            var method = ApolloClr.Cross.CrossDomain.build(Bridge.referenceEquals(r.ApolloClr$IOpTask$getOpCode().arg0, "instance") ? System.String.concat(r.ApolloClr$IOpTask$getOpCode().arg1, " ", r.ApolloClr$IOpTask$getOpCode().arg2) : System.String.concat(r.ApolloClr$IOpTask$getOpCode().arg0, " ", r.ApolloClr$IOpTask$getOpCode().arg1));
+            r.ApolloClr$IOpTask$setMethod(method);
+            Bridge.Reflection.fieldAccess(Bridge.Reflection.getMembers(Bridge.getType(r), 4, 284, "V3"), r, method);
+
         }
     },
     newCompile: function (r) {
+
+        //try clr cross
+        var method = ApolloClr.Cross.CrossDomain.build(System.String.concat(r.ApolloClr$IOpTask$getOpCode().arg1, " ", r.ApolloClr$IOpTask$getOpCode().arg2));
+        r.ApolloClr$IOpTask$setMethod(method);
+        Bridge.Reflection.fieldAccess(Bridge.Reflection.getMembers(Bridge.getType(r), 4, 284, "V3"), r, method);
+
     }
     });
 
@@ -5633,7 +6020,11 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
             }
             var methodInfo = Bridge.Reflection.getMembers(type, 8, 284, methodName, args.toArray());
             if (methodInfo == null) {
+                methodInfo = ApolloClr.Extensions.getMethodInfo(type, methodName, args.toArray());
+            }
+            if (methodInfo == null) {
                 var coninfo = Bridge.Reflection.getMembers(type, 1, 284, null, args.toArray());
+
                 if (coninfo != null) {
                     this.argCount = (coninfo.pi || []).length;
                     this.haseResult = true;
@@ -5641,10 +6032,27 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
                     this.creatDelegate(coninfo);
                 } else {
 
+                    if (Bridge.referenceEquals(methodName, ".ctor")) {
+                        //����޷��ҵ����캯����ֻ��ֱ�ӹ�����
+                        this.argCount = 0;
+                        this.haseResult = true;
+                        this.clr = new ApolloClr.Clr(1, this.argCount, this.haseResult, 1);
+
+                        var tasktype = System.Exction.makeGenericType(ApolloClr.Cross.ObjectBuild$1, [type]);
+                        this.setCrossMethodDelegate(Bridge.as(Bridge.createInstance(tasktype), ApolloClr.Cross.ICrossMethodDelegate));
+                        return;
+                    }
+
+                    throw new System.NotSupportedException(System.String.concat(callname, " methodInfo or coninfo Mast Be Not Null!"));
                 }
-            } else {
+            }
+
+            if (methodInfo != null) {
                 this.argCount = (methodInfo.pi || []).length;
                 this.haseResult = !Bridge.referenceEquals(methodInfo.rt, Object);
+                if (Bridge.referenceEquals(methodName, "ctor") || Bridge.referenceEquals(methodName, ".ctor")) {
+                    this.haseResult = true;
+                }
                 if (!(methodInfo.is || false)) {
                     this.argCount = (this.argCount + 1) | 0;
                 }
@@ -5656,7 +6064,7 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
 
         },
         run: function () {
-            var vs = this.clr.argp;
+            var vs = this.clr.getArgp();
             var ptr = ApolloClr.StackObject.op_Implicit(vs);
             //��ֵ���� ��ֵ
             if (this.isStatic) {
@@ -5694,7 +6102,7 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
 
             this.getCrossMethodDelegate().ApolloClr$Cross$ICrossMethodDelegate$run();
             if (this.haseResult) {
-                this.clr.resultPoint = this.clr.csp;
+                this.clr.resultPoint = this.clr.getCsp();
                 this.clr.resultPoint.valueType = ApolloClr.StackValueType.Ref;
                 this.clr.resultPoint.ptr = ApolloClr.StackObject.newObject(this.getCrossMethodDelegate().ApolloClr$Cross$ICrossMethodDelegate$getResult());
             }
@@ -7968,11 +8376,11 @@ Bridge.assembly("ApplloClr.Js", function ($asm, globals) {
     $m($n[2].ILParseHelper, function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"GetClassDeclarationParts","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0},{"n":"modifiers","out":true,"pt":$n[0].List$1(String),"ps":1},{"n":"className","out":true,"pt":String,"ps":2},{"n":"templateSpecification","out":true,"pt":String,"ps":3}],"sn":"getClassDeclarationParts","rt":Object,"p":[String,$n[0].List$1(String),String,String]},{"a":2,"n":"GetClassNameFromClassDeclarationLine","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0},{"n":"className","out":true,"pt":String,"ps":1},{"n":"templateSpecification","out":true,"pt":String,"ps":2}],"sn":"getClassNameFromClassDeclarationLine","rt":Object,"p":[String,String,String]},{"a":2,"n":"GetEventNameFromDeclarationLine","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"getEventNameFromDeclarationLine","rt":String,"p":[String]},{"a":2,"n":"GetMethodNameFromDeclarationLine","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"getMethodNameFromDeclarationLine","rt":String,"p":[String]},{"a":2,"n":"GetPropertyNameFromDeclarationLine","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"getPropertyNameFromDeclarationLine","rt":String,"p":[String]},{"a":2,"n":"IsLineAnyLevelIlClassDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"isLineAnyLevelIlClassDeclaration","rt":Boolean,"p":[String]},{"a":2,"n":"IsLineClassDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"isLineClassDeclaration","rt":Boolean,"p":[String]},{"a":2,"n":"IsLineClassEndDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0},{"n":"className","pt":String,"ps":1}],"sn":"isLineClassEndDeclaration","rt":Boolean,"p":[String,String]},{"a":2,"n":"IsLineEventEndDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0},{"n":"ilClassName","pt":String,"ps":1},{"n":"propertyName","pt":String,"ps":2}],"sn":"isLineEventEndDeclaration","rt":Boolean,"p":[String,String,String]},{"a":2,"n":"IsLineEventPropertyDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"isLineEventPropertyDeclaration","rt":Boolean,"p":[String]},{"a":2,"n":"IsLineFieldDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"isLineFieldDeclaration","rt":Boolean,"p":[String]},{"a":2,"n":"IsLineInterfaceDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"isLineInterfaceDeclaration","rt":Boolean,"p":[String]},{"a":2,"n":"IsLineMethodDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"isLineMethodDeclaration","rt":Boolean,"p":[String]},{"a":2,"n":"IsLineMethodEndDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0},{"n":"ilClassName","pt":String,"ps":1},{"n":"methodName","pt":String,"ps":2}],"sn":"isLineMethodEndDeclaration","rt":Boolean,"p":[String,String,String]},{"a":2,"n":"IsLinePropertyDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"isLinePropertyDeclaration","rt":Boolean,"p":[String]},{"a":2,"n":"IsLinePropertyEndDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0},{"n":"ilClassName","pt":String,"ps":1},{"n":"propertyName","pt":String,"ps":2}],"sn":"isLinePropertyEndDeclaration","rt":Boolean,"p":[String,String,String]},{"a":2,"n":"IsLineSourceComment","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"isLineSourceComment","rt":Boolean,"p":[String]},{"a":2,"n":"IsLineStartClassEndToken","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"isLineStartClassEndToken","rt":Boolean,"p":[String]},{"a":2,"n":"IsLineStructDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"isLineStructDeclaration","rt":Boolean,"p":[String]},{"a":2,"n":"IsLineTopLevelIlClassDeclaration","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0}],"sn":"isLineTopLevelIlClassDeclaration","rt":Boolean,"p":[String]},{"a":2,"n":"ReadExtendsLine","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0},{"n":"baseType","out":true,"pt":String,"ps":1}],"sn":"readExtendsLine","rt":Boolean,"p":[String,String]},{"a":1,"n":"Token_EndClass","is":true,"t":4,"rt":String,"sn":"Token_EndClass"},{"a":1,"n":"Token_EndEvent","is":true,"t":4,"rt":String,"sn":"Token_EndEvent"},{"a":1,"n":"Token_EndMethod","is":true,"t":4,"rt":String,"sn":"Token_EndMethod"},{"a":1,"n":"Token_EndProperty","is":true,"t":4,"rt":String,"sn":"Token_EndProperty"},{"a":1,"n":"Token_Event","is":true,"t":4,"rt":String,"sn":"Token_Event"},{"a":1,"n":"Token_Extends","is":true,"t":4,"rt":String,"sn":"Token_Extends"},{"a":1,"n":"Token_Field","is":true,"t":4,"rt":String,"sn":"Token_Field"},{"a":1,"n":"Token_Interface","is":true,"t":4,"rt":String,"sn":"Token_Interface"},{"a":1,"n":"Token_Method","is":true,"t":4,"rt":String,"sn":"Token_Method"},{"a":1,"n":"Token_Property","is":true,"t":4,"rt":String,"sn":"Token_Property"},{"a":1,"n":"Token_SourceComment","is":true,"t":4,"rt":String,"sn":"Token_SourceComment"},{"a":1,"n":"Token_StartClass","is":true,"t":4,"rt":String,"sn":"Token_StartClass"},{"a":1,"n":"Token_Structure","is":true,"t":4,"rt":String,"sn":"Token_Structure"}]}; });
     $m($n[2].ISilProcessor, function () { return {"att":161,"a":2,"m":[{"ab":true,"a":2,"n":"GetFileIL","t":8,"sn":"SilAPI$ISilProcessor$getFileIL","rt":String},{"ab":true,"a":2,"n":"GetModuleIL","t":8,"sn":"SilAPI$ISilProcessor$getModuleIL","rt":String},{"ab":true,"a":2,"n":"GetSelectionIL","t":8,"sn":"SilAPI$ISilProcessor$getSelectionIL","rt":String},{"ab":true,"a":2,"n":"ProcessIL","t":8,"sn":"SilAPI$ISilProcessor$processIL","rt":Boolean}]}; });
     $m($n[2].StreamSilProcessor, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":1,"n":"BurnCommentBlocks","is":true,"t":8,"pi":[{"n":"line","ref":true,"pt":String,"ps":0},{"n":"reader","pt":$n[4].StringReader,"ps":1}],"sn":"burnCommentBlocks","rt":Object,"p":[String,$n[4].StringReader]},{"a":1,"n":"GenerateModuleIL","t":8,"sn":"generateModuleIL","rt":Object},{"a":1,"n":"GetComment","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0},{"n":"comment","out":true,"pt":String,"ps":1},{"n":"linePart1","out":true,"pt":$n[1].Int32,"ps":2}],"sn":"getComment","rt":Boolean,"p":[String,String,$n[1].Int32]},{"a":2,"n":"GetFileIL","t":8,"sn":"getFileIL","rt":String},{"a":1,"n":"GetLineHint","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0},{"n":"firstPart","out":true,"pt":$n[1].Int32,"ps":1},{"n":"secondPart","out":true,"pt":$n[1].Int32,"ps":2}],"sn":"getLineHint","rt":Boolean,"p":[String,$n[1].Int32,$n[1].Int32]},{"a":2,"n":"GetModuleIL","t":8,"sn":"getModuleIL","rt":String},{"a":2,"n":"GetSelectionIL","t":8,"sn":"getSelectionIL","rt":String},{"a":1,"n":"GetSourceFile","is":true,"t":8,"pi":[{"n":"line","pt":String,"ps":0},{"n":"sourceFilePath","out":true,"pt":String,"ps":1}],"sn":"getSourceFile","rt":Boolean,"p":[String,String]},{"a":1,"n":"ParseFileIL","t":8,"sn":"parseFileIL","rt":Object},{"a":1,"n":"ParseSelectionIL","t":8,"sn":"parseSelectionIL","rt":Object},{"v":true,"a":2,"n":"ProcessIL","t":8,"sn":"processIL","rt":Boolean},{"a":2,"n":"SourceFileFirstLine","t":16,"rt":$n[1].Int32,"g":{"a":2,"n":"get_SourceFileFirstLine","t":8,"sn":"getSourceFileFirstLine","rt":$n[1].Int32},"s":{"a":2,"n":"set_SourceFileFirstLine","t":8,"pi":[{"n":"value","pt":$n[1].Int32,"ps":0}],"sn":"setSourceFileFirstLine","rt":Object,"p":[$n[1].Int32]}},{"a":2,"n":"SourceFileLastLine","t":16,"rt":$n[1].Int32,"g":{"a":2,"n":"get_SourceFileLastLine","t":8,"sn":"getSourceFileLastLine","rt":$n[1].Int32},"s":{"a":2,"n":"set_SourceFileLastLine","t":8,"pi":[{"n":"value","pt":$n[1].Int32,"ps":0}],"sn":"setSourceFileLastLine","rt":Object,"p":[$n[1].Int32]}},{"a":2,"n":"SourceFilePath","t":16,"rt":String,"g":{"a":2,"n":"get_SourceFilePath","t":8,"sn":"getSourceFilePath","rt":String},"s":{"a":2,"n":"set_SourceFilePath","t":8,"pi":[{"n":"value","pt":String,"ps":0}],"sn":"setSourceFilePath","rt":Object,"p":[String]}},{"a":2,"n":"SourceILStream","t":16,"rt":String,"g":{"a":2,"n":"get_SourceILStream","t":8,"sn":"getSourceILStream","rt":String},"s":{"a":2,"n":"set_SourceILStream","t":8,"pi":[{"n":"value","pt":String,"ps":0}],"sn":"setSourceILStream","rt":Object,"p":[String]}},{"a":3,"n":"fileIL","t":4,"rt":String,"sn":"fileIL"},{"a":3,"n":"moduleIL","t":4,"rt":String,"sn":"moduleIL"},{"a":3,"n":"selectionIL","t":4,"rt":String,"sn":"selectionIL"}]}; });
-    $m($n[6].Extensions, function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"GetFSet","is":true,"t":8,"pi":[{"n":"field","pt":$n[5].FieldInfo,"ps":0}],"sn":"getFSet","rt":Function,"p":[$n[5].FieldInfo]},{"a":2,"n":"GetTypeByName","is":true,"t":8,"pi":[{"n":"name","pt":String,"ps":0}],"sn":"getTypeByName","rt":Function,"p":[String]},{"a":2,"n":"GetValueFromStr","is":true,"t":8,"pi":[{"n":"str","pt":String,"ps":0},{"n":"vtype","pt":$n[6].StackValueType,"ps":1}],"sn":"getValueFromStr","rt":Object,"p":[String,$n[6].StackValueType]},{"a":2,"n":"SetTarget","is":true,"t":8,"pi":[{"n":"delegate","pt":Function,"ps":0},{"n":"target","pt":Object,"ps":1}],"sn":"setTarget","rt":Object,"p":[Function,Object]},{"a":1,"n":"DeleageSetFun","is":true,"t":4,"rt":Function,"sn":"deleageSetFun"}]}; });
-    $m($n[6].Clr, function () { return {"att":1048577,"a":2,"m":[{"a":2,"n":".ctor","t":1,"p":[$n[1].Int32,$n[1].Int32,Boolean,$n[1].Int32],"pi":[{"n":"localCount","dv":5,"o":true,"pt":$n[1].Int32,"ps":0},{"n":"argCount","dv":5,"o":true,"pt":$n[1].Int32,"ps":1},{"n":"haseResult","dv":true,"o":true,"pt":Boolean,"ps":2},{"n":"maxStack","dv":5,"o":true,"pt":$n[1].Int32,"ps":3}],"sn":"ctor"},{"v":true,"a":2,"n":"Add","t":8,"sn":"add","rt":Object},{"v":true,"a":2,"n":"And","t":8,"sn":"and","rt":Object},{"a":2,"n":"Arglist","t":8,"sn":"arglist","rt":Object},{"v":true,"a":2,"n":"Beq","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"beq","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Bge","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"bge","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Bgt","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"bgt","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Ble","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"ble","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Blt","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"blt","rt":Object,"p":[String,String,$n[1].Int32]},{"a":2,"n":"Box","t":8,"pi":[{"n":"type","pt":Function,"ps":0}],"tpc":1,"tprm":["T"],"sn":"box","rt":Object,"p":[Function]},{"v":true,"a":2,"n":"Br","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"br","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Break","t":8,"sn":"break","rt":Object},{"v":true,"a":2,"n":"Brfalse","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"brfalse","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Brtrue","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"brtrue","rt":Object,"p":[String,String,$n[1].Int32]},{"a":2,"n":"Call","t":8,"pi":[{"n":"retType","pt":String,"ps":0},{"n":"method","pt":String,"ps":1},{"n":"task","pt":$n[6].MethodTasks,"ps":2}],"sn":"call","rt":Object,"p":[String,String,$n[6].MethodTasks]},{"a":2,"n":"Calli","t":8,"sn":"calli","rt":Object},{"a":2,"n":"Callvirt","t":8,"pi":[{"n":"instance","pt":String,"ps":0},{"n":"return","pt":String,"ps":1},{"n":"task","pt":$n[6].MethodTasks,"ps":2}],"sn":"callvirt","rt":Object,"p":[String,String,$n[6].MethodTasks]},{"a":2,"n":"Castclass","t":8,"sn":"castclass","rt":Object},{"v":true,"a":2,"n":"Catch","t":8,"pi":[{"n":"spc","pt":$n[1].Int32,"ps":0},{"n":"epc","pt":$n[1].Int32,"ps":1}],"sn":"catch","rt":Object,"p":[$n[1].Int32,$n[1].Int32]},{"v":true,"a":2,"n":"Ceq","t":8,"sn":"ceq","rt":Object},{"v":true,"a":2,"n":"Cgt","t":8,"sn":"cgt","rt":Object},{"a":2,"n":"Ckfinite","t":8,"sn":"ckfinite","rt":Object},{"v":true,"a":2,"n":"Clt","t":8,"sn":"clt","rt":Object},{"a":2,"n":"Constrained","t":8,"sn":"constrained","rt":Object},{"a":2,"n":"Conv","t":8,"pi":[{"n":"type","pt":$n[6].StackValueType,"ps":0}],"sn":"conv","rt":Object,"p":[$n[6].StackValueType]},{"a":2,"n":"CopyToArgs","t":8,"pi":[{"n":"clr","pt":$n[6].Clr,"ps":0}],"sn":"copyToArgs","rt":Object,"p":[$n[6].Clr]},{"a":2,"n":"Cpblk","t":8,"sn":"cpblk","rt":Object},{"a":2,"n":"Cpobj","t":8,"sn":"cpobj","rt":Object},{"v":true,"a":2,"n":"Div","t":8,"sn":"div","rt":Object},{"a":2,"n":"Dup","t":8,"sn":"dup","rt":Object},{"a":2,"n":"Endfilter","t":8,"sn":"endfilter","rt":Object},{"a":2,"n":"Endfinally","t":8,"sn":"endfinally","rt":Object},{"a":2,"n":"EvaluationStack_Pop","t":8,"sn":"evaluationStack_Pop","rt":$n[6].StackItem},{"a":2,"n":"EvaluationStack_Pop","t":8,"pi":[{"n":"count","pt":$n[1].Int32,"ps":0}],"sn":"evaluationStack_Pop$1","rt":$n[6].StackItem,"p":[$n[1].Int32]},{"a":2,"n":"EvaluationStack_Push","t":8,"pi":[{"n":"obj","pt":$n[6].StackItem,"ps":0}],"sn":"evaluationStack_Push","rt":Object,"p":[$n[6].StackItem]},{"a":2,"n":"EvaluationStack_Push","t":8,"pi":[{"n":"obj","pt":$n[1].Int32,"ps":0}],"sn":"evaluationStack_Push$2","rt":Object,"p":[$n[1].Int32]},{"a":2,"n":"EvaluationStack_Push","t":8,"pi":[{"n":"args","pt":$n[1].Array.type(System.Int32),"ps":0}],"sn":"evaluationStack_Push$3","rt":Object,"p":[$n[1].Array.type(System.Int32)]},{"a":2,"n":"EvaluationStack_Push","t":8,"pi":[{"n":"obj","pt":Object,"ps":0}],"sn":"evaluationStack_Push$4","rt":Object,"p":[Object]},{"a":2,"n":"EvaluationStack_Push","t":8,"pi":[{"n":"vtype","pt":$n[6].StackValueType,"ps":0},{"n":"value","pt":Object,"ps":1}],"sn":"evaluationStack_Push$1","rt":Object,"p":[$n[6].StackValueType,Object]},{"v":true,"a":2,"n":"Finally","t":8,"pi":[{"n":"spc","pt":$n[1].Int32,"ps":0},{"n":"epc","pt":$n[1].Int32,"ps":1}],"sn":"finally","rt":Object,"p":[$n[1].Int32,$n[1].Int32]},{"a":2,"n":"Initblk","t":8,"sn":"initblk","rt":Object},{"a":2,"n":"Initobj","t":8,"sn":"initobj","rt":Object},{"a":2,"n":"Isinst","t":8,"sn":"isinst","rt":Object},{"a":2,"n":"Jmp","t":8,"sn":"jmp","rt":Object},{"v":true,"a":2,"n":"Ldarg","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0}],"sn":"ldarg","rt":Object,"p":[$n[1].Int32]},{"v":true,"a":2,"n":"Ldc","t":8,"pi":[{"n":"vtype","ref":true,"pt":$n[6].StackValueType,"ps":0},{"n":"value","ref":true,"pt":Object,"ps":1}],"sn":"ldc","rt":Object,"p":[$n[6].StackValueType,Object]},{"v":true,"a":2,"n":"Ldc_i4","t":8,"pi":[{"n":"v","pt":$n[1].Int32,"ps":0}],"sn":"ldc_i4","rt":Object,"p":[$n[1].Int32]},{"a":2,"n":"Ldelem","t":8,"pi":[{"n":"type","pt":$n[6].StackValueType,"ps":0}],"sn":"ldelem","rt":Object,"p":[$n[6].StackValueType]},{"a":2,"n":"Ldelema","t":8,"pi":[{"n":"type","pt":Function,"ps":0}],"tpc":1,"tprm":["T"],"sn":"ldelema","rt":Object,"p":[Function]},{"a":2,"n":"Ldfld","t":8,"sn":"ldfld","rt":Object},{"a":2,"n":"Ldflda","t":8,"sn":"ldflda","rt":Object},{"a":2,"n":"Ldftn","t":8,"sn":"ldftn","rt":Object},{"a":2,"n":"Ldind","t":8,"pi":[{"n":"type","pt":$n[6].StackValueType,"ps":0}],"sn":"ldind","rt":Object,"p":[$n[6].StackValueType]},{"a":2,"n":"Ldlen","t":8,"sn":"ldlen","rt":Object},{"v":true,"a":2,"n":"Ldloc","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0}],"sn":"ldloc","rt":Object,"p":[$n[1].Int32]},{"v":true,"a":2,"n":"Ldloc","t":8,"pi":[{"n":"args","ip":true,"pt":$n[1].Array.type(System.Int32),"ps":0}],"sn":"ldloc$1","rt":Object,"p":[$n[1].Array.type(System.Int32)]},{"v":true,"a":2,"n":"Ldloca","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0}],"sn":"ldloca","rt":Object,"p":[$n[1].Int32]},{"v":true,"a":2,"n":"Ldnull","t":8,"sn":"ldnull","rt":Object},{"a":2,"n":"Ldobj","t":8,"sn":"ldobj","rt":Object},{"a":2,"n":"Ldsfld","t":8,"sn":"ldsfld","rt":Object},{"a":2,"n":"Ldsflda","t":8,"sn":"ldsflda","rt":Object},{"v":true,"a":2,"n":"Ldstr","t":8,"pi":[{"n":"str","pt":String,"ps":0}],"sn":"ldstr","rt":Object,"p":[String]},{"a":2,"n":"Ldtoken","t":8,"sn":"ldtoken","rt":Object},{"a":2,"n":"Ldvirtftn","t":8,"sn":"ldvirtftn","rt":Object},{"a":2,"n":"Leave","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0}],"sn":"leave","rt":Object,"p":[$n[1].Int32]},{"a":2,"n":"Localloc","t":8,"sn":"localloc","rt":Object},{"a":2,"n":"Mkrefany","t":8,"sn":"mkrefany","rt":Object},{"v":true,"a":2,"n":"Mul","t":8,"sn":"mul","rt":Object},{"v":true,"a":2,"n":"Neg","t":8,"sn":"neg","rt":Object},{"a":2,"n":"Newarr","t":8,"pi":[{"n":"type","pt":Function,"ps":0}],"tpc":1,"tprm":["T"],"sn":"newarr","rt":Object,"p":[Function]},{"a":2,"n":"Newobj","t":8,"pi":[{"n":"instance","pt":String,"ps":0},{"n":"return","pt":String,"ps":1},{"n":"task","pt":$n[6].MethodTasks,"ps":2}],"sn":"newobj","rt":Object,"p":[String,String,$n[6].MethodTasks]},{"a":2,"n":"No","t":8,"sn":"no","rt":Object},{"v":true,"a":2,"n":"Nop","t":8,"sn":"nop","rt":Object},{"v":true,"a":2,"n":"Not","t":8,"sn":"not","rt":Object},{"v":true,"a":2,"n":"Or","t":8,"sn":"or","rt":Object},{"v":true,"a":2,"n":"Pop","t":8,"sn":"pop","rt":Object},{"a":2,"n":"Readonly","t":8,"sn":"readonly","rt":Object},{"a":2,"n":"Refanytype","t":8,"sn":"refanytype","rt":Object},{"a":2,"n":"Refanyval","t":8,"sn":"refanyval","rt":Object},{"v":true,"a":2,"n":"Rem","t":8,"sn":"rem","rt":Object},{"v":true,"a":2,"n":"Reset","t":8,"sn":"reset","rt":Object},{"v":true,"a":2,"n":"Ret","t":8,"sn":"ret","rt":Object},{"a":2,"n":"Rethrow","t":8,"sn":"rethrow","rt":Object},{"v":true,"a":2,"n":"Shl","t":8,"sn":"shl","rt":Object},{"v":true,"a":2,"n":"Shr","t":8,"sn":"shr","rt":Object},{"a":2,"n":"Sizeof","t":8,"sn":"sizeof","rt":Object},{"a":2,"n":"Starg","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0}],"sn":"starg","rt":Object,"p":[$n[1].Int32]},{"a":2,"n":"Stelem","t":8,"pi":[{"n":"type","pt":$n[6].StackValueType,"ps":0}],"sn":"stelem","rt":Object,"p":[$n[6].StackValueType]},{"a":2,"n":"Stfld","t":8,"sn":"stfld","rt":Object},{"a":2,"n":"Stind","t":8,"pi":[{"n":"type","pt":$n[6].StackValueType,"ps":0}],"sn":"stind","rt":Object,"p":[$n[6].StackValueType]},{"v":true,"a":2,"n":"Stloc","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0}],"sn":"stloc","rt":Object,"p":[$n[1].Int32]},{"a":2,"n":"Stobj","t":8,"sn":"stobj","rt":Object},{"a":2,"n":"Stsfld","t":8,"sn":"stsfld","rt":Object},{"v":true,"a":2,"n":"Sub","t":8,"sn":"sub","rt":Object},{"a":2,"n":"Switch","t":8,"pi":[{"n":"pcs","pt":$n[1].Array.type(System.Int32),"ps":0}],"sn":"switch","rt":Object,"p":[$n[1].Array.type(System.Int32)]},{"a":2,"n":"Tail","t":8,"sn":"tail","rt":Object},{"a":2,"n":"Throw","t":8,"sn":"throw","rt":Object},{"a":2,"n":"UnBox","t":8,"pi":[{"n":"type","pt":Function,"ps":0}],"tpc":1,"tprm":["T"],"sn":"unBox","rt":Object,"p":[Function]},{"a":2,"n":"UnBox_Any","t":8,"pi":[{"n":"type","pt":Function,"ps":0}],"tpc":1,"tprm":["T"],"sn":"unBox_Any","rt":Object,"p":[Function]},{"a":2,"n":"Unaligned","t":8,"sn":"unaligned","rt":Object},{"a":2,"n":"Volatile","t":8,"sn":"volatile","rt":Object},{"v":true,"a":2,"n":"Xor","t":8,"sn":"xor","rt":Object},{"v":true,"a":2,"n":"_Try","t":8,"pi":[{"n":"spc","pt":$n[1].Int32,"ps":0},{"n":"epc","pt":$n[1].Int32,"ps":1},{"n":"pcs","pt":$n[1].Int32,"ps":2}],"sn":"_Try","rt":Object,"p":[$n[1].Int32,$n[1].Int32,$n[1].Int32]},{"a":2,"n":"Argp","t":4,"rt":$n[6].StackItem,"sn":"argp","ro":true},{"a":2,"n":"ArgsVarCount","t":4,"rt":$n[1].Int32,"sn":"argsVarCount","ro":true},{"a":2,"n":"CallStack","t":4,"rt":System.Array.type(ApolloClr.StackItem),"sn":"callStack","ro":true},{"a":2,"n":"Csp","t":4,"rt":$n[6].StackItem,"sn":"csp","ro":true},{"a":2,"n":"DumpAction","t":4,"rt":Function,"sn":"dumpAction"},{"a":2,"n":"LocalVarCount","t":4,"rt":$n[1].Int32,"sn":"localVarCount","ro":true},{"a":2,"n":"ResultPoint","t":4,"rt":$n[6].StackItem,"sn":"resultPoint"},{"a":2,"n":"RetResult","t":4,"rt":Boolean,"sn":"retResult"},{"a":1,"n":"Stack","t":4,"rt":$n[6].BaseClrStack,"sn":"stack"},{"a":2,"n":"ThrowAction","t":4,"rt":Function,"sn":"throwAction"}]}; });
+    $m($n[6].Extensions, function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"GetFSet","is":true,"t":8,"pi":[{"n":"field","pt":$n[5].FieldInfo,"ps":0}],"sn":"getFSet","rt":Function,"p":[$n[5].FieldInfo]},{"a":2,"n":"GetMethodInfo","is":true,"t":8,"pi":[{"n":"type","pt":Function,"ps":0},{"n":"name","pt":String,"ps":1},{"n":"types","pt":$n[1].Array.type(Function),"ps":2}],"sn":"getMethodInfo","rt":$n[5].MethodInfo,"p":[Function,String,$n[1].Array.type(Function)]},{"a":2,"n":"GetTypeByName","is":true,"t":8,"pi":[{"n":"name","pt":String,"ps":0}],"sn":"getTypeByName","rt":Function,"p":[String]},{"a":2,"n":"GetValueFromStr","is":true,"t":8,"pi":[{"n":"str","pt":String,"ps":0},{"n":"vtype","pt":$n[6].StackValueType,"ps":1}],"sn":"getValueFromStr","rt":Object,"p":[String,$n[6].StackValueType]},{"a":2,"n":"SetTarget","is":true,"t":8,"pi":[{"n":"delegate","pt":Function,"ps":0},{"n":"target","pt":Object,"ps":1}],"sn":"setTarget","rt":Object,"p":[Function,Object]},{"a":1,"n":"DeleageSetFun","is":true,"t":4,"rt":Function,"sn":"deleageSetFun"}]}; });
+    $m($n[6].Clr, function () { return {"att":1048577,"a":2,"m":[{"a":2,"n":".ctor","t":1,"p":[$n[1].Int32,$n[1].Int32,Boolean,$n[1].Int32],"pi":[{"n":"localCount","dv":5,"o":true,"pt":$n[1].Int32,"ps":0},{"n":"argCount","dv":5,"o":true,"pt":$n[1].Int32,"ps":1},{"n":"haseResult","dv":true,"o":true,"pt":Boolean,"ps":2},{"n":"maxStack","dv":5,"o":true,"pt":$n[1].Int32,"ps":3}],"sn":"ctor"},{"v":true,"a":2,"n":"Add","t":8,"sn":"add","rt":Object},{"v":true,"a":2,"n":"And","t":8,"sn":"and","rt":Object},{"a":2,"n":"Arglist","t":8,"sn":"arglist","rt":Object},{"v":true,"a":2,"n":"Beq","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"beq","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Bge","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"bge","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Bgt","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"bgt","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Ble","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"ble","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Blt","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"blt","rt":Object,"p":[String,String,$n[1].Int32]},{"a":2,"n":"Box","t":8,"pi":[{"n":"type","pt":Function,"ps":0}],"tpc":1,"tprm":["T"],"sn":"box","rt":Object,"p":[Function]},{"v":true,"a":2,"n":"Br","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"br","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Break","t":8,"sn":"break","rt":Object},{"v":true,"a":2,"n":"Brfalse","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"brfalse","rt":Object,"p":[String,String,$n[1].Int32]},{"v":true,"a":2,"n":"Brtrue","t":8,"pi":[{"n":"n1","pt":String,"ps":0},{"n":"n2","pt":String,"ps":1},{"n":"pc","pt":$n[1].Int32,"ps":2}],"sn":"brtrue","rt":Object,"p":[String,String,$n[1].Int32]},{"a":2,"n":"Call","t":8,"pi":[{"n":"retType","pt":String,"ps":0},{"n":"method","pt":String,"ps":1},{"n":"task","pt":$n[6].MethodTasks,"ps":2}],"sn":"call","rt":Object,"p":[String,String,$n[6].MethodTasks]},{"a":2,"n":"Calli","t":8,"sn":"calli","rt":Object},{"a":2,"n":"Callvirt","t":8,"pi":[{"n":"instance","pt":String,"ps":0},{"n":"return","pt":String,"ps":1},{"n":"task","pt":$n[6].MethodTasks,"ps":2}],"sn":"callvirt","rt":Object,"p":[String,String,$n[6].MethodTasks]},{"a":2,"n":"Castclass","t":8,"sn":"castclass","rt":Object},{"v":true,"a":2,"n":"Catch","t":8,"pi":[{"n":"spc","pt":$n[1].Int32,"ps":0},{"n":"epc","pt":$n[1].Int32,"ps":1}],"sn":"catch","rt":Object,"p":[$n[1].Int32,$n[1].Int32]},{"v":true,"a":2,"n":"Ceq","t":8,"sn":"ceq","rt":Object},{"v":true,"a":2,"n":"Cgt","t":8,"sn":"cgt","rt":Object},{"a":2,"n":"Ckfinite","t":8,"sn":"ckfinite","rt":Object},{"v":true,"a":2,"n":"Clt","t":8,"sn":"clt","rt":Object},{"a":2,"n":"Constrained","t":8,"sn":"constrained","rt":Object},{"a":2,"n":"Conv","t":8,"pi":[{"n":"type","pt":$n[6].StackValueType,"ps":0}],"sn":"conv","rt":Object,"p":[$n[6].StackValueType]},{"a":2,"n":"CopyToArgs","t":8,"pi":[{"n":"clr","pt":$n[6].Clr,"ps":0}],"sn":"copyToArgs","rt":Object,"p":[$n[6].Clr]},{"a":2,"n":"Cpblk","t":8,"sn":"cpblk","rt":Object},{"a":2,"n":"Cpobj","t":8,"sn":"cpobj","rt":Object},{"v":true,"a":2,"n":"Div","t":8,"sn":"div","rt":Object},{"a":2,"n":"Dup","t":8,"sn":"dup","rt":Object},{"a":2,"n":"Endfilter","t":8,"sn":"endfilter","rt":Object},{"a":2,"n":"Endfinally","t":8,"sn":"endfinally","rt":Object},{"a":2,"n":"EvaluationStack_Pop","t":8,"sn":"evaluationStack_Pop","rt":$n[6].StackItem},{"a":2,"n":"EvaluationStack_Pop","t":8,"pi":[{"n":"count","pt":$n[1].Int32,"ps":0}],"sn":"evaluationStack_Pop$1","rt":$n[6].StackItem,"p":[$n[1].Int32]},{"a":2,"n":"EvaluationStack_Push","t":8,"pi":[{"n":"obj","pt":$n[6].StackItem,"ps":0}],"sn":"evaluationStack_Push","rt":Object,"p":[$n[6].StackItem]},{"a":2,"n":"EvaluationStack_Push","t":8,"pi":[{"n":"obj","pt":$n[1].Int32,"ps":0}],"sn":"evaluationStack_Push$2","rt":Object,"p":[$n[1].Int32]},{"a":2,"n":"EvaluationStack_Push","t":8,"pi":[{"n":"args","pt":$n[1].Array.type(System.Int32),"ps":0}],"sn":"evaluationStack_Push$3","rt":Object,"p":[$n[1].Array.type(System.Int32)]},{"a":2,"n":"EvaluationStack_Push","t":8,"pi":[{"n":"obj","pt":Object,"ps":0}],"sn":"evaluationStack_Push$4","rt":Object,"p":[Object]},{"a":2,"n":"EvaluationStack_Push","t":8,"pi":[{"n":"vtype","pt":$n[6].StackValueType,"ps":0},{"n":"value","pt":Object,"ps":1}],"sn":"evaluationStack_Push$1","rt":Object,"p":[$n[6].StackValueType,Object]},{"v":true,"a":2,"n":"Finally","t":8,"pi":[{"n":"spc","pt":$n[1].Int32,"ps":0},{"n":"epc","pt":$n[1].Int32,"ps":1}],"sn":"finally","rt":Object,"p":[$n[1].Int32,$n[1].Int32]},{"a":2,"n":"Initblk","t":8,"sn":"initblk","rt":Object},{"a":2,"n":"Initobj","t":8,"sn":"initobj","rt":Object},{"a":2,"n":"Isinst","t":8,"sn":"isinst","rt":Object},{"a":2,"n":"Jmp","t":8,"sn":"jmp","rt":Object},{"v":true,"a":2,"n":"Ldarg","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0}],"sn":"ldarg","rt":Object,"p":[$n[1].Int32]},{"v":true,"a":2,"n":"Ldc","t":8,"pi":[{"n":"vtype","pt":$n[6].StackValueType,"ps":0},{"n":"value","pt":Object,"ps":1}],"sn":"ldc","rt":Object,"p":[$n[6].StackValueType,Object]},{"v":true,"a":2,"n":"Ldc_i4","t":8,"pi":[{"n":"v","pt":$n[1].Int32,"ps":0}],"sn":"ldc_i4","rt":Object,"p":[$n[1].Int32]},{"a":2,"n":"Ldelem","t":8,"pi":[{"n":"type","pt":$n[6].StackValueType,"ps":0}],"sn":"ldelem","rt":Object,"p":[$n[6].StackValueType]},{"a":2,"n":"Ldelema","t":8,"pi":[{"n":"type","pt":Function,"ps":0}],"sn":"ldelema","rt":Object,"p":[Function]},{"a":2,"n":"Ldfld","t":8,"sn":"ldfld","rt":Object},{"a":2,"n":"Ldflda","t":8,"sn":"ldflda","rt":Object},{"a":2,"n":"Ldftn","t":8,"sn":"ldftn","rt":Object},{"a":2,"n":"Ldind","t":8,"pi":[{"n":"type","pt":$n[6].StackValueType,"ps":0}],"sn":"ldind","rt":Object,"p":[$n[6].StackValueType]},{"a":2,"n":"Ldlen","t":8,"sn":"ldlen","rt":Object},{"v":true,"a":2,"n":"Ldloc","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0}],"sn":"ldloc","rt":Object,"p":[$n[1].Int32]},{"v":true,"a":2,"n":"Ldloc","t":8,"pi":[{"n":"args","ip":true,"pt":$n[1].Array.type(System.Int32),"ps":0}],"sn":"ldloc$1","rt":Object,"p":[$n[1].Array.type(System.Int32)]},{"v":true,"a":2,"n":"Ldloca","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0}],"sn":"ldloca","rt":Object,"p":[$n[1].Int32]},{"v":true,"a":2,"n":"Ldnull","t":8,"sn":"ldnull","rt":Object},{"a":2,"n":"Ldobj","t":8,"sn":"ldobj","rt":Object},{"a":2,"n":"Ldsfld","t":8,"sn":"ldsfld","rt":Object},{"a":2,"n":"Ldsflda","t":8,"sn":"ldsflda","rt":Object},{"v":true,"a":2,"n":"Ldstr","t":8,"pi":[{"n":"str","pt":String,"ps":0}],"sn":"ldstr","rt":Object,"p":[String]},{"a":2,"n":"Ldtoken","t":8,"sn":"ldtoken","rt":Object},{"a":2,"n":"Ldvirtftn","t":8,"sn":"ldvirtftn","rt":Object},{"a":2,"n":"Leave","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0}],"sn":"leave","rt":Object,"p":[$n[1].Int32]},{"a":2,"n":"Localloc","t":8,"sn":"localloc","rt":Object},{"a":2,"n":"Mkrefany","t":8,"sn":"mkrefany","rt":Object},{"v":true,"a":2,"n":"Mul","t":8,"sn":"mul","rt":Object},{"v":true,"a":2,"n":"Neg","t":8,"sn":"neg","rt":Object},{"a":2,"n":"Newarr","t":8,"pi":[{"n":"type","pt":Function,"ps":0}],"sn":"newarr","rt":Object,"p":[Function]},{"a":2,"n":"Newobj","t":8,"pi":[{"n":"instance","pt":String,"ps":0},{"n":"return","pt":String,"ps":1},{"n":"task","pt":$n[6].MethodTasks,"ps":2}],"sn":"newobj","rt":Object,"p":[String,String,$n[6].MethodTasks]},{"a":2,"n":"No","t":8,"sn":"no","rt":Object},{"v":true,"a":2,"n":"Nop","t":8,"sn":"nop","rt":Object},{"v":true,"a":2,"n":"Not","t":8,"sn":"not","rt":Object},{"v":true,"a":2,"n":"Or","t":8,"sn":"or","rt":Object},{"v":true,"a":2,"n":"Pop","t":8,"sn":"pop","rt":Object},{"a":2,"n":"Readonly","t":8,"sn":"readonly","rt":Object},{"a":2,"n":"Refanytype","t":8,"sn":"refanytype","rt":Object},{"a":2,"n":"Refanyval","t":8,"sn":"refanyval","rt":Object},{"v":true,"a":2,"n":"Rem","t":8,"sn":"rem","rt":Object},{"v":true,"a":2,"n":"Reset","t":8,"sn":"reset","rt":Object},{"v":true,"a":2,"n":"Ret","t":8,"sn":"ret","rt":Object},{"a":2,"n":"Rethrow","t":8,"sn":"rethrow","rt":Object},{"v":true,"a":2,"n":"Shl","t":8,"sn":"shl","rt":Object},{"v":true,"a":2,"n":"Shr","t":8,"sn":"shr","rt":Object},{"a":2,"n":"Sizeof","t":8,"sn":"sizeof","rt":Object},{"a":2,"n":"Starg","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0}],"sn":"starg","rt":Object,"p":[$n[1].Int32]},{"a":2,"n":"Stelem","t":8,"pi":[{"n":"type","pt":$n[6].StackValueType,"ps":0}],"sn":"stelem","rt":Object,"p":[$n[6].StackValueType]},{"a":2,"n":"Stfld","t":8,"sn":"stfld","rt":Object},{"a":2,"n":"Stind","t":8,"pi":[{"n":"type","pt":$n[6].StackValueType,"ps":0}],"sn":"stind","rt":Object,"p":[$n[6].StackValueType]},{"v":true,"a":2,"n":"Stloc","t":8,"pi":[{"n":"i","pt":$n[1].Int32,"ps":0}],"sn":"stloc","rt":Object,"p":[$n[1].Int32]},{"a":2,"n":"Stobj","t":8,"sn":"stobj","rt":Object},{"a":2,"n":"Stsfld","t":8,"sn":"stsfld","rt":Object},{"v":true,"a":2,"n":"Sub","t":8,"sn":"sub","rt":Object},{"a":2,"n":"Switch","t":8,"pi":[{"n":"pcs","pt":$n[1].Array.type(System.Int32),"ps":0}],"sn":"switch","rt":Object,"p":[$n[1].Array.type(System.Int32)]},{"a":2,"n":"Tail","t":8,"sn":"tail","rt":Object},{"a":2,"n":"Throw","t":8,"sn":"throw","rt":Object},{"a":2,"n":"UnBox","t":8,"pi":[{"n":"type","pt":Function,"ps":0}],"tpc":1,"tprm":["T"],"sn":"unBox","rt":Object,"p":[Function]},{"a":2,"n":"UnBox_Any","t":8,"pi":[{"n":"type","pt":Function,"ps":0}],"tpc":1,"tprm":["T"],"sn":"unBox_Any","rt":Object,"p":[Function]},{"a":2,"n":"Unaligned","t":8,"sn":"unaligned","rt":Object},{"a":2,"n":"Volatile","t":8,"sn":"volatile","rt":Object},{"v":true,"a":2,"n":"Xor","t":8,"sn":"xor","rt":Object},{"v":true,"a":2,"n":"_Try","t":8,"pi":[{"n":"spc","pt":$n[1].Int32,"ps":0},{"n":"epc","pt":$n[1].Int32,"ps":1},{"n":"pcs","pt":$n[1].Int32,"ps":2}],"sn":"_Try","rt":Object,"p":[$n[1].Int32,$n[1].Int32,$n[1].Int32]},{"a":2,"n":"Argp","t":16,"rt":$n[6].StackItem,"g":{"a":2,"n":"get_Argp","t":8,"sn":"getArgp","rt":$n[6].StackItem}},{"a":2,"n":"Csp","t":16,"rt":$n[6].StackItem,"g":{"a":2,"n":"get_Csp","t":8,"sn":"getCsp","rt":$n[6].StackItem}},{"a":1,"n":"Stack","t":16,"rt":$n[6].BaseClrStack,"g":{"a":1,"n":"get_Stack","t":8,"sn":"getStack","rt":$n[6].BaseClrStack}},{"a":2,"n":"ArgsVarCount","t":4,"rt":$n[1].Int32,"sn":"argsVarCount","ro":true},{"a":2,"n":"CallStack","t":4,"rt":System.Array.type(ApolloClr.StackItem),"sn":"callStack","ro":true},{"a":1,"n":"CallStackClr","t":4,"rt":$n[6].BaseClrStack,"sn":"callStackClr","ro":true},{"a":2,"n":"DumpAction","t":4,"rt":Function,"sn":"dumpAction"},{"a":2,"n":"LocalVarCount","t":4,"rt":$n[1].Int32,"sn":"localVarCount","ro":true},{"a":2,"n":"ResultPoint","t":4,"rt":$n[6].StackItem,"sn":"resultPoint"},{"a":2,"n":"RetResult","t":4,"rt":Boolean,"sn":"retResult"},{"a":2,"n":"ThrowAction","t":4,"rt":Function,"sn":"throwAction"},{"a":1,"n":"_Argp","t":4,"rt":$n[6].StackItem,"sn":"_Argp","ro":true},{"a":1,"n":"_Csp","t":4,"rt":$n[6].StackItem,"sn":"_Csp","ro":true},{"a":1,"n":"_Stack","t":4,"rt":$n[6].BaseClrStack,"sn":"_Stack"},{"a":1,"n":"conveTypes","t":4,"rt":$n[1].Array.type(Function),"sn":"conveTypes"}]}; });
     $m($n[6].OpCodeEnum, function () { return {"att":256,"a":4}; });
-    $m($n[6].BaseClrStack, function () { return {"att":1048577,"a":2,"m":[{"a":2,"n":".ctor","t":1,"p":[$n[1].Int32],"pi":[{"n":"x","dv":10,"o":true,"pt":$n[1].Int32,"ps":0}],"sn":"ctor"},{"v":true,"a":2,"n":"Pop","t":8,"sn":"pop","rt":$n[6].StackItem},{"v":true,"a":2,"n":"Pop","t":8,"pi":[{"n":"count","pt":$n[1].Int32,"ps":0}],"sn":"pop$1","rt":$n[6].StackItem,"p":[$n[1].Int32]},{"v":true,"a":2,"n":"Push","t":8,"pi":[{"n":"obj","pt":$n[6].StackItem,"ps":0}],"sn":"push","rt":Object,"p":[$n[6].StackItem]},{"a":2,"n":"Push","t":8,"pi":[{"n":"obj","pt":$n[1].Int32,"ps":0}],"sn":"push$1","rt":Object,"p":[$n[1].Int32]},{"a":2,"n":"Reset","t":8,"sn":"reset","rt":Object},{"a":2,"n":"Top","t":8,"sn":"top","rt":$n[6].StackItem},{"a":1,"n":"Esp","t":4,"rt":$n[1].Int32,"sn":"esp"},{"a":1,"n":"EvaluationStack","t":4,"rt":System.Array.type(ApolloClr.StackItem),"sn":"evaluationStack"}]}; });
-    $m($n[6].StackItem, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"CopyFrom","t":8,"pi":[{"n":"stackItem","pt":$n[6].StackItem,"ps":0}],"sn":"copyFrom","rt":Object,"p":[$n[6].StackItem]},{"a":2,"n":"SetValue","t":8,"pi":[{"n":"vtype","pt":$n[6].StackValueType,"ps":0},{"n":"value","pt":Object,"ps":1}],"sn":"setValue","rt":Object,"p":[$n[6].StackValueType,Object]},{"a":2,"n":"op_Addition","is":true,"t":8,"pi":[{"n":"s1","pt":$n[6].StackItem,"ps":0},{"n":"offset","pt":$n[1].Int32,"ps":1}],"sn":"op_Addition","rt":$n[6].StackItem,"p":[$n[6].StackItem,$n[1].Int32]},{"a":2,"n":"op_Equality","is":true,"t":8,"pi":[{"n":"s1","pt":$n[6].StackItem,"ps":0},{"n":"s2","pt":$n[6].StackItem,"ps":1}],"sn":"op_Equality","rt":Boolean,"p":[$n[6].StackItem,$n[6].StackItem]},{"a":2,"n":"op_GreaterThan","is":true,"t":8,"pi":[{"n":"s1","pt":$n[6].StackItem,"ps":0},{"n":"s2","pt":$n[6].StackItem,"ps":1}],"sn":"op_GreaterThan","rt":Boolean,"p":[$n[6].StackItem,$n[6].StackItem]},{"a":2,"n":"op_GreaterThanOrEqual","is":true,"t":8,"pi":[{"n":"s1","pt":$n[6].StackItem,"ps":0},{"n":"s2","pt":$n[6].StackItem,"ps":1}],"sn":"op_GreaterThanOrEqual","rt":Boolean,"p":[$n[6].StackItem,$n[6].StackItem]},{"a":2,"n":"op_Implicit","is":true,"t":8,"pi":[{"n":"ptr","pt":$n[1].Int32,"ps":0}],"sn":"op_Implicit","rt":$n[6].StackItem,"p":[$n[1].Int32]},{"a":2,"n":"op_Inequality","is":true,"t":8,"pi":[{"n":"s1","pt":$n[6].StackItem,"ps":0},{"n":"s2","pt":$n[6].StackItem,"ps":1}],"sn":"op_Inequality","rt":Boolean,"p":[$n[6].StackItem,$n[6].StackItem]},{"a":2,"n":"op_LessThan","is":true,"t":8,"pi":[{"n":"s1","pt":$n[6].StackItem,"ps":0},{"n":"s2","pt":$n[6].StackItem,"ps":1}],"sn":"op_LessThan","rt":Boolean,"p":[$n[6].StackItem,$n[6].StackItem]},{"a":2,"n":"op_LessThanOrEqual","is":true,"t":8,"pi":[{"n":"s1","pt":$n[6].StackItem,"ps":0},{"n":"s2","pt":$n[6].StackItem,"ps":1}],"sn":"op_LessThanOrEqual","rt":Boolean,"p":[$n[6].StackItem,$n[6].StackItem]},{"a":2,"n":"Value","t":16,"rt":Object,"g":{"a":2,"n":"get_Value","t":8,"sn":"getValue","rt":Object}},{"a":2,"n":"ValueDouble","t":16,"rt":$n[1].Double,"g":{"a":2,"n":"get_ValueDouble","t":8,"sn":"getValueDouble","rt":$n[1].Double}},{"a":2,"n":"ValueFloat","t":16,"rt":$n[1].Single,"g":{"a":2,"n":"get_ValueFloat","t":8,"sn":"getValueFloat","rt":$n[1].Single}},{"a":2,"n":"ValueInt","t":16,"rt":$n[1].Int32,"g":{"a":2,"n":"get_ValueInt","t":8,"sn":"getValueInt","rt":$n[1].Int32}},{"a":2,"n":"ValueLong","t":16,"rt":$n[1].Int64,"g":{"a":2,"n":"get_ValueLong","t":8,"sn":"getValueLong","rt":$n[1].Int64}},{"a":2,"n":"Index","t":4,"rt":$n[1].Int32,"sn":"index"},{"a":2,"n":"IntValue","t":4,"rt":$n[1].Int32,"sn":"intValue"},{"a":2,"n":"LValue","t":4,"rt":$n[1].Int32,"sn":"lValue"},{"a":2,"n":"Ptr","t":4,"rt":$n[6].StackObject,"sn":"ptr"},{"a":2,"n":"SPtrEmpty","is":true,"t":4,"rt":$n[6].StackItem,"sn":"sPtrEmpty"},{"a":2,"n":"VPoint","t":4,"rt":Object,"sn":"vPoint"},{"a":2,"n":"ValueType","t":4,"rt":$n[6].StackValueType,"sn":"valueType"}]}; });
+    $m($n[6].BaseClrStack, function () { return {"att":1048577,"a":2,"m":[{"a":2,"n":".ctor","t":1,"p":[$n[1].Int32],"pi":[{"n":"x","dv":10,"o":true,"pt":$n[1].Int32,"ps":0}],"sn":"ctor"},{"v":true,"a":2,"n":"Pop","t":8,"sn":"pop","rt":$n[6].StackItem},{"v":true,"a":2,"n":"Pop","t":8,"pi":[{"n":"count","pt":$n[1].Int32,"ps":0}],"sn":"pop$1","rt":$n[6].StackItem,"p":[$n[1].Int32]},{"v":true,"a":2,"n":"Push","t":8,"pi":[{"n":"obj","pt":$n[6].StackItem,"ps":0}],"sn":"push","rt":Object,"p":[$n[6].StackItem]},{"a":2,"n":"Push","t":8,"pi":[{"n":"obj","pt":$n[1].Int32,"ps":0}],"sn":"push$3","rt":Object,"p":[$n[1].Int32]},{"a":2,"n":"Push","t":8,"pi":[{"n":"vtype","pt":$n[6].StackValueType,"ps":0},{"n":"value","pt":$n[1].Int32,"ps":1}],"sn":"push$1","rt":Object,"p":[$n[6].StackValueType,$n[1].Int32]},{"a":2,"n":"Push","t":8,"pi":[{"n":"vtype","pt":$n[6].StackValueType,"ps":0},{"n":"value","pt":Object,"ps":1}],"sn":"push$2","rt":Object,"p":[$n[6].StackValueType,Object]},{"a":2,"n":"Reset","t":8,"sn":"reset","rt":Object},{"a":2,"n":"SetCurrent","t":8,"sn":"setCurrent","rt":Object},{"a":2,"n":"Top","t":8,"sn":"top","rt":$n[6].StackItem},{"a":2,"n":"Item","t":16,"rt":$n[6].StackItem,"p":[$n[1].Int32],"i":true,"ipi":[{"n":"index","pt":$n[1].Int32,"ps":0}],"g":{"a":2,"n":"get_Item","t":8,"pi":[{"n":"index","pt":$n[1].Int32,"ps":0}],"sn":"getItem","rt":$n[6].StackItem,"p":[$n[1].Int32]}},{"a":2,"n":"Current","is":true,"t":4,"rt":$n[6].BaseClrStack,"sn":"current"},{"a":1,"n":"Esp","t":4,"rt":$n[1].Int32,"sn":"esp"},{"a":4,"n":"EvaluationStack","t":4,"rt":System.Array.type(ApolloClr.StackItem),"sn":"evaluationStack"}]}; });
+    $m($n[6].StackItem, function () { return {"att":1048577,"a":2,"m":[{"a":2,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":".ctor","t":1,"p":[$n[1].Int32,$n[6].BaseClrStack],"pi":[{"n":"lindex","pt":$n[1].Int32,"ps":0},{"n":"current","pt":$n[6].BaseClrStack,"ps":1}],"sn":"$ctor1"},{"a":2,"n":"CopyFrom","t":8,"pi":[{"n":"stackItem","pt":$n[6].StackItem,"ps":0}],"sn":"copyFrom","rt":Object,"p":[$n[6].StackItem]},{"a":2,"n":"SetValue","t":8,"pi":[{"n":"vtype","pt":$n[6].StackValueType,"ps":0},{"n":"value","pt":Object,"ps":1}],"sn":"setValue","rt":Object,"p":[$n[6].StackValueType,Object]},{"a":2,"n":"op_Addition","is":true,"t":8,"pi":[{"n":"s1","pt":$n[6].StackItem,"ps":0},{"n":"offset","pt":$n[1].Int32,"ps":1}],"sn":"op_Addition","rt":$n[6].StackItem,"p":[$n[6].StackItem,$n[1].Int32]},{"a":2,"n":"op_Equality","is":true,"t":8,"pi":[{"n":"s1","pt":$n[6].StackItem,"ps":0},{"n":"s2","pt":$n[6].StackItem,"ps":1}],"sn":"op_Equality","rt":Boolean,"p":[$n[6].StackItem,$n[6].StackItem]},{"a":2,"n":"op_GreaterThan","is":true,"t":8,"pi":[{"n":"s1","pt":$n[6].StackItem,"ps":0},{"n":"s2","pt":$n[6].StackItem,"ps":1}],"sn":"op_GreaterThan","rt":Boolean,"p":[$n[6].StackItem,$n[6].StackItem]},{"a":2,"n":"op_GreaterThanOrEqual","is":true,"t":8,"pi":[{"n":"s1","pt":$n[6].StackItem,"ps":0},{"n":"s2","pt":$n[6].StackItem,"ps":1}],"sn":"op_GreaterThanOrEqual","rt":Boolean,"p":[$n[6].StackItem,$n[6].StackItem]},{"a":2,"n":"op_Implicit","is":true,"t":8,"pi":[{"n":"ptr","pt":$n[1].Int32,"ps":0}],"sn":"op_Implicit","rt":$n[6].StackItem,"p":[$n[1].Int32]},{"a":2,"n":"op_Inequality","is":true,"t":8,"pi":[{"n":"s1","pt":$n[6].StackItem,"ps":0},{"n":"s2","pt":$n[6].StackItem,"ps":1}],"sn":"op_Inequality","rt":Boolean,"p":[$n[6].StackItem,$n[6].StackItem]},{"a":2,"n":"op_LessThan","is":true,"t":8,"pi":[{"n":"s1","pt":$n[6].StackItem,"ps":0},{"n":"s2","pt":$n[6].StackItem,"ps":1}],"sn":"op_LessThan","rt":Boolean,"p":[$n[6].StackItem,$n[6].StackItem]},{"a":2,"n":"op_LessThanOrEqual","is":true,"t":8,"pi":[{"n":"s1","pt":$n[6].StackItem,"ps":0},{"n":"s2","pt":$n[6].StackItem,"ps":1}],"sn":"op_LessThanOrEqual","rt":Boolean,"p":[$n[6].StackItem,$n[6].StackItem]},{"a":2,"n":"Value","t":16,"rt":Object,"g":{"a":2,"n":"get_Value","t":8,"sn":"getValue","rt":Object}},{"a":2,"n":"ValueDouble","t":16,"rt":$n[1].Double,"g":{"a":2,"n":"get_ValueDouble","t":8,"sn":"getValueDouble","rt":$n[1].Double}},{"a":2,"n":"ValueFloat","t":16,"rt":$n[1].Single,"g":{"a":2,"n":"get_ValueFloat","t":8,"sn":"getValueFloat","rt":$n[1].Single}},{"a":2,"n":"ValueInt","t":16,"rt":$n[1].Int32,"g":{"a":2,"n":"get_ValueInt","t":8,"sn":"getValueInt","rt":$n[1].Int32}},{"a":2,"n":"ValueLong","t":16,"rt":$n[1].Int64,"g":{"a":2,"n":"get_ValueLong","t":8,"sn":"getValueLong","rt":$n[1].Int64}},{"a":2,"n":"Current","t":4,"rt":$n[6].BaseClrStack,"sn":"current","ro":true},{"a":2,"n":"Index","t":4,"rt":$n[1].Int32,"sn":"index"},{"a":2,"n":"IntValue","t":4,"rt":$n[1].Int32,"sn":"intValue"},{"a":2,"n":"LValue","t":4,"rt":$n[1].Int32,"sn":"lValue","ro":true},{"a":2,"n":"Ptr","t":4,"rt":$n[6].StackObject,"sn":"ptr"},{"a":2,"n":"SPtrEmpty","is":true,"t":4,"rt":$n[6].StackItem,"sn":"sPtrEmpty"},{"a":2,"n":"VPoint","t":4,"rt":Object,"sn":"vPoint"},{"a":2,"n":"ValueType","t":4,"rt":$n[6].StackValueType,"sn":"valueType"}]}; });
     $m($n[6].StackObject, function () { return {"att":1048577,"a":2,"m":[{"a":2,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"GetStackObject","is":true,"t":8,"pi":[{"n":"prt","pt":Object,"ps":0}],"sn":"getStackObject","rt":$n[6].StackObject,"p":[Object]},{"a":2,"n":"NewObject","is":true,"t":8,"pi":[{"n":"obj","pt":Object,"ps":0}],"sn":"newObject","rt":$n[6].StackObject,"p":[Object]},{"a":2,"n":"ToObject","is":true,"t":8,"pi":[{"n":"stackItem","pt":$n[6].StackItem,"ps":0}],"sn":"toObject","rt":Object,"p":[$n[6].StackItem]},{"a":2,"n":"op_Implicit","is":true,"t":8,"pi":[{"n":"ptr","pt":$n[6].StackItem,"ps":0}],"sn":"op_Implicit","rt":$n[6].StackObject,"p":[$n[6].StackItem]},{"a":2,"n":"op_Implicit","is":true,"t":8,"pi":[{"n":"ptr","pt":$n[1].Int32,"ps":0}],"sn":"op_Implicit$1","rt":$n[6].StackObject,"p":[$n[1].Int32]},{"a":2,"n":"Object","t":4,"rt":Object,"sn":"object"}]}; });
     $m($n[6].StackValueType, function () { return {"att":257,"a":2}; });
     $m($n[6].ILCode, function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"ov":true,"a":2,"n":"ToString","t":8,"sn":"toString","rt":String},{"a":2,"n":"Arg0","t":4,"rt":String,"sn":"arg0"},{"a":2,"n":"Arg1","t":4,"rt":String,"sn":"arg1"},{"a":2,"n":"Arg2","t":4,"rt":String,"sn":"arg2"},{"a":2,"n":"Lable","t":4,"rt":String,"sn":"lable"},{"a":2,"n":"Line","t":4,"rt":String,"sn":"line"},{"a":2,"n":"Op","t":4,"rt":String,"sn":"op"},{"a":2,"n":"OpArg0","t":4,"rt":String,"sn":"opArg0"},{"a":2,"n":"OpArg1","t":4,"rt":String,"sn":"opArg1"},{"a":2,"n":"OpCode","t":4,"rt":String,"sn":"opCode"}]}; });

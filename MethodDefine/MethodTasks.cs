@@ -132,16 +132,18 @@ namespace ApolloClr
             IsEnd = false;
             while (PC < End)
             {
-                try
-                {
-                    Lines[PC].Run();
-                  
-                }
-                catch (Exception ex)
-                {
-                    Clr.EvaluationStack_Push(0);
-                    ThrowAction(ex, -1);
-                }
+
+                //try
+                //{
+                Lines[PC].Run();
+
+                //}
+                //catch (Exception ex)
+                //{
+                //    Clr.EvaluationStack_Push(0);
+                //    ThrowAction(ex, -1);
+                //}
+
                 PC++;
             }
 
@@ -183,6 +185,10 @@ namespace ApolloClr
 
             foreach (var line in list)
             {
+                if (string.IsNullOrEmpty(line.OpCode))
+                {
+                    continue;
+                }
                 if (line.OpCode == ".try")
                 {
 

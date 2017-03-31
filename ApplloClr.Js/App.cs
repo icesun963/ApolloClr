@@ -14,7 +14,67 @@ namespace ApolloClr.Js
     {
         public static void Main()
         {
-           
+            var code = @"
+	IL_0000: nop
+	IL_0001: ldc.i4.1
+	IL_0002: stloc.0
+	IL_0003: ldc.i4.2
+	IL_0004: stloc.1
+	IL_0005: ldc.i4.3
+	IL_0006: stloc.2
+	IL_0007: ldloc.0
+	IL_0008: ldloc.1
+	IL_0009: add
+	IL_000a: ldloc.2
+	IL_000b: add
+	IL_000c: stloc.3
+	IL_000d: ldloc.3
+	IL_000e: stloc.s 4
+	IL_0010: br.s IL_0012
+
+	IL_0012: ldloc.s 4
+	IL_0014: ret
+";
+            if (true)
+            {
+                int count = 10000 * 100;
+                var sw = new Stopwatch();
+                var func = MethodTasks.Build(code).Compile();
+
+
+                sw.Restart();
+                sw.Start();
+                for (int i = 0; i < count; i++)
+                {
+                    func.Run();
+                }
+                sw.Stop();
+                Console.WriteLine(sw.ElapsedMilliseconds);
+                sw.Restart();
+                sw.Start();
+                for (int i = 0; i < count; i++)
+                {
+                    Run1();
+                }
+                sw.Stop();
+                Console.WriteLine(sw.ElapsedMilliseconds);
+            }
+
+            jQuery.Ajax(new AjaxOptions
+            {
+                Url = "out.il",
+                Data = "",
+                ContentType = "application/json; charset=utf-8",
+                Success = delegate (object data, string str, jqXHR jqxhr)
+                {
+                    //Console.WriteLine(str);
+
+                    var json = data + "";
+                    Console.WriteLine("Result:" + json);
+                    var result = TypeDefine.AssemblyDefine.ReadAndRun(json, "Test", "RunF1");
+                    Console.WriteLine("End:" + Bridge.Html5.JSON.Stringify(result));
+                }
+            });
         }
 
         public static int Run1()
@@ -27,7 +87,7 @@ namespace ApolloClr.Js
         }
     }
 
- 
+
 }
 
 namespace System

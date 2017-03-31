@@ -123,7 +123,15 @@ namespace ApolloClr
 
         public void EvaluationStack_Push(StackValueType vtype, object value)
         {
-            Stack.Push(vtype, value);
+            if (vtype == StackValueType.i4)
+            {
+                Stack.Push(vtype,(int)value);
+            }
+            else
+            {
+                Stack.Push(vtype, value);
+            }
+          
         }
 
         public void EvaluationStack_Push(object obj)
@@ -325,6 +333,29 @@ namespace ApolloClr
             EvaluationStack_Push(v);
         }
 
+
+        /// <summary>
+        /// 压入数据 压入Evaluation Stack中
+        /// </summary>
+        /// <param name="vtype"></param>
+        /// <param name="value"></param>
+#if BRIDGE
+        public virtual void Ldc( StackValueType vtype,  object value)
+#else
+        public virtual void Ldc(ref StackValueType vtype, ref object value)
+#endif
+        {
+            if (value is string)
+            {
+                value = Extensions.GetValueFromStr(value as string, vtype);
+            }
+
+            {
+                EvaluationStack_Push(vtype, value);
+            }
+
+        }
+
         /// <summary>
         /// 将位于计算堆栈顶部的值存储在参数槽中的指定索引处（短格式）。
         /// </summary>
@@ -340,23 +371,6 @@ namespace ApolloClr
 #endif
         }
 
-        /// <summary>
-        /// 压入数据 压入Evaluation Stack中
-        /// </summary>
-        /// <param name="vtype"></param>
-        /// <param name="value"></param>
-        public virtual void Ldc(ref StackValueType vtype,ref object value)
-        {
-            if (value is string)
-            {
-                value = Extensions.GetValueFromStr(value as string, vtype);
-            }
-
-            {
-                EvaluationStack_Push(vtype, value);
-            }
-
-        }
 
         /// <summary>
         /// 把一个变量放入 （压入Evaluation Stack中）

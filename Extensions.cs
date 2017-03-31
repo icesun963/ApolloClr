@@ -101,6 +101,28 @@ namespace ApolloClr
             return value;
         }
 
+        public static MethodInfo GetMethodInfo(this Type type, string name,Type [] types)
+        {
+           var mi = type.GetMethod(name, types);
+            if (mi != null)
+            {
+                return mi;
+            }
+            mi = type.GetMethod(name.ToLower(), types);
+
+            if (mi == null)
+            {
+                foreach (var methodInfo in type.GetMethods())
+                {
+                    Console.WriteLine(methodInfo.Name);
+                    if (methodInfo.Name.ToLower() == name.ToLower())
+                    {
+                        return methodInfo;
+                    }
+                }
+            }
+            return mi;
+        }
         public static Type GetTypeByName(string name)
         {
             name = name.Replace("[mscorlib]", "");
@@ -136,6 +158,10 @@ namespace ApolloClr
                     return typeof(double);
                 case "float32":
                     return typeof(float);
+            }
+            if (name == "System.Console")
+            {
+                return typeof(System.Console);
             }
             if (type == null)
             {

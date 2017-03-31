@@ -1,6 +1,5 @@
 {
     "output": "Bridge/output"
-
   // Uncomment to add TypeScript Definition file (.d.ts) generation to your project.
     ,
   "generateTypeScript": true,

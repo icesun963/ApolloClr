@@ -211,7 +211,7 @@ namespace ApolloClr.Method
                     var before = input[i - 1];
                     var next = input[i + 1];
                     var newx2 = input[i + 1 + 1];
-                    if (opSpeed.Contains(now.Op))
+                    if (opSpeed.Contains(now.Op) && locals!=null)
                     {
                         if (before2.Op == "ldc" )
                         {

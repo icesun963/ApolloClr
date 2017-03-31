@@ -48,12 +48,13 @@ namespace ApolloClr
 	IL_0017: ret
 ";
             {
+
 #if JS
                
-                TypeDefine.AssemblyDefine.ReadAndRun(AppDomain.CurrentDomain.BaseDirectory + "ApolloClr.exe", "Test", "Run1");
+                TypeDefine.AssemblyDefine.ReadAndRun(AppDomain.CurrentDomain.BaseDirectory + "TestLib.dll", "Test", "Run1");
 #endif
                 //Test.RunArray();
-                TypeDefine.AssemblyDefine.ReadAndRun(AppDomain.CurrentDomain.BaseDirectory + "ApolloClr.exe", "Test",
+                TypeDefine.AssemblyDefine.ReadAndRun(AppDomain.CurrentDomain.BaseDirectory + "TestLib.dll", "Test",
                     "RunF1");
 
                 Console.ReadLine();
@@ -104,31 +105,4 @@ namespace ApolloClr
     }
 
 
-    public class Test
-    {
-        public static float RunF1()
-        {
-            var sw = new Stopwatch();
-            sw.Start();
-            Double xxx = -22;
-            for (int i = 0; i < 10000*100; i++)
-            {
-                Run1();
-            }
-            Console.WriteLine(xxx);
-            sw.Stop();
-            sw.Stop();
-            Console.WriteLine(sw.ElapsedMilliseconds);
-            return (float) xxx;
-        }
-
-        public static int Run1()
-        {
-            int i = 1;
-            int j = 2;
-            int k = 3;
-            int answer = i + j + k;
-            return answer;
-        }
-    }
 }

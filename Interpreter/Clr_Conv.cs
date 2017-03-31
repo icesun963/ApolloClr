@@ -44,16 +44,252 @@ namespace ApolloClr
             {
                 value = v.VPoint;
             }
-            object result = Convert.ChangeType(value, conveTypes[(int) type]);
+#if !BRIDGE
+            value = Convert.ChangeType(value, conveTypes[(int) type]);
+#else
             switch (type)
             {
-                case  StackValueType.i8:
+                case StackValueType.u1:
+                    switch (v.ValueType)
+                    {
+                        case StackValueType.i4:
+                            value = (int)(byte)v.IntValue;
+                            break;
+                        case StackValueType.i8:
+                            value = (int)(byte)v.ValueLong;
+                            break;
+                        case StackValueType.r4:
+                            value = (int)(byte)v.ValueFloat;
+                            break;
+                        case StackValueType.r8:
+                            value = (int)(byte)v.ValueDouble;
+                            break;
+
+                    }
+                    break;
+                case StackValueType.i1:
+                    switch (v.ValueType)
+                    {
+                        case StackValueType.i4:
+                            value = (int)(sbyte)v.IntValue;
+                            break;
+                        case StackValueType.i8:
+                            value = (int)(sbyte)v.ValueLong;
+                            break;
+                        case StackValueType.r4:
+                            value = (int)(sbyte)v.ValueFloat;
+                            break;
+                        case StackValueType.r8:
+                            value = (int)(sbyte)v.ValueDouble;
+                            break;
+
+                    }
+                    break;
+                case StackValueType.u2:
+                    switch (v.ValueType)
+                    {
+                        case StackValueType.i4:
+                            value = (int)(ushort)v.IntValue;
+                            break;
+                        case StackValueType.i8:
+                            value = (int)(ushort)v.ValueLong;
+                            break;
+                        case StackValueType.r4:
+                            value = (int)(ushort)v.ValueFloat;
+                            break;
+                        case StackValueType.r8:
+                            value = (int)(ushort)v.ValueDouble;
+                            break;
+
+                    }
+                    break;
+                case StackValueType.i2:
+                    switch (v.ValueType)
+                    {
+                        case StackValueType.i4:
+                            value = (int)(short)v.IntValue;
+                            break;
+                        case StackValueType.i8:
+                            value = (int)(short)v.ValueLong;
+                            break;
+                        case StackValueType.r4:
+                            value = (int)(short)v.ValueFloat;
+                            break;
+                        case StackValueType.r8:
+                            value = (int)(short)v.ValueDouble;
+                            break;
+
+                    }
+                    break;
+                case StackValueType.u4:
+                    switch (v.ValueType)
+                    {
+                        case StackValueType.i4:
+                            value = (int)(uint)v.IntValue;
+                            break;
+                        case StackValueType.i8:
+                            value = (int)(uint)v.ValueLong;
+                            break;
+                        case StackValueType.r4:
+                            value = (int)(uint)v.ValueFloat;
+                            break;
+                        case StackValueType.r8:
+                            value = (int)(uint)v.ValueDouble;
+                            break;
+
+                    }
+                    break;
+                case StackValueType.i4:
+                    switch (v.ValueType)
+                    {
+                        case StackValueType.i4:
+                            value = (int)v.IntValue;
+                            break;
+                        case StackValueType.i8:
+                            value = (int)v.ValueLong;
+                            break;
+                        case StackValueType.r4:
+                            value = (int)v.ValueFloat;
+                            break;
+                        case StackValueType.r8:
+                            value = (int)v.ValueDouble;
+                            break;
+
+                    }
+                    break;
+
+                case StackValueType.r4:
+                    switch (v.ValueType)
+                    {
+                        case StackValueType.i4:
+                            {
+                                value = (float)v.IntValue;
+                              
+                                break;
+                            }
+                        case StackValueType.i8:
+                            {
+                                value = (float)v.ValueLong;
+                             
+                                break;
+                            }
+                        case StackValueType.r4:
+                            {
+                                value = (float)v.ValueFloat;
+                              
+                                break;
+                            }
+                        case StackValueType.r8:
+                            {
+                                value = (float)v.ValueDouble;
+                              
+                                break;
+                            }
+
+                    }
+                    break;
+
+                case StackValueType.u8:
+                    switch (v.ValueType)
+                    {
+                        case StackValueType.i4:
+                            {
+                                value = (ulong)v.IntValue;
+                               
+                                break;
+                            }
+                        case StackValueType.i8:
+                            {
+                                value = (ulong)v.ValueLong;
+                                
+                                break;
+                            }
+                        case StackValueType.r4:
+                            {
+                                value = (ulong)v.ValueFloat;
+                               
+                                break;
+                            }
+                        case StackValueType.r8:
+                            {
+                                value = (ulong)v.ValueDouble;
+                              
+                                break;
+                            }
+
+                    }
+                    break;
+                case StackValueType.i8:
+                    switch (v.ValueType)
+                    {
+                        case StackValueType.i4:
+                            {
+                                value = (long)v.IntValue;
+                             
+                                break;
+                            }
+                        case StackValueType.i8:
+                            {
+                                value = (long)v.ValueLong;
+                            
+                                break;
+                            }
+                        case StackValueType.r4:
+                            {
+                                value = (long)v.ValueFloat;
+                              
+                                break;
+                            }
+                        case StackValueType.r8:
+                            {
+                                value = (long)v.ValueDouble;
+                               
+                                break;
+                            }
+
+                    }
+                    break;
+                case StackValueType.r8:
+                    switch (v.ValueType)
+                    {
+                        case StackValueType.i4:
+                            {
+                                value = (double)v.IntValue;
+                              
+                                break;
+                            }
+                        case StackValueType.i8:
+                            {
+                                value = (double)v.ValueLong;
+                                
+                                break;
+                            }
+                        case StackValueType.r4:
+                            {
+                                value = (double)v.ValueFloat;
+                               
+                                break;
+                            }
+                        case StackValueType.r8:
+                            {
+                                value = (double)v.ValueDouble;
+                                
+                                break;
+                            }
+
+                    }
+                    break;
+            }
+#endif
+            switch (type)
+            {
+                case StackValueType.i8:
                 case StackValueType.r8:
                 case StackValueType.r4:
-                    EvaluationStack_Push(type, result);
+                    EvaluationStack_Push(type, value);
                     break;
                 default:
-                    EvaluationStack_Push(type, Convert.ChangeType(value, typeof(int)));
+                    EvaluationStack_Push(type, (int)value);
                     break;
             }
 #else
