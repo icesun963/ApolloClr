@@ -1050,7 +1050,7 @@ declare module ApolloClr {
     export interface ExtensionsFunc extends Function {
         prototype: Extensions;
         new (): Extensions;
-        setTarget(delegate: Function, target: Object): void;
+        setTarget(delegate: Function, target: Object): Function;
         getFSet(field: System.Reflection.FieldInfo): {(arg1: Object, arg2: Object): void};
         getValueFromStr(str: string, vtype: ApolloClr.StackValueType): Object;
         getMethodInfo(type: Function, name: string, types: Function[]): System.Reflection.MethodInfo;

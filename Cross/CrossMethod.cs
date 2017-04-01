@@ -68,7 +68,11 @@ namespace ApolloClr.Cross
                     if (ptr != CrossMethodDelegate.Ptr)
                     {
                         CrossMethodDelegate.Ptr = ptr;
+#if BRIDGE
+                        CrossMethodDelegate["func"] = CrossMethodDelegate.Delegate.SetTarget(args[ArgCount - 1]);
+#else
                         CrossMethodDelegate.Delegate.SetTarget(args[ArgCount - 1]);
+#endif
                     }
                     
                 }
@@ -120,8 +124,12 @@ namespace ApolloClr.Cross
 #endif
             if (methodInfo == null)
             {
-                var coninfo = type.GetConstructor(args.ToArray());
+                ConstructorInfo coninfo = null;
+                
 
+#if !BRIDGE
+                coninfo = type.GetConstructor(args.ToArray());
+#endif
                 if (coninfo != null)
                 {
                     ArgCount = coninfo.GetParameters().Length;
@@ -244,8 +252,8 @@ namespace ApolloClr.Cross
             }
             else
             {
-                //var obj = Activator.CreateInstance(methodInfo.DeclaringType);
-                var @delage = Delegate.CreateDelegate(funtask, null, methodInfo);
+                var obj = Activator.CreateInstance(methodInfo.DeclaringType);
+                var @delage = Delegate.CreateDelegate(funtask, obj, methodInfo);
                 tasktype.GetField("Func").SetValue(CrossMethodDelegate, @delage);
                 IsStatic = false;
             }

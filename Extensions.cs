@@ -14,29 +14,45 @@ namespace ApolloClr
     {
         private static Action<object, object> DeleageSetFun = null;
 
-        public static void SetTarget(this Delegate @delegate, object target)
+        public static Delegate SetTarget(this Delegate @delegate, object target)
         {
+
+#if !BRIDGE
             if (DeleageSetFun == null)
             {
-#if BRIDGE
-
-
-                var xfield = @delegate.GetType().GetField("_target");
-#else
                  BindingFlags flag = BindingFlags.Instance | BindingFlags.NonPublic;
 
-                var xfield = @delegate.GetType().GetField("_target", flag);
+                 var xfield = @delegate.GetType().GetField("_target", flag);
 
-#endif
+
                 if (xfield == null)
                 {
                     throw new NotSupportedException("_target field was not found!");
                 }
                 DeleageSetFun = GetFSet(xfield);
-            }
+             }
             DeleageSetFun(@delegate, target);
-        }
 
+#else
+            var _old = @delegate;
+            Func<object> action = () =>
+            {
+                target["$scope"] = target;
+                return Apply(_old, target);
+            };
+            @delegate = action;
+#endif
+
+            return @delegate;
+
+        }
+#if BRIDGE
+        [Bridge.Template("{input}.apply({target}, arguments)")]
+        public static object Apply(object input,object target)
+        {
+            return null;
+        }
+#endif
         //TODO UNITY 如果支持的话 回头再修改
         public static Action<object, object> GetFSet(FieldInfo field)
         {
@@ -114,7 +130,6 @@ namespace ApolloClr
             {
                 foreach (var methodInfo in type.GetMethods())
                 {
-                    Console.WriteLine(methodInfo.Name);
                     if (methodInfo.Name.ToLower() == name.ToLower())
                     {
                         return methodInfo;
@@ -140,7 +155,18 @@ namespace ApolloClr
             if (type == null && name.StartsWith("System"))
             {
                 type = typeof(System.Diagnostics.Stopwatch).Assembly.GetType(name);
+#if BRIDGE
 
+                if (type == null)
+                {
+
+                    if ("System.Console" == name)
+                    {
+                        return typeof(System.Console);
+                    }
+                    type = typeof(System.Diagnostics.Stopwatch).Assembly.GetType(name.Replace("System.", "Bridge.")); 
+                }
+#endif
             }
             if (type != null)
             {
@@ -159,10 +185,7 @@ namespace ApolloClr
                 case "float32":
                     return typeof(float);
             }
-            if (name == "System.Console")
-            {
-                return typeof(System.Console);
-            }
+  
             if (type == null)
             {
                 throw new NotSupportedException("Type  Was  Not Fount :" + name);

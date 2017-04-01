@@ -46,13 +46,13 @@
   .ver 1:0:0:0
 }
 .module TestLib.dll
-// MVID: {567B9704-45BA-4599-BD29-8AAAAEA10BC0}
+// MVID: {D421484E-0125-4CD1-BD7B-DE57FD82AA42}
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x009D0000
+// Image base: 0x024A0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -91,7 +91,7 @@
     IL_0026:  add
     IL_0027:  stloc.2
     IL_0028:  ldloc.2
-    IL_0029:  ldc.i4     0xf4240
+    IL_0029:  ldc.i4     0x186a0
     IL_002e:  clt
     IL_0030:  stloc.3
     IL_0031:  ldloc.3

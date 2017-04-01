@@ -5,7 +5,8 @@
   "generateTypeScript": true,
   "fileName": "clr.js",
   "reflection": {
-    "enabled": true
+    "enabled": true,
+    "filter": "ApolloClr.*;System.Console;System.Delegate;System.Diagnostics.Stopwatch;"
   }
 
   // More options available at:

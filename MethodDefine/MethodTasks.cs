@@ -218,7 +218,7 @@ namespace ApolloClr
                 }
                 if (method == null)
                 {
-                    
+                    throw new NotImplementedException(line.Line);
                 }
                 if (opcode.IndexOf(".") == -1 && longOp)
                 {

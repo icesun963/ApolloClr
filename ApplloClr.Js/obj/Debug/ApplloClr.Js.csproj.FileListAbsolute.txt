@@ -9,3 +9,4 @@ E:\OneDrive\WindNet\NetThemis\ApolloClr\ApplloClr.Js\bin\Debug\Bridge.Html5.xml
 E:\OneDrive\WindNet\NetThemis\ApolloClr\ApplloClr.Js\bin\Debug\Bridge.jQuery2.xml
 E:\OneDrive\WindNet\NetThemis\ApolloClr\ApplloClr.Js\obj\Debug\ApplloClr.Js.dll
 E:\OneDrive\WindNet\NetThemis\ApolloClr\ApplloClr.Js\obj\Debug\ApplloClr.Js.pdb
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApplloClr.Js\obj\Debug\ApplloClr.Js.csprojResolveAssemblyReference.cache

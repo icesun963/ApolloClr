@@ -190,6 +190,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Bridge\output\bridge_fix.js" />
+    <Content Include="Bridge\output\clr.js" />
     <Content Include="Bridge\output\readme.txt" />
     <Content Include="Bridge\www\demo.html" />
   </ItemGroup>

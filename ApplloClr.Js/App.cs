@@ -14,6 +14,8 @@ namespace ApolloClr.Js
     {
         public static void Main()
         {
+           
+
             var code = @"
 	IL_0000: nop
 	IL_0001: ldc.i4.1
@@ -37,7 +39,7 @@ namespace ApolloClr.Js
 ";
             if (true)
             {
-                int count = 10000 * 100;
+                int count = 10000 * 10;
                 var sw = new Stopwatch();
                 var func = MethodTasks.Build(code).Compile();
 
