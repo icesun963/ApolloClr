@@ -46,13 +46,13 @@
   .ver 1:0:0:0
 }
 .module TestLib.dll
-// MVID: {D421484E-0125-4CD1-BD7B-DE57FD82AA42}
+// MVID: {859377E2-B78E-4888-9258-0EC7290ECF64}
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x024A0000
+// Image base: 0x013B0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -149,6 +149,46 @@
     IL_0014:  ret
   } // end of method Test::Run1
 
+  .method public hidebysig static void  ClassRun() cil managed
+  {
+    // 
+    .maxstack  2
+    .locals init ([0] int32 q,
+             [1] int32 q2,
+             [2] int32 q3,
+             [3] class TestLib.TestClass q4)
+    IL_0000:  nop
+    IL_0001:  ldsfld     int32 TestLib.TestClass::Value
+    IL_0006:  stloc.0
+    IL_0007:  ldloc.0
+    IL_0008:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_000d:  nop
+    IL_000e:  call       int32 TestLib.TestClass::get_Value1()
+    IL_0013:  stloc.1
+    IL_0014:  ldloc.1
+    IL_0015:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_001a:  nop
+    IL_001b:  newobj     instance void TestLib.TestClass::.ctor()
+    IL_0020:  ldfld      int32 TestLib.TestBaseClass::IValue
+    IL_0025:  stloc.2
+    IL_0026:  ldloc.2
+    IL_0027:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_002c:  nop
+    IL_002d:  newobj     instance void TestLib.TestClass::.ctor()
+    IL_0032:  stloc.3
+    IL_0033:  ldloc.3
+    IL_0034:  ldc.i4.5
+    IL_0035:  stfld      int32 TestLib.TestBaseClass::IValue
+    IL_003a:  ldloc.3
+    IL_003b:  ldfld      int32 TestLib.TestBaseClass::IValue
+    IL_0040:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0045:  nop
+    IL_0046:  ldloc.2
+    IL_0047:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_004c:  nop
+    IL_004d:  ret
+  } // end of method Test::ClassRun
+
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
@@ -161,6 +201,82 @@
   } // end of method Test::.ctor
 
 } // end of class TestLib.Test
+
+.class public auto ansi beforefieldinit TestLib.TestClass
+       extends TestLib.TestBaseClass
+{
+  .field public static int32 Value
+  .field private static int32 '<Value1>k__BackingField'
+  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+  .custom instance void [mscorlib]System.Diagnostics.DebuggerBrowsableAttribute::.ctor(valuetype [mscorlib]System.Diagnostics.DebuggerBrowsableState) = ( 01 00 00 00 00 00 00 00 ) 
+  .method public hidebysig specialname static 
+          int32  get_Value1() cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    // 
+    .maxstack  8
+    IL_0000:  ldsfld     int32 TestLib.TestClass::'<Value1>k__BackingField'
+    IL_0005:  ret
+  } // end of method TestClass::get_Value1
+
+  .method public hidebysig specialname static 
+          void  set_Value1(int32 'value') cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    // 
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  stsfld     int32 TestLib.TestClass::'<Value1>k__BackingField'
+    IL_0006:  ret
+  } // end of method TestClass::set_Value1
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // 
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance void TestLib.TestBaseClass::.ctor()
+    IL_0006:  nop
+    IL_0007:  ret
+  } // end of method TestClass::.ctor
+
+  .method private hidebysig specialname rtspecialname static 
+          void  .cctor() cil managed
+  {
+    // 
+    .maxstack  8
+    IL_0000:  ldc.i4.s   12
+    IL_0002:  stsfld     int32 TestLib.TestClass::Value
+    IL_0007:  ret
+  } // end of method TestClass::.cctor
+
+  .property int32 Value1()
+  {
+    .get int32 TestLib.TestClass::get_Value1()
+    .set void TestLib.TestClass::set_Value1(int32)
+  } // end of property TestClass::Value1
+} // end of class TestLib.TestClass
+
+.class public auto ansi beforefieldinit TestLib.TestBaseClass
+       extends [mscorlib]System.Object
+{
+  .field public int32 IValue
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // 
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldc.i4.s   11
+    IL_0003:  stfld      int32 TestLib.TestBaseClass::IValue
+    IL_0008:  ldarg.0
+    IL_0009:  call       instance void [mscorlib]System.Object::.ctor()
+    IL_000e:  nop
+    IL_000f:  ret
+  } // end of method TestBaseClass::.ctor
+
+} // end of class TestLib.TestBaseClass
 
 
 // =============================================================

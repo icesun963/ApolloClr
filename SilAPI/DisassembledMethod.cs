@@ -110,16 +110,10 @@ namespace SilAPI
                         {
                             methodStart = false;
                             line = sb.ToString();
-                            values = line.Split(' ');
+                            values = line.Split(new [] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                             Static = line.IndexOf("static") >= 0;
-                            if (Static)
-                            {
-                                ReturnType = values[4];
-                            }
-                            else
-                            {
-                                ReturnType = values[3];
-                            }
+                            var index = values.ToList().FindIndex(r => r.IndexOf("(") >= 0);
+                            ReturnType = values[index - 1];
                             var locals = line;
                             locals = strForm2S(locals, "(", ")");
                             var localvalues = locals.Split(',');
@@ -152,6 +146,7 @@ namespace SilAPI
                     if (line.StartsWith(".maxstack"))
                     {
                         MaxStack = int.Parse(values[2]);
+                
                     }
                     
                     if (line.StartsWith(".locals"))
@@ -181,6 +176,10 @@ namespace SilAPI
                             bodyStart = true;
                             continue;
                         }
+                    }
+                    if (!bodyStart && line.StartsWith("IL"))
+                    {
+                        bodyStart = true;
                     }
                     if (bodyStart)
                     {

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,32 +9,46 @@ namespace ApolloClr.TypeDefine
 {
     public class AssemblyDefine
     {
+        /// <summary>
+        /// 定义的类型
+        /// </summary>
+        public List<TypeDefine> TypeDefines { get; set; } = new List<TypeDefine>();
+
+        public AssemblyDefine Load(string fileName)
+        {
+            var api = SilAPI.Disassembler.DisassembleAssembly(fileName);
+            foreach (var typeDefinition in api.AllClasses)
+            {
+                var typedefine = new TypeDefine(typeDefinition);
+                TypeDefines.Add(typedefine);
+            }
+            Extensions.RegAssembly(this);
+            foreach (var typeDefine in TypeDefines)
+            {
+                typeDefine.Compile();
+            }
+            return this;
+        }
+
         public static object ReadAndRun(string fileName, string type, string method)
         {
+            var assbmbly = new AssemblyDefine().Load(fileName);
 
 
-            var api = SilAPI.Disassembler.DisassembleAssembly(fileName);
-
-
-            foreach (var typeDefinition in api.AllClasses )
+            foreach (var typeDefinition in assbmbly.TypeDefines)
             {
-                if (typeDefinition == null || typeDefinition.ShortName == type)
-                {
-                    foreach (var methodDefinition in typeDefinition.Methods)
-                    {
-                        var typedefine = new TypeDefine(typeDefinition).Compile();
 
-                        var methodefine = typedefine.Methods.Find(r => r.MethodDefinition.ShortName == method);
-                        methodefine.Run();
+                if (typeDefinition.TypeDefinition.ShortName == type)
+                {
+                    var methodefine = typeDefinition.Methods.Find(r => r.MethodDefinition.ShortName == method);
+                    methodefine.Run();
 
 #if JS
-                        return methodefine.Clr.ResultPoint;
+                     return methodefine.Clr.ResultPoint;
 #else
 
 #endif
-
-                        break;
-                    }
+                    break;
                 }
             }
 

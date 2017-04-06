@@ -103,15 +103,14 @@ namespace ApolloClr.Cross
         {
             CallName = callname;
 
-            var values = callname.Split(new string[] {"::", "[", "]", ",", "(", ")"},
+            var values = callname.Split(new string[] {"::",  ",", "(", ")"," "},
                 StringSplitOptions.RemoveEmptyEntries);
             var returnType = values[0];
-            var assemblyname = values[1];
-            var typeName = values[2];
-            var methodName = values[3];
+            var typeName = values[1];
+            var methodName = values[2];
             var type = Extensions.GetTypeByName(typeName);
             List<Type> args = new List<Type>();
-            for (int i = 4; i < values.Length; i++)
+            for (int i = 3; i < values.Length; i++)
             {
                 args.Add(Extensions.GetTypeByName(values[i]));
             }
@@ -136,6 +135,7 @@ namespace ApolloClr.Cross
                     HaseResult = true;
                     Clr = new Clr(1, ArgCount, HaseResult, 1);
                     CreatDelegate(coninfo);
+                    return;
                 }
                 else
                 {

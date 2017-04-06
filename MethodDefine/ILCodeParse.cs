@@ -8,38 +8,38 @@ namespace ApolloClr.Method
 {
     public class ILCodeParse
     {
-        public static List<ILCode> ReadILCodes(string ilcodes,List<string> locals=null, List<string> args =null)
+        public static List<ILCode> ReadILCodes(string ilcodes, List<string> locals = null, List<string> args = null)
         {
             var lines = ilcodes.Split('\r');
             return ReadILCodes(lines);
         }
 
-        public static List<ILCode> ReadILCodes(string [] lines, List<string> locals = null, List<string> args = null)
+        public static List<ILCode> ReadILCodes(string[] lines, List<string> locals = null, List<string> args = null)
         {
-          
+
 
             var list = new List<ILCode>();
             //重置堆栈
             list.Add(new ILCode()
             {
                 OpCode = "Reset",
-                Line ="Reset",
+                Line = "Reset",
             });
 
             bool switchStart = false;
             StringBuilder sline = new StringBuilder();
 
-         
+
             foreach (var xline in lines)
             {
                 var line = xline;
                 var values = line.Trim().Split(' ');
-              
-                if (values.Length>=2 && values[1]== "switch")
+
+                if (values.Length >= 2 && values[1] == "switch")
                 {
                     switchStart = true;
                     sline = new StringBuilder();
-                 
+
                 }
                 if (switchStart)
                 {
@@ -57,7 +57,7 @@ namespace ApolloClr.Method
                 }
 
 
-             
+
 
                 if (values.Length > 4)
                 {
@@ -75,21 +75,22 @@ namespace ApolloClr.Method
                         var str = line.Substring(index + 1, indexe - index - 1);
                         var subline = line.Substring(0, index + 1) + "str" + line.Substring(indexe);
                         values = subline.Trim().Split(' ');
-                        var indexx = new List<string>(values).IndexOf( "\"str\"");
+                        var indexx = new List<string>(values).IndexOf("\"str\"");
                         values[indexx] = str;
                     }
                 }
-                
+
 
                 var illine = new ILCode();
                 illine.Line = line;
-                if (list.Count > 0 && (list.Last().OpCode == "try" || list.Last().OpCode == "catch" || list.Last().OpCode == "finally"))
+                if (list.Count > 0 &&
+                    (list.Last().OpCode == "try" || list.Last().OpCode == "catch" || list.Last().OpCode == "finally"))
                 {
                     list.Last().Arg1 = line;
                 }
-               
+
                 list.Add(illine);
-              
+
                 for (int i = 0; i < values.Length; i++)
                 {
                     if (i == 0)
@@ -126,9 +127,9 @@ namespace ApolloClr.Method
                     }
                 }
 
-              
+
             }
-            list= FixTryCatchFinally(list);
+            list = FixTryCatchFinally(list);
             //解析 生成
             list = MergeCodes(list, locals, args);
             return list;
@@ -145,14 +146,14 @@ namespace ApolloClr.Method
                 {
                     continue;
                 }
-                if (input[i].Line == ".try" || input[i].Line.StartsWith( "catch") || input[i].Line.StartsWith("finally"))
+                if (input[i].Line == ".try" || input[i].Line.StartsWith("catch") || input[i].Line.StartsWith("finally"))
                 {
                     input[i].Arg0 = input.Skip(i).First(r => r.Lable != null && r.Lable.StartsWith("IL")).Lable;
                     stack.Push(input[i]);
                     input[i].OpCode = input[i].Lable;
                     if (input[i].Line == ".try")
                     {
-                       
+
                     }
                     else
                     {
@@ -162,20 +163,24 @@ namespace ApolloClr.Method
                 if (input[i].Line.StartsWith("}"))
                 {
                     var item = stack.Pop();
-                    item.Arg1 = input.Take(i).Last(r =>r.Lable!=null && r.Lable.StartsWith("IL")).Lable;
+                    item.Arg1 = input.Take(i).Last(r => r.Lable != null && r.Lable.StartsWith("IL")).Lable;
                     if (item.Line == ".try")
                     {
                         lastTry = item;
                     }
                     else
                     {
-                       
+
                     }
                 }
             }
             foreach (var ilCode in input.ToArray())
             {
-                if (ilCode.Line.StartsWith("{") 
+                if(ilCode.Line.EndsWith("call instance void [mscorlib]System.Object::.ctor()"))
+                {
+                    ilCode.Op = ilCode.OpCode = "nop";
+                }
+                if (ilCode.Line.StartsWith("{")
                     || ilCode.Line.StartsWith("}")
                     || string.IsNullOrEmpty(ilCode.Line)
                     )
@@ -183,11 +188,12 @@ namespace ApolloClr.Method
                     input.Remove(ilCode);
                 }
             }
-            
+
             return input;
         }
 
-     
+
+
 
         /// <summary>
         /// 指令优化，合并指令
@@ -205,15 +211,15 @@ namespace ApolloClr.Method
                 //{
                 //    continue;
                 //}
-                if (i > 2 &&  i < input.Count - 2)
+                if (i > 2 && i < input.Count - 2)
                 {
                     var before2 = input[i - 1 - 1];
                     var before = input[i - 1];
                     var next = input[i + 1];
                     var newx2 = input[i + 1 + 1];
-                    if (opSpeed.Contains(now.Op) && locals!=null)
+                    if (opSpeed.Contains(now.Op) && locals != null)
                     {
-                        if (before2.Op == "ldc" )
+                        if (before2.Op == "ldc")
                         {
                             now.OpCode += "." + before2.OpArg0;
                         }
@@ -241,7 +247,7 @@ namespace ApolloClr.Method
                 }
                 if (i < input.Count - 2)
                 {
-                  
+
                     var next = input[i + 1];
                     var newx2 = input[i + 1 + 1];
 #if SPEED
@@ -285,4 +291,7 @@ namespace ApolloClr.Method
             return outPut;
         }
     }
+
+
+  
 }

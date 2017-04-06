@@ -7,10 +7,12 @@ using System.Reflection.Emit;
 #endif
 using System.Text;
 using System.Threading.Tasks;
+using ApolloClr.TypeDefine;
+using SilAPI;
 
 namespace ApolloClr
 {
-    public static class Extensions
+    public unsafe static class Extensions
     {
         private static Action<object, object> DeleageSetFun = null;
 
@@ -46,6 +48,36 @@ namespace ApolloClr
             return @delegate;
 
         }
+
+        public static void BuildClrObject(ClrObject clrObject, DisassembledClass typeDefinition, bool isstatic = false)
+        {
+
+            foreach (var disassembledField in typeDefinition.Fields)
+            {
+                if (isstatic && disassembledField.Modifiers.Contains("static"))
+                {
+
+                    if (!clrObject.Fields.ContainsKey(disassembledField.ShortName))
+                    {
+
+                        clrObject.Fields[disassembledField.ShortName] = new StackItemPtr();
+                    }
+                }
+                if (!isstatic && !disassembledField.Modifiers.Contains("static"))
+                {
+                    if (!clrObject.Fields.ContainsKey(disassembledField.ShortName))
+                    {
+
+                        clrObject.Fields[disassembledField.ShortName] = new StackItemPtr();
+                    }
+                }
+            }
+            if (typeDefinition.BaseType != null && typeDefinition.BaseType != "[mscorlib]System.Object")
+            {
+                BuildClrObject(clrObject, GetTypeDefineByName(typeDefinition.BaseType).TypeDefinition, isstatic);
+            }
+        }
+
 #if BRIDGE
         [Bridge.Template("{input}.apply({target}, arguments)")]
         public static object Apply(object input,object target)
@@ -81,7 +113,110 @@ namespace ApolloClr
 #endif
         }
 
+        static Extensions()
+        {
+            RegConvert<StackItemPtr>(s =>
+            {
+                var values = s.Split(':');
+                var type = GetTypeDefineByName(values[0]);
+                if (type != null)
+                {
+                    var key = values.Last();
+                    if (type.StaticClrObject.Fields.ContainsKey(key))
+                    {
+                        return type.StaticClrObject.Fields[key];
+                    }
+           
+                    type.StaticClrObject.Fields[key] = new StackItemPtr();
+                    return type.StaticClrObject.Fields[key];
+                }
+                else
+                {
+                    throw new NotSupportedException();
+                }
+                return null;
+            });
+        }
 
+        static Dictionary<Type, Func<string,object>> ConverFuncs = new Dictionary<Type, Func<string, object>>();
+
+        public static void RegConvert<T>(Func<string, object> convert)
+        {
+            ConverFuncs[typeof(T)] = convert;
+        }
+
+        public static object Convert(Type type, string input, List<ILCode> list)
+        {
+            if (type == typeof(string) || type == typeof(object))
+            {
+                return input;
+            }
+            if (ConverFuncs.ContainsKey(type))
+            {
+               return ConverFuncs[type](input);
+            }
+            if (type == typeof(int[]))
+            {
+                var lines = input.Substring(1, input.Length - 2).Split(',');
+                var resule = new int[lines.Length];
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    resule[i] = (int)Convert(typeof(int), lines[i], list);
+                }
+                return resule;
+            }
+            if (type == typeof(Type))
+            {
+                return Extensions.GetTypeByName(input);
+            }
+            if (type.IsEnum)
+            {
+                var value = Enum.Parse(type, input, true);
+                return value;
+            }
+            else if (type == typeof(float))
+            {
+                return float.Parse(input);
+            }
+            else if (type == typeof(double))
+            {
+                return double.Parse(input);
+            }
+            else if (type == typeof(int))
+            {
+                if (input.StartsWith("IL_"))//跳转命令
+                {
+                    var find = list.FindIndex(r => r.Lable == input);
+                    if (find >= 0)
+                    {
+                        return find - 1; //PC Move之后会++ 所以提前减一
+                    }
+                    else
+                    {
+                        throw new NotImplementedException();
+                    }
+
+                }
+                if (input != null)
+                {
+                    if (input.StartsWith("m") || input.StartsWith("M"))
+                    {
+                        return -int.Parse(input.Substring(1).Replace("i", "").Replace("V_", ""));
+                    }
+                    if (input.StartsWith("0x"))
+                    {
+                        return System.Convert.ToInt32(input, 16);
+                    }
+                    else
+                    {
+                        return int.Parse(input.Replace("i", "").Replace("V_", ""));
+                    }
+
+                }
+                return 0;
+            }
+            return null;
+        }
         public static object GetValueFromStr(string str, StackValueType vtype)
         {
             object value = null;
@@ -138,9 +273,39 @@ namespace ApolloClr
             }
             return mi;
         }
+
+        public static void RegAssembly( TypeDefine.AssemblyDefine  assembly)
+        {
+            Assembly.Add(assembly);
+        }
+
+      
+
+        private static List<TypeDefine.AssemblyDefine> Assembly  = new List<AssemblyDefine>();
+
+        public static TypeDefine.TypeDefine GetTypeDefineByName(string name)
+        {
+            var values = name.Split(new string[] { "::", ",", "(", ")", "[", "]" },
+        StringSplitOptions.RemoveEmptyEntries);
+            name = values.Last();
+            foreach (var assemblyDefine in Assembly)
+            {
+                var q = assemblyDefine.TypeDefines.Find(r => r.TypeDefinition.FullName == name);
+                if (q != null)
+                {
+                    return q;
+                  
+                }
+            }
+
+            return null;
+        }
+
         public static Type GetTypeByName(string name)
         {
-            name = name.Replace("[mscorlib]", "");
+            var values = name.Split(new string[] { "::", ",", "(", ")", "[","]" },
+           StringSplitOptions.RemoveEmptyEntries);
+            name = values.Last();
             Type type = Type.GetType(name);
 
             if (type != null)
@@ -184,8 +349,11 @@ namespace ApolloClr
                     return typeof(double);
                 case "float32":
                     return typeof(float);
+                case "object":
+                    return typeof(object);
             }
-  
+           
+       
             if (type == null)
             {
                 throw new NotSupportedException("Type  Was  Not Fount :" + name);

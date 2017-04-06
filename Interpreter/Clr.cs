@@ -170,6 +170,12 @@ namespace ApolloClr
             var iptr = StackObject.NewObject(obj);
             Stack.Push(iptr);
         }
+
+        public void EvaluationStack_Push(StackItem obj)
+        {
+            Stack.Push(obj);
+        }
+
         public void EvaluationStack_Push(StackItem* obj)
         {
             Stack.Push(obj);
@@ -248,14 +254,20 @@ namespace ApolloClr
             RetResult = haseResult;
             LocalVarCount = localCount;
             ArgsVarCount = argCount;
+
+#if JS
             CallStackClr = new BaseClrStack(localCount + argCount);
             CallStack = CallStackClr.EvaluationStack;
+           
+#else
+            CallStack = new StackItem[localCount + argCount];
+
+#endif
+
             if (CallStack.Length <= 0)
             {
                 return;
             }
-         
-
 #if JS
             _Csp = 0;
             _Argp = Csp + localCount;

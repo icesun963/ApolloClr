@@ -18,7 +18,7 @@ namespace ApolloClr
         public int IntValue;
         //在指针环境仅仅为了保留数据
         //非指针指向当前所在堆栈位置
-        public readonly int LValue;
+        public int LValue;
         public int Index;
 #if JS
         public static StackItem SPtrEmpty = null;
@@ -106,7 +106,8 @@ namespace ApolloClr
 
         public double ValueDouble => (double)VPoint;
 #else
-        
+      
+
         public void SetValue(StackValueType vtype, object value)
         {
             switch (vtype)
@@ -134,6 +135,12 @@ namespace ApolloClr
                     *(double*) VPoint = v;
                     break;
                 }
+
+                case  StackValueType.Ref:
+                {
+                    Ptr = StackObject.NewObject(value);
+                    break;
+                }
             }
         
         }
@@ -158,15 +165,21 @@ namespace ApolloClr
         }
 #endif
 
-#if JS
         public void CopyFrom(StackItem stackItem)
         {
-            this.Index = stackItem.Index;
-            this.IntValue = stackItem.IntValue;
-            this.Ptr = stackItem.Ptr;
-            this.VPoint = stackItem.VPoint;
-            this.ValueType = stackItem.ValueType;
+            Index = stackItem.Index;
+            IntValue = stackItem.IntValue;
+            LValue = stackItem.LValue;
+            Ptr = stackItem.Ptr;
+#if JS
+            VPoint = stackItem.VPoint;
+#endif
+            ValueType = stackItem.ValueType;
         }
+
+   
+#if JS
+      
 
         public static implicit operator StackItem(int ptr)
         {

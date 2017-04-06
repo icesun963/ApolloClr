@@ -18,6 +18,12 @@ namespace ApolloClr.TypeDefine
 
         private List<ILCode> Codes = null;
 
+        public override void InitMember(ClrObject input)
+        {
+            base.InitMember(input);
+            Extensions.BuildClrObject(input, TypeDefine.TypeDefinition);
+        }
+
         protected override MethodTasks CloneOne()
         {
             var methodDefinition = MethodDefinition;

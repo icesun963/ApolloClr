@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 namespace ApolloClr
@@ -6,6 +8,7 @@ namespace ApolloClr
     /// <summary>
     /// 对象指针
     /// </summary>
+    [DebuggerDisplay("Ptr = {PtrNum}")]
     public class StackObject
     {
 
@@ -14,11 +17,21 @@ namespace ApolloClr
         /// 指向自己的指针
         /// </summary>
         public GCHandle Ptr;
+
+        public object PtrNum
+        {
+            get
+            {
+               return GCHandle.ToIntPtr(Ptr).ToInt32();
+            }
+        }
 #endif
         /// <summary>
         /// 指向的对象
         /// </summary>
         public object Object;
+
+
 
 
 

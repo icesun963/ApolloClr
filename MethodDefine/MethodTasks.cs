@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using ApolloClr.Method;
 using ApolloClr.MethodDefine;
+using ApolloClr.TypeDefine;
 
 namespace ApolloClr
 {
@@ -15,6 +16,8 @@ namespace ApolloClr
         public List<IOpTask> TaskList = new List<IOpTask>();
 
         public IOpTask[] Lines;
+
+        private List<ILCode> ILLines;
 
         public int PC = 0;
 
@@ -156,33 +159,24 @@ namespace ApolloClr
             }
         }
 
-
-      
-
-
+        public  virtual void InitMember(ClrObject clrObj)
+        {
+           
+        }
 
         public static MethodTasks Build(string codes )
         {
             var list = ILCodeParse.ReadILCodes(codes);
-            return Build< MethodTasks>(list);
+            var ret= Build<MethodTasks>(list);
+            ret.CompileIL();
+
+            return ret;
         }
 
-        public static T Build<T>(List<ILCode> list,
-            Dictionary<string,string> localvars=null,
-            Dictionary<string, string> pargrams =null,
-            bool haseResult = true,
-            int maxstack =5)
-            where T : MethodTasks ,new()
+        public void CompileIL()
         {
-            var methodDefine = new T()
-            {
-                Clr =
-                    new Clr(localvars == null ? 5 : localvars.Count, pargrams == null ? 5 : pargrams.Count, haseResult,
-                        maxstack)
-            };
-
-            var clr = methodDefine.Clr;
-
+            var clr = this.Clr;
+            var list = ILLines;
             foreach (var line in list)
             {
                 if (string.IsNullOrEmpty(line.OpCode))
@@ -198,10 +192,10 @@ namespace ApolloClr
                 var baseOp = opcodeValue[0];
                 bool longOp = true;
 
-            
+
                 var method = FindMethod1(opcode.Replace(".", "_"));
                 //全
-              
+
                 if (method == null && baseOp + "_" + line.OpArg0 != opcode.Replace(".", "_"))
                 {
                     method = FindMethod1(baseOp + "_" + line.OpArg0);
@@ -209,8 +203,8 @@ namespace ApolloClr
                     if (method != null)
                         opcodeValue = new string[] {opcodeValue[0] + "_" + opcodeValue[1], opcodeValue[2]};
                 }
-                
-              
+
+
                 if (method == null)
                 {
                     method = FindMethod(baseOp);
@@ -227,12 +221,12 @@ namespace ApolloClr
                 object[] methodArg = null;
                 if (longOp)
                 {
-                    methodArg = ArgsFix(new string[] { "", line.Arg0, line.Arg1,line.Arg2 }, method,list);
+                    methodArg = ArgsFix(new string[] {"", line.Arg0, line.Arg1, line.Arg2}, method, list);
                 }
                 else
                 {
                     var subvalue = new List<string>(opcodeValue);
-                    if (method.GetParameters().Length == 3)//固定跳转
+                    if (method.GetParameters().Length == 3) //固定跳转
                     {
                         while (subvalue.Count < 3)
                         {
@@ -242,9 +236,9 @@ namespace ApolloClr
                     subvalue.Add(line.Arg0);
                     subvalue.Add(line.Arg1);
                     subvalue.Add(line.Arg2);
-                    methodArg = ArgsFix(subvalue.ToArray(), method,list);
+                    methodArg = ArgsFix(subvalue.ToArray(), method, list);
                 }
-              
+
                 var tasktype = typeof(OpCodeTask);
                 var parms = method.GetParameters();
                 if (parms.Length > 0)
@@ -287,8 +281,8 @@ namespace ApolloClr
                     }
                     else
                     {
-                      
-                       
+
+
                         {
                             if (parms.Length == 1)
                             {
@@ -313,15 +307,15 @@ namespace ApolloClr
                         }
                     }
                 }
-                
-              
+
+
                 var task = Activator.CreateInstance(tasktype) as IOpTask;
-             
+
                 task.OpCode = line;
 
                 var funtask = tasktype.GetField("Func").FieldType;
                 var gtype = method.GetGenericArguments();
-                if(gtype.Length==0)
+                if (gtype.Length == 0)
                 {
                     var @delage = Delegate.CreateDelegate(funtask, clr, method);
 
@@ -329,9 +323,9 @@ namespace ApolloClr
                 }
                 else
                 {
-                    if (methodArg.Length<=0 || methodArg[0].GetType() != typeof(Type).GetType())
+                    if (methodArg.Length <= 0 || methodArg[0].GetType() != typeof(Type).GetType())
                     {
-                        throw  new Exception("GenericMethod，First Pargram Type Mast Be System.Type!");
+                        throw new Exception("GenericMethod，First Pargram Type Mast Be System.Type!");
                     }
 #if BRIDGE
                     throw new NotSupportedException("GenericMethod, In BRIDGE Was Not Supported!");
@@ -339,7 +333,7 @@ namespace ApolloClr
                     var genmethod = method.MakeGenericMethod(methodArg[0] as Type);
 
                     var @delage = Delegate.CreateDelegate(funtask, clr, genmethod);
-                  
+
                     tasktype.GetField("Func").SetValue(task, @delage);
 #endif
                 }
@@ -356,11 +350,34 @@ namespace ApolloClr
                     }
                 }
 
-                methodDefine.TaskList.Add(task);
+                this.TaskList.Add(task);
 
             }
+        }
 
+        public static T Build<T>(List<ILCode> list,
+            Dictionary<string, string> localvars = null,
+            Dictionary<string, string> pargrams = null,
+            bool haseResult = true,
+            int maxstack = 5,
+            bool isstatic =true
+            )
+            where T : MethodTasks, new()
+        {
+            var pcount = pargrams == null ? 5 : pargrams.Count;
+            if (!isstatic)
+            {
+                pcount++;
+            }
 
+            var methodDefine = new T()
+            {
+                Clr =
+                   new Clr(localvars == null ? 5 : localvars.Count, pcount, haseResult,
+                       maxstack)
+            };
+
+            methodDefine.ILLines = list;
             return methodDefine;
         }
 
@@ -382,81 +399,14 @@ namespace ApolloClr
                         type = type.GetElementType();
                     }
 #endif
-                    args[i] = Convert(type, values[i + 1],list);
+                    args[i] = Extensions.Convert(type, values[i + 1],list);
                 }
             }
 
             return args;
         }
 
-        public static object Convert(Type type, string input, List<ILCode> list)
-        {
-            if (type == typeof(string) || type ==  typeof(object))
-            {
-                return input;
-            }
-            if (type == typeof(int[]))
-            {
-                var lines = input.Substring(1, input.Length - 2).Split(',');
-                var resule = new int[lines.Length];
-                for (int i = 0; i < lines.Length; i++)
-                {
-                    resule[i] = (int) Convert(typeof(int), lines[i], list);
-                }
-                return resule;
-            }
-            if (type == typeof(Type))
-            {
-                return Extensions.GetTypeByName(input);
-            }
-            if (type.IsEnum)
-            {
-               var value= Enum.Parse(type, input,true);
-                return value;
-            }
-            else if(type==typeof(float))
-            {
-                return float.Parse(input);
-            }
-            else if (type == typeof(double))
-            {
-                return double.Parse(input);
-            }
-            else if (type == typeof(int))
-            {
-                if ( input.StartsWith("IL_"))//跳转命令
-                {
-                    var find = list.FindIndex(r => r.Lable == input);
-                    if (find >= 0)
-                    {
-                        return find - 1; //PC Move之后会++ 所以提前减一
-                    }
-                    else
-                    {
-                        throw new NotImplementedException();
-                    }
-                   
-                }
-                if (input != null)
-                {
-                    if (input.StartsWith("m") || input.StartsWith("M"))
-                    {
-                        return -int.Parse(input.Substring(1).Replace("i", "").Replace("V_", ""));
-                    }
-                    if (input.StartsWith("0x"))
-                    {
-                        return System.Convert.ToInt32(input, 16);
-                    }
-                    else
-                    {
-                         return int.Parse(input.Replace("i", "").Replace("V_", ""));
-                    }
-                  
-                }
-                return 0;
-            }
-            return null;
-        }
+  
 
         public static MethodInfo FindMethod1(string name)
         {

@@ -9,6 +9,7 @@ namespace ApolloClr
         public readonly StackItem[] EvaluationStack;
         private readonly StackItem* EspZero;
         private StackItem* Esp;
+#if DEBUG
         private int _espI = 0;
 
         private int EspI
@@ -17,12 +18,14 @@ namespace ApolloClr
             set
             {
                 _espI = value;
-                if (value < 0)
+                if (value < 0 || value>EvaluationStack.Length)
                 {
-                    
+                    throw  new NotSupportedException("Ptr 溢出!");
                 }
+
             }
         }
+#endif
 
         public void Reset()
         {
@@ -80,7 +83,13 @@ namespace ApolloClr
             EspI++;
         }
 
-
+        public void Push(StackItem obj)
+        {
+            *Esp = obj;
+            Esp->VPoint = &Esp->IntValue;
+            Esp++;
+            EspI++;
+        }
         public StackItem* Pop()
         {
             Esp--;
@@ -102,7 +111,7 @@ namespace ApolloClr
 
         public ClrStack(int maxStack = 5)
         {
-            maxStack++;
+            //maxStack++;
             EvaluationStack = new StackItem[maxStack];
 
             fixed (StackItem* esp = &EvaluationStack[0])

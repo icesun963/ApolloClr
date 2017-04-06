@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using ApolloClr.TypeDefine;
 
 namespace ApolloClr
 {
@@ -91,7 +92,7 @@ namespace ApolloClr
                 }
                 //克隆 对战 并 运行
                 task.Run();
-
+             
                 //如果有返回
                 if (task.Clr.RetResult)
                 {
@@ -152,8 +153,17 @@ namespace ApolloClr
         /// <param name="type"></param>
         public void Newobj(string instance,string @return, MethodTasks task)
         {
+            if (task.Clr.ArgsVarCount > 0)
+            {
+                //初始化
+                task.Clr.Argp->ValueType = StackValueType.Ref;
+                var clrObj = new ClrObject();
+                task.InitMember(clrObj);
+              
+                task.Clr.Argp->SetValue(StackValueType.Ref, clrObj);
+            }
+        
             task.Run();
-
             EvaluationStack_Push(task.Clr.ResultPoint);
         }
 
@@ -231,9 +241,19 @@ namespace ApolloClr
         /// <summary>
         /// 查找对象中其引用当前位于计算堆栈的字段的值。
         /// </summary>
-        public void Ldfld()
+        public void Ldfld(Type type, string name)
         {
+            var vs = EvaluationStack_Pop();
+            var v1 = (vs)->Value;
+            if (v1 is ClrObject)
+            {
+                var s = (v1 as ClrObject).GetItem(name);
+                EvaluationStack_Push(s);
+            }
+            else
+            {
 
+            }
         }
 
         /// <summary>
@@ -247,17 +267,36 @@ namespace ApolloClr
         /// <summary>
         /// 用新值替换在对象引用或指针的字段中存储的值。
         /// </summary>
-        public void Stfld()
+        public void Stfld(Type type, string name)
         {
+            var vs = EvaluationStack_Pop(2);
+            var v1 = (vs)->Value;
+         
+            if (v1 is ClrObject)
+            {
+                (v1 as ClrObject).SetItem(name, *(vs+1));
+            }
+            else
+            {
+
+            }
 
         }
 
         /// <summary>
         /// 将静态字段的值推送到计算堆栈上。
         /// </summary>
-        public void Ldsfld()
+        public void Ldsfld( Type type, StackItemPtr stackObject)
         {
-
+            if (type == typeof(int))
+            {
+                EvaluationStack_Push(stackObject.Body.IntValue);
+            }
+            else
+            {
+               
+            }
+          
         }
 
         /// <summary>
@@ -265,14 +304,27 @@ namespace ApolloClr
         /// </summary>
         public void Ldsflda()
         {
-
+            var sckObj = EvaluationStack_Pop();
         }
 
         /// <summary>
         /// 用来自计算堆栈的值替换静态字段的值。
         /// </summary>
-        public void Stsfld()
+        public void Stsfld( Type type, StackItemPtr stackObject)
         {
+            var vs = EvaluationStack_Pop();
+
+
+            if (type == typeof(int))
+            {
+                stackObject.Body = *vs;
+            }
+            else
+            {
+
+            }
+
+
 
         }
 

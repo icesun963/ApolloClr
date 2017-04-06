@@ -18,7 +18,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;JS;SILAPI;!SPEED;</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;!JS;SILAPI;!SPEED;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -56,6 +56,7 @@
     <Compile Include="Interpreter\Stack\StackValueType.cs" />
     <Compile Include="MethodDefine\BaseOpTask.cs" />
     <Compile Include="MethodDefine\IOpTask.cs" />
+    <Compile Include="MethodDefine\OpCodeTaskPtr.cs" />
     <Compile Include="MethodDefine\OpCodeTaskRef.cs" />
     <Compile Include="MethodDefine\OpCodeTaskT.cs" />
     <Compile Include="MethodDefine\ILCodeParse.cs" />
@@ -87,9 +88,12 @@
     <Compile Include="SilAPI\ISilProcessor.cs" />
     <Compile Include="SilAPI\StreamSilProcessor.cs" />
     <Compile Include="TypeDefine\AssemblyDefine.cs" />
+    <Compile Include="ClrObject.cs" />
     <Compile Include="TypeDefine\MethodDefine.cs" />
+    <Compile Include="Interpreter\Stack\StackItemPtr.cs" />
     <Compile Include="TypeDefine\TypeDefine.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="TypeDefine\TypeParse.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

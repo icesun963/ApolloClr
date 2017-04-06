@@ -20,7 +20,7 @@ namespace ApolloClr
 
         static unsafe void Main(string[] args)
         {
-
+ 
             int count = 10000*1000;
 
             var sw = new Stopwatch();
@@ -51,11 +51,12 @@ namespace ApolloClr
 
 #if JS
                
-                TypeDefine.AssemblyDefine.ReadAndRun(AppDomain.CurrentDomain.BaseDirectory + "TestLib.dll", "Test", "Run1");
+                TypeDefine.AssemblyDefine.ReadAndRun(AppDomain.CurrentDomain.BaseDirectory + "TestLib.dll", "Test", "ClassRun");
 #endif
+             
                 //Test.RunArray();
                 TypeDefine.AssemblyDefine.ReadAndRun(AppDomain.CurrentDomain.BaseDirectory + "TestLib.dll", "Test",
-                    "RunF1");
+                    "ClassRun");
 
                 Console.ReadLine();
                 var func = MethodTasks.Build(code).Compile();
