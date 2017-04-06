@@ -115,7 +115,7 @@ namespace ApolloClr
 
         static Extensions()
         {
-            RegConvert<StackItemPtr>(s =>
+            RegConvert<StackItemPtr>((s,l) =>
             {
                 var values = s.Split(':');
                 var type = GetTypeDefineByName(values[0]);
@@ -136,24 +136,30 @@ namespace ApolloClr
                 }
                 return null;
             });
+
+            //RegConvert<Type>((s,l) =>
+            //{
+                
+            //});
         }
 
-        static Dictionary<Type, Func<string,object>> ConverFuncs = new Dictionary<Type, Func<string, object>>();
+        static Dictionary<Type, Func<string, List<ILCode>,object>> ConverFuncs =new Dictionary<Type, Func<string, List<ILCode>, object>>();
 
-        public static void RegConvert<T>(Func<string, object> convert)
+        public static void RegConvert<T>(Func<string, List<ILCode>, object> convert)
         {
             ConverFuncs[typeof(T)] = convert;
         }
 
-        public static object Convert(Type type, string input, List<ILCode> list)
+        public static object Convert(Type type, string input, List<ILCode> list,bool userConvertFun=true)
         {
             if (type == typeof(string) || type == typeof(object))
             {
                 return input;
             }
-            if (ConverFuncs.ContainsKey(type))
+            
+            if (userConvertFun && ConverFuncs.ContainsKey(type))
             {
-               return ConverFuncs[type](input);
+               return ConverFuncs[type](input,list);
             }
             if (type == typeof(int[]))
             {
@@ -167,6 +173,11 @@ namespace ApolloClr
             }
             if (type == typeof(Type))
             {
+                var typedefine = Extensions.GetTypeDefineByName(input);
+                if (typedefine != null)
+                {
+                    return typedefine.GetClrType();
+                }
                 return Extensions.GetTypeByName(input);
             }
             if (type.IsEnum)

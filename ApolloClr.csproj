@@ -47,6 +47,7 @@
     <Compile Include="Cross\ObjectBuild.cs" />
     <Compile Include="Interpreter\Clr_Array.cs" />
     <Compile Include="Interpreter\Clr_Conv.cs" />
+    <Compile Include="Interpreter\Clr_Ptr.cs" />
     <Compile Include="Interpreter\Clr_Speed.cs" />
     <Compile Include="Interpreter\Stack\BaseClrStack.cs" />
     <Compile Include="Interpreter\Clr_CallType.cs" />
@@ -89,6 +90,7 @@
     <Compile Include="SilAPI\StreamSilProcessor.cs" />
     <Compile Include="TypeDefine\AssemblyDefine.cs" />
     <Compile Include="ClrObject.cs" />
+    <Compile Include="TypeDefine\ClrType.cs" />
     <Compile Include="TypeDefine\MethodDefine.cs" />
     <Compile Include="Interpreter\Stack\StackItemPtr.cs" />
     <Compile Include="TypeDefine\TypeDefine.cs" />

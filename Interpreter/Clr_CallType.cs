@@ -170,23 +170,6 @@ namespace ApolloClr
 
 
 
-        /// <summary>
-        /// 将位于对象（&、* 或 native int 类型）地址的值类型复制到目标对象（&、* 或 native int 类型）的地址。
-        /// </summary>
-        public void Cpobj()
-        {
-
-        }
-
-        /// <summary>
-        /// 将地址指向的值类型对象复制到计算堆栈的顶部。
-        /// </summary>
-
-        public void Ldobj()
-        {
-
-        }
-
 
 
 
@@ -199,17 +182,40 @@ namespace ApolloClr
 
         }
 
+
+
         /// <summary>
         /// 测试对象引用（O 类型）是否为特定类的实例。
+        /// 推送空或引用到堆栈上
         /// </summary>
-        public void Isinst()
+        public void Isinst<T>(Type type)
         {
-
+            var vs = EvaluationStack_Pop();
+            var result = false;
+            if (type is ClrType)
+            {
+                result = (type as ClrType).Is(vs->Value);
+            }
+            else
+            {
+                result = (vs->Value is T);
+            }
+            if (!result)
+            {
+                Ldnull();
+            }
+            else
+            {
+                //丢回去
+                EvaluationStack_Push(vs);
+            }
+          
         }
 
 
         /// <summary>
         /// 将值类型的已装箱的表示形式转换为其未装箱的形式
+        /// 不理他
         /// </summary>
         public void UnBox<T>(Type type)
         {
@@ -219,6 +225,7 @@ namespace ApolloClr
 
         /// <summary>
         /// 将值类型的已装箱的表示形式转换为其未装箱的形式
+        /// 不理他
         /// </summary>
         public void UnBox_Any<T>(Type type)
         {
@@ -227,6 +234,7 @@ namespace ApolloClr
 
         /// <summary>
         /// 将值类转换为对象引用（O 类型）。
+        /// 不理他
         /// </summary>
 
         public void Box<T>(Type type)
@@ -288,23 +296,15 @@ namespace ApolloClr
         /// </summary>
         public void Ldsfld( Type type, StackItemPtr stackObject)
         {
-            if (type == typeof(int))
-            {
-                EvaluationStack_Push(stackObject.Body.IntValue);
-            }
-            else
-            {
-               
-            }
-          
+            EvaluationStack_Push(stackObject.Body);
         }
 
         /// <summary>
         /// 将静态字段的地址推送到计算堆栈上。
         /// </summary>
-        public void Ldsflda()
+        public void Ldsflda(Type type, StackItemPtr stackObject)
         {
-            var sckObj = EvaluationStack_Pop();
+            EvaluationStack_Push(stackObject.Body);
         }
 
         /// <summary>
@@ -313,38 +313,10 @@ namespace ApolloClr
         public void Stsfld( Type type, StackItemPtr stackObject)
         {
             var vs = EvaluationStack_Pop();
-
-
-            if (type == typeof(int))
-            {
-                stackObject.Body = *vs;
-            }
-            else
-            {
-
-            }
-
-
-
-        }
-
-        /// <summary>
-        /// 将指定类型的值从计算堆栈复制到所提供的内存地址中。
-        /// </summary>
-        public void Stobj()
-        {
-
+            stackObject.Body = *vs;
         }
 
 
-
-        /// <summary>
-        /// 检索嵌入在类型化引用内的地址（& 类型）。
-        /// </summary>
-        public void Refanyval()
-        {
-
-        }
 
         /// <summary>
         /// 如果值不是有限数，则引发 ArithmeticException。
@@ -441,13 +413,6 @@ namespace ApolloClr
 
         }
 
-        /// <summary>
-        /// 将位于指定地址的值类型的每个字段初始化为空引用或适当的基元类型的 0。
-        /// </summary>
-        public void Initobj()
-        {
-
-        }
 
         /// <summary>
         /// 约束要对其进行虚方法调用的类型。
@@ -457,35 +422,12 @@ namespace ApolloClr
 
         }
 
-        /// <summary>
-        /// 将指定数目的字节从源地址复制到目标地址。
-        /// </summary>
-        public void Cpblk()
-        {
-
-        }
-
-        /// <summary>
-        /// 将位于特定地址的内存的指定块初始化为给定大小和初始值。
-        /// </summary>
-        public void Initblk()
-        {
-
-        }
 
         public void No()
         {
 
         }
 
-
-        /// <summary>
-        /// 将提供的值类型的大小（以字节为单位）推送到计算堆栈上。
-        /// </summary>
-        public void Sizeof()
-        {
-
-        }
 
         /// <summary>
         /// 检索嵌入在类型化引用内的类型标记。
@@ -495,13 +437,6 @@ namespace ApolloClr
 
         }
 
-        /// <summary>
-        /// 指定后面的数组地址操作在运行时不执行类型检查，并且返回可变性受限的托管指针。
-        /// </summary>
-        public void Readonly()
-        {
-
-        }
     }
 
 }

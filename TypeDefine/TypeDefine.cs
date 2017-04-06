@@ -17,7 +17,7 @@ namespace ApolloClr.TypeDefine
 
         public SilAPI.DisassembledClass TypeDefinition { get; set; }
 
-
+        public ClrType ClrType { get; set; }
 
         public  TypeDefine(SilAPI.DisassembledClass inputType)
         {
@@ -46,8 +46,8 @@ namespace ApolloClr.TypeDefine
 
                 Methods.Add(method);
             }
+            ClrType = new ClrType();
 
-            
         }
 
 
@@ -131,6 +131,11 @@ namespace ApolloClr.TypeDefine
             }
         
 
+        }
+
+        public Type GetClrType()
+        {
+            return ClrType;
         }
     }
 }

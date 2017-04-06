@@ -22,6 +22,7 @@ namespace ApolloClr.TypeDefine
         {
             base.InitMember(input);
             Extensions.BuildClrObject(input, TypeDefine.TypeDefinition);
+            input.DefineType = TypeDefine.ClrType;
         }
 
         protected override MethodTasks CloneOne()

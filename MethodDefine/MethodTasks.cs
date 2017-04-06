@@ -323,18 +323,37 @@ namespace ApolloClr
                 }
                 else
                 {
-                    if (methodArg.Length <= 0 || methodArg[0].GetType() != typeof(Type).GetType())
+                    if (methodArg.Length <= 0 ||
+                        (
+                            methodArg[0].GetType() != typeof(Type).GetType()
+                            &&
+                            methodArg[0].GetType() != typeof(ClrType)
+                            ) 
+
+                        )
                     {
                         throw new Exception("GenericMethod£¬First Pargram Type Mast Be System.Type!");
                     }
 #if BRIDGE
                     throw new NotSupportedException("GenericMethod, In BRIDGE Was Not Supported!");
 #else
-                    var genmethod = method.MakeGenericMethod(methodArg[0] as Type);
+                    if (methodArg[0].GetType() == typeof(ClrType))
+                    {
+                        var genmethod = method.MakeGenericMethod(typeof(ClrType));
 
-                    var @delage = Delegate.CreateDelegate(funtask, clr, genmethod);
+                        var @delage = Delegate.CreateDelegate(funtask, clr, genmethod);
 
-                    tasktype.GetField("Func").SetValue(task, @delage);
+                        tasktype.GetField("Func").SetValue(task, @delage);
+                    }
+                    else
+                    {
+                        var genmethod = method.MakeGenericMethod(methodArg[0] as Type);
+
+                        var @delage = Delegate.CreateDelegate(funtask, clr, genmethod);
+
+                        tasktype.GetField("Func").SetValue(task, @delage);
+                    }
+                 
 #endif
                 }
                 for (int i = 1; i < 4; i++)

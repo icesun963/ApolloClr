@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ApolloClr.TypeDefine;
 
 namespace ApolloClr
 {
@@ -12,6 +13,8 @@ namespace ApolloClr
         /// 静态字段
         /// </summary>
         public Dictionary<string, StackItemPtr> Fields { get; set; } = new Dictionary<string, StackItemPtr>();
+
+        public ClrType DefineType { get; set; }
 
         public StackItem GetItem(string field)
         {
