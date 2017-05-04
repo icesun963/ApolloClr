@@ -16,8 +16,8 @@ namespace ApolloClr
     {
         public StackValueType ValueType;
         public int IntValue;
-        //ÔÚÖ¸Õë»·¾³½ö½öÎªÁË±£ÁôÊı¾İ
-        //·ÇÖ¸ÕëÖ¸Ïòµ±Ç°ËùÔÚ¶ÑÕ»Î»ÖÃ
+        //åœ¨æŒ‡é’ˆç¯å¢ƒä»…ä»…ä¸ºäº†ä¿ç•™æ•°æ®
+        //éæŒ‡é’ˆæŒ‡å‘å½“å‰æ‰€åœ¨å †æ ˆä½ç½®
         public int LValue;
         public int Index;
 #if JS
@@ -30,7 +30,7 @@ namespace ApolloClr
         public static StackItem* SPtrEmpty = null;
         public int* VPoint;
         public GCHandle Ptr;
-     
+
 #endif
 #if JS
         public StackItem(int lindex,BaseClrStack current)
@@ -45,7 +45,13 @@ namespace ApolloClr
         }
 #endif
 
-
+        public void Fix()
+        {
+            fixed (int* vp = &IntValue)
+            {
+                VPoint = vp;
+            }
+        }
 
         public object Value
         {
@@ -233,6 +239,6 @@ namespace ApolloClr
             return s1.IntValue <= s2.IntValue;
         }
 
-   
+       
     }
 }

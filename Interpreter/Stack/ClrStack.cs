@@ -33,6 +33,7 @@ namespace ApolloClr
             EspI = 0;
         }
 
+
         public void Push(GCHandle ptr)
         {
             Esp->Ptr = ptr;
@@ -40,6 +41,8 @@ namespace ApolloClr
             Esp++;
             EspI++;
         }
+
+
 
         public void PushType(StackValueType vtype)
         {

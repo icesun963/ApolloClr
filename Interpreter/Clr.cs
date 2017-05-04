@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace ApolloClr
 {
@@ -27,19 +28,19 @@ namespace ApolloClr
 #endif
 
         /// <summary>
-        /// ±äÁ¿Æ¨¹ÉÉÏ µ¹ÊıÎ»ÖÃÎª ²ÎÊı
-        /// ×ÜÊı=µ±Ç°¾Ö²¿±äÁ¿+·µ»ØÖµ+º¯Êı²ÎÊı
+        /// å˜é‡å±è‚¡ä¸Š å€’æ•°ä½ç½®ä¸º å‚æ•°
+        /// æ€»æ•°=å½“å‰å±€éƒ¨å˜é‡+è¿”å›å€¼+å‡½æ•°å‚æ•°
         /// </summary>
         public readonly StackItem[] CallStack;
 
 
 #if JS
-        //ÎªÁË°ü×°
+        //ä¸ºäº†åŒ…è£…
         private readonly BaseClrStack CallStackClr;
         private readonly StackItem _Csp;
         private readonly StackItem _Argp;
         /// <summary>
-        /// Í·Ö¸Õë
+        /// å¤´æŒ‡é’ˆ
         /// </summary>
         public  StackItem Csp
         {
@@ -51,7 +52,7 @@ namespace ApolloClr
         }
 
         /// <summary>
-        /// ²ÎÊıÖ¸Õë
+        /// å‚æ•°æŒ‡é’ˆ
         /// </summary>
         public StackItem Argp
         {
@@ -63,22 +64,22 @@ namespace ApolloClr
         }
 
         /// <summary>
-        /// µ±Ç°µÄ·µ»ØÖµ
+        /// å½“å‰çš„è¿”å›å€¼
         /// </summary>
         public StackItem ResultPoint;
 #else
         /// <summary>
-        /// Í·Ö¸Õë
+        /// å¤´æŒ‡é’ˆ
         /// </summary>
         public readonly StackItem* Csp;
 
         /// <summary>
-        /// ²ÎÊıÖ¸Õë
+        /// å‚æ•°æŒ‡é’ˆ
         /// </summary>
         public readonly StackItem* Argp;
 
         /// <summary>
-        /// µ±Ç°µÄ·µ»ØÖµ
+        /// å½“å‰çš„è¿”å›å€¼
         /// </summary>
         public StackItem* ResultPoint;
 #endif
@@ -150,6 +151,9 @@ namespace ApolloClr
                 case StackValueType.Ref:
                     EvaluationStack_Push(value);
                     break;
+                case StackValueType.Ptr:
+                    EvaluationStack_Push(value);
+                    break;
                 case StackValueType.i8:
                     EvaluationStack_Push((long) value);
                     break;
@@ -170,6 +174,8 @@ namespace ApolloClr
             var iptr = StackObject.NewObject(obj);
             Stack.Push(iptr);
         }
+
+ 
 
         public void EvaluationStack_Push(StackItem obj)
         {
@@ -291,7 +297,7 @@ namespace ApolloClr
         }
 
         /// <summary>
-        /// ÒÆ³ıµ±Ç°Î»ÓÚ¼ÆËã¶ÑÕ»¶¥²¿µÄÖµ
+        /// ç§»é™¤å½“å‰ä½äºè®¡ç®—å †æ ˆé¡¶éƒ¨çš„å€¼
         /// </summary>
         public virtual void Pop()
         {
@@ -299,7 +305,7 @@ namespace ApolloClr
         }
 
         /// <summary>
-        /// ¸´ÖÆ¼ÆËã¶ÑÕ»ÉÏµ±Ç°×î¶¥¶ËµÄÖµ
+        /// å¤åˆ¶è®¡ç®—å †æ ˆä¸Šå½“å‰æœ€é¡¶ç«¯çš„å€¼
         /// </summary>
         public void Dup()
         {
@@ -308,7 +314,7 @@ namespace ApolloClr
         }
 
         /// <summary>
-        /// ÍË³öµ±Ç°·½·¨²¢ÌøÖÁÖ¸¶¨·½·¨
+        /// é€€å‡ºå½“å‰æ–¹æ³•å¹¶è·³è‡³æŒ‡å®šæ–¹æ³•
         /// </summary>
         public void Jmp()
         {
@@ -317,7 +323,7 @@ namespace ApolloClr
 
 
         /// <summary>
-        /// ½«²ÎÊı£¨ÓÉÖ¸¶¨Ë÷ÒıÖµÒıÓÃ£©¼ÓÔØµ½¶ÑÕ»ÉÏ¡£
+        /// å°†å‚æ•°ï¼ˆç”±æŒ‡å®šç´¢å¼•å€¼å¼•ç”¨ï¼‰åŠ è½½åˆ°å †æ ˆä¸Šã€‚
         /// </summary>
         /// <param name="i"></param>
         public virtual void Ldarg(int i)
@@ -337,9 +343,9 @@ namespace ApolloClr
         }
 
         /// <summary>
-        /// Ñ¹ÈëÊı¾İ Ñ¹ÈëEvaluation StackÖĞ
+        /// å‹å…¥æ•°æ® å‹å…¥Evaluation Stackä¸­
         /// </summary>
-        /// <param name="v">Öµ</param>
+        /// <param name="v">å€¼</param>
         public virtual void Ldc_i4(int v)
         {
             EvaluationStack_Push(v);
@@ -347,7 +353,7 @@ namespace ApolloClr
 
 
         /// <summary>
-        /// Ñ¹ÈëÊı¾İ Ñ¹ÈëEvaluation StackÖĞ
+        /// å‹å…¥æ•°æ® å‹å…¥Evaluation Stackä¸­
         /// </summary>
         /// <param name="vtype"></param>
         /// <param name="value"></param>
@@ -369,7 +375,7 @@ namespace ApolloClr
         }
 
         /// <summary>
-        /// ½«Î»ÓÚ¼ÆËã¶ÑÕ»¶¥²¿µÄÖµ´æ´¢ÔÚ²ÎÊı²ÛÖĞµÄÖ¸¶¨Ë÷Òı´¦£¨¶Ì¸ñÊ½£©¡£
+        /// å°†ä½äºè®¡ç®—å †æ ˆé¡¶éƒ¨çš„å€¼å­˜å‚¨åœ¨å‚æ•°æ§½ä¸­çš„æŒ‡å®šç´¢å¼•å¤„ï¼ˆçŸ­æ ¼å¼ï¼‰ã€‚
         /// </summary>
         /// <param name="i"></param>
         public void Starg(int i)
@@ -379,13 +385,13 @@ namespace ApolloClr
             (Argp + 1).CopyFrom(v);
 #else
             *(Argp + i) = *v;
-            (Argp + i)->VPoint = &(Argp + i)->IntValue;
+           (Argp + i)->VPoint = &(Argp + i)->IntValue;
 #endif
         }
 
 
         /// <summary>
-        /// °ÑÒ»¸ö±äÁ¿·ÅÈë £¨Ñ¹ÈëEvaluation StackÖĞ£©
+        /// æŠŠä¸€ä¸ªå˜é‡æ”¾å…¥ ï¼ˆå‹å…¥Evaluation Stackä¸­ï¼‰
         /// </summary>
         /// <param name="i"></param>
         /// <returns></returns>
@@ -394,19 +400,11 @@ namespace ApolloClr
             EvaluationStack_Push(Csp + i);
         }
 
-        /// <summary>
-        /// °ÑÒ»¸ö±äÁ¿·ÅÈë £¨Ñ¹ÈëEvaluation StackÖĞ£©
-        /// </summary>
-        /// <param name="i"></param>
-        /// <returns></returns>
-        public virtual void Ldloca(int i)
-        {
-            Ldloc(i);
-        }
+
 
 
         /// <summary>
-        /// °ÑÒ»¸ö±äÁ¿·ÅÈë £¨Ñ¹ÈëEvaluation StackÖĞ£©
+        /// æŠŠä¸€ä¸ªå˜é‡æ”¾å…¥ ï¼ˆå‹å…¥Evaluation Stackä¸­ï¼‰
         /// </summary>
         /// <param name="i"></param>
         /// <returns></returns>
@@ -421,10 +419,10 @@ namespace ApolloClr
 
 
         /// <summary>
-        ///  ´Ó¼ÆËã¶ÑÕ»µÄ¶¥²¿µ¯³öµ±Ç°Öµ²¢½«Æä´æ´¢ÔÚ¾Ö²¿±äÁ¿ÁĞ±íÖĞµÄ index ´¦£¨¶Ì¸ñÊ½£©¡£
+        ///  ä»è®¡ç®—å †æ ˆçš„é¡¶éƒ¨å¼¹å‡ºå½“å‰å€¼å¹¶å°†å…¶å­˜å‚¨åœ¨å±€éƒ¨å˜é‡åˆ—è¡¨ä¸­çš„ index å¤„ï¼ˆçŸ­æ ¼å¼ï¼‰ã€‚
         /// Stloc_S
         /// </summary>
-        /// <param name="i">Î»ÖÃ</param>
+        /// <param name="i">ä½ç½®</param>
         /// <returns></returns>
         public virtual void Stloc(int i)
         {
@@ -442,7 +440,7 @@ namespace ApolloClr
 
 
         /// <summary>
-        /// ÎŞÓÃ´¦
+        /// æ— ç”¨å¤„
         /// </summary>
         /// <returns></returns>
         public virtual void Nop()

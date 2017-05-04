@@ -11,15 +11,15 @@ namespace ApolloClr.TypeDefine
         public List<MethodDefine> Methods { get; set; } = new List<MethodDefine>();
 
         /// <summary>
-        /// æ≤Ã¨∂‘œÛ
+        /// ÈùôÊÄÅÂØπË±°
         /// </summary>
         public ClrObject StaticClrObject { get; set; } = new ClrObject();
 
-        public SilAPI.DisassembledClass TypeDefinition { get; set; }
+        public SilAPI.DisassembledIlClass TypeDefinition { get; set; }
 
         public ClrType ClrType { get; set; }
 
-        public  TypeDefine(SilAPI.DisassembledClass inputType)
+        public  TypeDefine(SilAPI.DisassembledIlClass inputType)
         {
             TypeDefinition = inputType;
 
@@ -32,7 +32,7 @@ namespace ApolloClr.TypeDefine
                 bool haseResult = methodDefinition.ReturnType.ToLower() != typeof(void).Name.ToLower();
                 if (methodDefinition.ShortName == ".ctor")
                 {
-                    haseResult = true;
+                    haseResult = false;
                 }
                 var method = MethodDefine.Build<MethodDefine>(codes,
                     methodDefinition.Locals,
@@ -47,7 +47,7 @@ namespace ApolloClr.TypeDefine
                 Methods.Add(method);
             }
             ClrType = new ClrType();
-
+            ClrType.typeDefine = TypeDefinition;
         }
 
 
@@ -55,7 +55,7 @@ namespace ApolloClr.TypeDefine
 
         public TypeDefine Compile()
         {
-            Extensions.BuildClrObject(StaticClrObject, TypeDefinition,true);
+            Extensions.BuildClrObject(StaticClrObject,ClrType,true);
           
 
             foreach (var methodTaskse in Methods)
@@ -79,7 +79,7 @@ namespace ApolloClr.TypeDefine
             var parse = TypeParse.Parse(r.OpCode);
        
             var find = Methods.Find(rx => rx.MethodDefinition.CallName == parse.CallName);
-            //±æµÿ≤È’“
+            //Êú¨Âú∞Êü•Êâæ
             if(find==null && parse.TypeDefine!=null)
             {
                 find = parse.TypeDefine.Methods.Find(rx => rx.MethodDefinition.CallName == parse.CallName);
@@ -108,7 +108,7 @@ namespace ApolloClr.TypeDefine
             var parse = TypeParse.Parse( r.OpCode);
          
             var find = Methods.Find(rx => rx.MethodDefinition.CallName == parse.CallName);
-            //±æµÿ≤È’“
+            //Êú¨Âú∞Êü•Êâæ
             if (find == null && parse.TypeDefine != null)
             {
                 find = parse.TypeDefine.Methods.Find(rx => rx.MethodDefinition.CallName == parse.CallName);

@@ -21,8 +21,7 @@ namespace ApolloClr.TypeDefine
         public override void InitMember(ClrObject input)
         {
             base.InitMember(input);
-            Extensions.BuildClrObject(input, TypeDefine.TypeDefinition);
-            input.DefineType = TypeDefine.ClrType;
+            Extensions.BuildClrObject(input, TypeDefine.ClrType);
         }
 
         protected override MethodTasks CloneOne()
@@ -40,7 +39,7 @@ namespace ApolloClr.TypeDefine
             var method = MethodDefine.Build<MethodDefine>(codes,
                 methodDefinition.Locals,
                 methodDefinition.Parameters,
-                methodDefinition.ReturnType.ToLower() != typeof(void).Name.ToLower(),
+                methodDefinition.ReturnType.ToLower() != typeof(void).Name.ToLower() && MethodDefinition.ShortName!= ".ctor",
                 methodDefinition.MaxStack);
             method.MethodDefinition = methodDefinition;
             method.TypeDefine = TypeDefine;

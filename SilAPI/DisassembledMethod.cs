@@ -122,7 +122,7 @@ namespace SilAPI
                                 if (string.IsNullOrEmpty(localvalue))
                                     continue;
                                 var lvs = localvalue.Split(' ');
-                                Parameters[lvs[1]] = lvs[0];
+                                Parameters[lvs[1]] = lvs[0].Trim();
                                 ParametersIndex[lvs[1]] = Parameters.Count;
                                 ParametersList.Add(lvs[0]);
                                
@@ -168,7 +168,7 @@ namespace SilAPI
                             {
                                 var lvs = localvalue.Split(' ');
                                 
-                                Locals[lvs[lvs.Length-1]] = lvs[lvs.Length-2];
+                                Locals[lvs[lvs.Length-1]] = lvs[lvs.Length-2].Trim();
                                 LocalsIndex[lvs[lvs.Length - 1]] = LocalsIndex.Count;
                                 LocalList.Add(lvs[lvs.Length - 2]);
                             }

@@ -160,6 +160,8 @@ namespace ApolloClr.TypeDefine
             return false;
         }
 
+        public SilAPI.DisassembledIlClass typeDefine { get; set; }
+
         public override Type BaseType { get; }
 
         public override object[] GetCustomAttributes(Type attributeType, bool inherit)

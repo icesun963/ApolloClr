@@ -90,6 +90,9 @@ namespace ApolloClr
                 {
                     CopyToArgs(task.Clr);
                 }
+                //如果是非静态
+                //把先吧对象压入栈
+
                 //克隆 对战 并 运行
                 task.Run();
              
@@ -255,7 +258,7 @@ namespace ApolloClr
             var v1 = (vs)->Value;
             if (v1 is ClrObject)
             {
-                var s = (v1 as ClrObject).GetItem(name);
+                var s = (v1 as ClrObject).GetItemValue(name);
                 EvaluationStack_Push(s);
             }
             else
@@ -264,13 +267,6 @@ namespace ApolloClr
             }
         }
 
-        /// <summary>
-        /// 查找对象中其引用当前位于计算堆栈的字段的地址。
-        /// </summary>
-        public void Ldflda()
-        {
-
-        }
 
         /// <summary>
         /// 用新值替换在对象引用或指针的字段中存储的值。
@@ -279,10 +275,25 @@ namespace ApolloClr
         {
             var vs = EvaluationStack_Pop(2);
             var v1 = (vs)->Value;
-         
-            if (v1 is ClrObject)
+
+            if (v1 is IntPtr)
             {
-                (v1 as ClrObject).SetItem(name, *(vs+1));
+                var ptr = (IntPtr)v1;
+                var sp = (StackItem*)ptr.ToPointer();
+                var value = sp->Value;
+                if (value is ClrObject)
+                {
+                    (value as ClrObject).SetItemValue(name, *(vs + 1));
+                }
+                else
+                {
+                    
+                }
+            }
+
+            else if (v1 is ClrObject)
+            {
+                (v1 as ClrObject).SetItemValue(name, *(vs+1));
             }
             else
             {
@@ -314,6 +325,7 @@ namespace ApolloClr
         {
             var vs = EvaluationStack_Pop();
             stackObject.Body = *vs;
+            stackObject.Body.Fix();
         }
 
 

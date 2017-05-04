@@ -7,24 +7,50 @@ using ApolloClr.TypeDefine;
 
 namespace ApolloClr
 {
-    public class ClrObject
+
+    public unsafe class ClrObject
     {
         /// <summary>
         /// 静态字段
         /// </summary>
         public Dictionary<string, StackItemPtr> Fields { get; set; } = new Dictionary<string, StackItemPtr>();
 
+
+
         public ClrType DefineType { get; set; }
 
-        public StackItem GetItem(string field)
+        public ClrObject(ClrType type)
+        {
+            Extensions.BuildClrObject(this, type, false);
+        }
+        public ClrObject()
+        {
+
+        }
+
+ 
+        public IntPtr GetItemPtr(string field)
         {
             var value = field.Split(':').Last();
+            //获得指针
+            fixed (StackItem* ptr = &Fields[value].Body)
+            {
+                return (IntPtr) (void*) ptr;
+            }
+        }
+
+        public StackItem GetItemValue(string field)
+        {
+            var value = field.Split(':').Last();
+            //获得指针
             return Fields[value].Body;
         }
 
-        public void SetItem(string field, StackItem obj)
+        public void SetItemValue(string field, StackItem obj)
         {
             var value = field.Split(':').Last();
+            //替换值
+            obj.Fix();
             Fields[value].Body = obj;
         }
     }

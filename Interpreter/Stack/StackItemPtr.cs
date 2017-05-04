@@ -1,9 +1,16 @@
 ﻿namespace ApolloClr
 {
-    public  class StackItemPtr
+    public unsafe class StackItemPtr
     {
         public StackItem Body;
 
-     
+
+        //public static implicit operator StackItemPtr(StackItem obj)
+        //{
+        //    return new StackItemPtr()
+        //    {
+        //        Body = obj
+        //    };
+        //}
     }
 }

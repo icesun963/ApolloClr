@@ -22,6 +22,11 @@ namespace ApolloClr.TypeDefine
                 var typedefine = new TypeDefine(typeDefinition);
                 TypeDefines.Add(typedefine);
             }
+            foreach (var typeDefinition in api.AllStructures)
+            {
+                var typedefine = new TypeDefine(typeDefinition);
+                TypeDefines.Add(typedefine);
+            }
             Extensions.RegAssembly(this);
             foreach (var typeDefine in TypeDefines)
             {

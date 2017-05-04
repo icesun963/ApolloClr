@@ -49,9 +49,10 @@ namespace ApolloClr
 
         }
 
-        public static void BuildClrObject(ClrObject clrObject, DisassembledClass typeDefinition, bool isstatic = false)
+        public static void BuildClrObject(ClrObject clrObject, ClrType clrType, bool isstatic = false)
         {
-
+            var typeDefinition = clrType.typeDefine;
+            clrObject.DefineType = clrType;
             foreach (var disassembledField in typeDefinition.Fields)
             {
                 if (isstatic && disassembledField.Modifiers.Contains("static"))
@@ -72,9 +73,11 @@ namespace ApolloClr
                     }
                 }
             }
-            if (typeDefinition.BaseType != null && typeDefinition.BaseType != "[mscorlib]System.Object")
+            if (typeDefinition.BaseType != null && 
+                typeDefinition.BaseType != "[mscorlib]System.Object" &&
+                typeDefinition.BaseType != "[mscorlib]System.ValueType")
             {
-                BuildClrObject(clrObject, GetTypeDefineByName(typeDefinition.BaseType).TypeDefinition, isstatic);
+                BuildClrObject(clrObject, GetTypeDefineByName(typeDefinition.BaseType).ClrType, isstatic);
             }
         }
 
@@ -148,6 +151,34 @@ namespace ApolloClr
         public static void RegConvert<T>(Func<string, List<ILCode>, object> convert)
         {
             ConverFuncs[typeof(T)] = convert;
+        }
+
+        static List<Type> conveTypes =new List<Type>(new[]
+        {
+            typeof(int)  ,
+            typeof(long),
+            typeof(float),
+            typeof(double),
+            typeof(sbyte),
+            typeof(short),
+            typeof(byte),
+            typeof(ushort),
+            typeof(uint),
+            typeof(ulong)
+        });
+
+        public static bool IsBaseType(this Type type)
+        {
+            if (type.IsClass)
+            {
+                return false;
+            }
+            if (conveTypes.Contains(type))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         public static object Convert(Type type, string input, List<ILCode> list,bool userConvertFun=true)
@@ -362,6 +393,8 @@ namespace ApolloClr
                     return typeof(float);
                 case "object":
                     return typeof(object);
+                case "bool":
+                    return typeof(bool);
             }
            
        

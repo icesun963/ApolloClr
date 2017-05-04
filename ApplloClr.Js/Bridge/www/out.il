@@ -42,17 +42,20 @@
                                                                                                         0E 14 46 72 61 6D 65 77 6F 72 6B 44 69 73 70 6C   // ..FrameworkDispl
                                                                                                         61 79 4E 61 6D 65 12 2E 4E 45 54 20 46 72 61 6D   // ayName..NET Fram
                                                                                                         65 77 6F 72 6B 20 34 2E 35 )                      // ework 4.5
+  .permissionset reqmin
+             = {[mscorlib]System.Security.Permissions.SecurityPermissionAttribute = {property bool 'SkipVerification' = bool(true)}}
   .hash algorithm 0x00008004
   .ver 1:0:0:0
 }
 .module TestLib.dll
-// MVID: {673F60DD-306F-42C7-9931-84BC46BD6112}
+// MVID: {CC813965-5F6D-436D-8930-B5F436D0A73D}
+.custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x02580000
+// Image base: 0x02610000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -152,12 +155,24 @@
   .method public hidebysig static void  ClassRun() cil managed
   {
     // 
-    .maxstack  8
+    .maxstack  3
+    .locals init ([0] valuetype TestLib.TestStruct p)
     IL_0000:  nop
-    IL_0001:  ldc.i4.1
-    IL_0002:  call       void [mscorlib]System.Console::WriteLine(int32)
-    IL_0007:  nop
-    IL_0008:  ret
+    IL_0001:  ldloca.s   p
+    IL_0003:  ldc.i4.s   11
+    IL_0005:  call       instance void TestLib.TestStruct::.ctor(int32)
+    IL_000a:  ldloca.s   p
+    IL_000c:  ldflda     int32 TestLib.TestStruct::Value
+    IL_0011:  dup
+    IL_0012:  ldind.i4
+    IL_0013:  ldc.i4.1
+    IL_0014:  add
+    IL_0015:  stind.i4
+    IL_0016:  ldloc.0
+    IL_0017:  ldfld      int32 TestLib.TestStruct::Value
+    IL_001c:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0021:  nop
+    IL_0022:  ret
   } // end of method Test::ClassRun
 
   .method public hidebysig specialname rtspecialname 
@@ -172,6 +187,24 @@
   } // end of method Test::.ctor
 
 } // end of class TestLib.Test
+
+.class public sequential ansi sealed beforefieldinit TestLib.TestStruct
+       extends [mscorlib]System.ValueType
+{
+  .field public int32 Value
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(int32 v1) cil managed
+  {
+    // 
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldarg.1
+    IL_0003:  stfld      int32 TestLib.TestStruct::Value
+    IL_0008:  ret
+  } // end of method TestStruct::.ctor
+
+} // end of class TestLib.TestStruct
 
 .class public auto ansi beforefieldinit TestLib.TestClass
        extends TestLib.TestBaseClass

@@ -10,7 +10,7 @@ using ApolloClr.TypeDefine;
 
 namespace ApolloClr
 {
-    public class MethodTasks
+    public unsafe class MethodTasks
     {
         public Clr Clr ;
         public List<IOpTask> TaskList = new List<IOpTask>();
@@ -18,6 +18,9 @@ namespace ApolloClr
         public IOpTask[] Lines;
 
         private List<ILCode> ILLines;
+
+        private Dictionary<string, string> Localvars = null;
+        private Dictionary<string, string> Pargrams = null;
 
         public int PC = 0;
 
@@ -55,14 +58,14 @@ namespace ApolloClr
      
 
         /// <summary>
-        /// ¶ª³öÒ»¸öÒì³£
+        /// ä¸¢å‡ºä¸€ä¸ªå¼‚å¸¸
         /// </summary>
         /// <param name="ex"></param>
         public void ThrowAction(object ex,int pc)
         {
             if (pc > 0)
             {
-                //²éÕÒÏÂÒ»ĞĞÊÇ·ñÊÇFinally
+                //æŸ¥æ‰¾ä¸‹ä¸€è¡Œæ˜¯å¦æ˜¯Finally
                 if (Lines[PC + 1].OpCode.OpCode == "finally")
                 {
                     
@@ -86,8 +89,8 @@ namespace ApolloClr
                         var value = Lines[i] as OpCodeTask<int, int, int>;
                         if (nowPc >= value.V1 && nowPc <= value.V2)
                         {
-                            //Ìø×ª
-                            //´íÎóÅĞ¶Ï Èç¹ûÆ¥Åä
+                            //è·³è½¬
+                            //é”™è¯¯åˆ¤æ–­ å¦‚æœåŒ¹é…
                         
                             if (Lines[value.V3].OpCode.OpCode == "catch")
                             {
@@ -100,7 +103,7 @@ namespace ApolloClr
                             }
                            
                             break;
-                            //²»Æ¥Åä¼ÌĞøÑ°ÕÒ
+                            //ä¸åŒ¹é…ç»§ç»­å¯»æ‰¾
                         }
                     }
                 }
@@ -154,7 +157,7 @@ namespace ApolloClr
             //Console.WriteLine("==========Run End===========:" + Name);
             if (TrowException != null && !IsCatched)
             {
-                //Èç¹û·¢ÏÖÌø³öÖ®ºóÒÀÈ»ÓĞÒì³£Å×³ö
+                //å¦‚æœå‘ç°è·³å‡ºä¹‹åä¾ç„¶æœ‰å¼‚å¸¸æŠ›å‡º
                 throw TrowException;
             }
         }
@@ -176,6 +179,36 @@ namespace ApolloClr
         public void CompileIL()
         {
             var clr = this.Clr;
+
+            //å¦‚æœæ˜¯å¯¹è±¡åˆ™è¿›è¡Œåˆå§‹åŒ–
+            if (Localvars != null)
+            {
+                var localvars = this.Localvars;
+                for (int i = 0; i < localvars.Count; i++)
+                {
+                    var typeDefine = Extensions.GetTypeDefineByName(localvars["V_" + i]);
+                    if (typeDefine == null)
+                    {
+                        var type = Extensions.GetTypeByName(localvars["V_" + i]);
+                        //if (type.IsClass)
+                        //{
+                        //    (clr.Csp + i)->ValueType = StackValueType.Ref;
+                        //}
+                        //éåŸºç¡€ç±»å‹
+                        if (!type.IsBaseType())
+                        {
+                            (clr.Csp + i)->ValueType = StackValueType.Ref;
+                        }
+                    }
+                    else
+                    {
+                        var clrobj = new ClrObject(typeDefine.ClrType);
+
+                        (clr.Csp + i)->SetValue(StackValueType.Ref, clrobj);
+                        (clr.Csp + i)->ValueType = StackValueType.Ref;
+                    }
+                }
+            }
             var list = ILLines;
             foreach (var line in list)
             {
@@ -194,7 +227,7 @@ namespace ApolloClr
 
 
                 var method = FindMethod1(opcode.Replace(".", "_"));
-                //È«
+                //å…¨
 
                 if (method == null && baseOp + "_" + line.OpArg0 != opcode.Replace(".", "_"))
                 {
@@ -226,7 +259,7 @@ namespace ApolloClr
                 else
                 {
                     var subvalue = new List<string>(opcodeValue);
-                    if (method.GetParameters().Length == 3) //¹Ì¶¨Ìø×ª
+                    if (method.GetParameters().Length == 3) //å›ºå®šè·³è½¬
                     {
                         while (subvalue.Count < 3)
                         {
@@ -332,7 +365,7 @@ namespace ApolloClr
 
                         )
                     {
-                        throw new Exception("GenericMethod£¬First Pargram Type Mast Be System.Type!");
+                        throw new Exception("GenericMethodï¼ŒFirst Pargram Type Mast Be System.Type!");
                     }
 #if BRIDGE
                     throw new NotSupportedException("GenericMethod, In BRIDGE Was Not Supported!");
@@ -394,9 +427,13 @@ namespace ApolloClr
                 Clr =
                    new Clr(localvars == null ? 5 : localvars.Count, pcount, haseResult,
                        maxstack)
-            };
 
+               
+            };
+            
             methodDefine.ILLines = list;
+            methodDefine.Localvars = localvars;
+            methodDefine.Pargrams = pargrams;
             return methodDefine;
         }
 

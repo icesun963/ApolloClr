@@ -18,7 +18,7 @@ namespace ApolloClr
 
         private Type[] conveTypes = new[]
         {
-            typeof(int)  ,
+            typeof(int),
             typeof(long),
             typeof(float),
             typeof(double),
@@ -37,7 +37,7 @@ namespace ApolloClr
         public void Conv(StackValueType type)
         {
             var v = EvaluationStack_Pop();
-         
+
 #if JS
             object value = v.IntValue;
             if (v.ValueType != StackValueType.i4)
@@ -441,29 +441,29 @@ namespace ApolloClr
                     switch (v->ValueType)
                     {
                         case StackValueType.i4:
-                            {
-                                var f = (ulong)v->IntValue;
-                                rv.VPoint = (int*)&f;
-                                break;
-                            }
+                        {
+                            var f = (ulong) v->IntValue;
+                            rv.VPoint = (int*) &f;
+                            break;
+                        }
                         case StackValueType.i8:
-                            {
-                                var f = (ulong)v->ValueLong;
-                                rv.VPoint = (int*)&f;
-                                break;
-                            }
+                        {
+                            var f = (ulong) v->ValueLong;
+                            rv.VPoint = (int*) &f;
+                            break;
+                        }
                         case StackValueType.r4:
-                            {
-                                var f = (ulong)v->ValueFloat;
-                                rv.VPoint = (int*)&f;
-                                break;
-                            }
+                        {
+                            var f = (ulong) v->ValueFloat;
+                            rv.VPoint = (int*) &f;
+                            break;
+                        }
                         case StackValueType.r8:
-                            {
-                                var f = (ulong)v->ValueDouble;
-                                rv.VPoint = (int*)&f;
-                                break;
-                            }
+                        {
+                            var f = (ulong) v->ValueDouble;
+                            rv.VPoint = (int*) &f;
+                            break;
+                        }
 
                     }
                     break;
@@ -471,29 +471,29 @@ namespace ApolloClr
                     switch (v->ValueType)
                     {
                         case StackValueType.i4:
-                            {
-                                var f = (long)v->IntValue;
-                                rv.VPoint = (int*)&f;
-                                break;
-                            }
+                        {
+                            var f = (long) v->IntValue;
+                            rv.VPoint = (int*) &f;
+                            break;
+                        }
                         case StackValueType.i8:
-                            {
-                                var f = (long)v->ValueLong;
-                                rv.VPoint = (int*)&f;
-                                break;
-                            }
+                        {
+                            var f = (long) v->ValueLong;
+                            rv.VPoint = (int*) &f;
+                            break;
+                        }
                         case StackValueType.r4:
-                            {
-                                var f = (long)v->ValueFloat;
-                                rv.VPoint = (int*)&f;
-                                break;
-                            }
+                        {
+                            var f = (long) v->ValueFloat;
+                            rv.VPoint = (int*) &f;
+                            break;
+                        }
                         case StackValueType.r8:
-                            {
-                                var f = (long)v->ValueDouble;
-                                rv.VPoint = (int*)&f;
-                                break;
-                            }
+                        {
+                            var f = (long) v->ValueDouble;
+                            rv.VPoint = (int*) &f;
+                            break;
+                        }
 
                     }
                     break;
@@ -501,29 +501,29 @@ namespace ApolloClr
                     switch (v->ValueType)
                     {
                         case StackValueType.i4:
-                            {
-                                var f = (double)v->IntValue;
-                                rv.VPoint = (int*)&f;
-                                break;
-                            }
+                        {
+                            var f = (double) v->IntValue;
+                            rv.VPoint = (int*) &f;
+                            break;
+                        }
                         case StackValueType.i8:
-                            {
-                                var f = (double)v->ValueLong;
-                                rv.VPoint = (int*)&f;
-                                break;
-                            }
+                        {
+                            var f = (double) v->ValueLong;
+                            rv.VPoint = (int*) &f;
+                            break;
+                        }
                         case StackValueType.r4:
-                            {
-                                var f = (double)v->ValueFloat;
-                                rv.VPoint = (int*)&f;
-                                break;
-                            }
+                        {
+                            var f = (double) v->ValueFloat;
+                            rv.VPoint = (int*) &f;
+                            break;
+                        }
                         case StackValueType.r8:
-                            {
-                                var f = (double)v->ValueDouble;
-                                rv.VPoint = (int*)&f;
-                                break;
-                            }
+                        {
+                            var f = (double) v->ValueDouble;
+                            rv.VPoint = (int*) &f;
+                            break;
+                        }
 
                     }
                     break;
@@ -540,7 +540,7 @@ namespace ApolloClr
         /// <param name="type"></param>
         public void Ldind(StackValueType type)
         {
-            var vs = Stack.Top();
+            var vs = Stack.Pop();
 #if JS
             switch (vs.ValueType)
             {
@@ -562,20 +562,45 @@ namespace ApolloClr
                     throw new NotSupportedException();
             }
 #else
+            if (vs->ValueType == StackValueType.Ref)
+            {
+                var value = StackObject.ToObject(vs);
+                if (value is IntPtr)
+                {
+                    var si = (StackItem*) ((IntPtr) value).ToPointer();
+                    vs = si;
+                }
+                else
+                {
+
+                }
+            }
+
             switch (vs->ValueType)
             {
                 case StackValueType.Array:
                 {
-                    var array = ((StackObject)vs->Ptr.Target).Object as Array;
+                    var array = ((StackObject) vs->Ptr.Target).Object as Array;
                     vs->SetValue(type, array.GetValue(vs->Index));
                     break;
                 }
                 case StackValueType.i4:
+                    EvaluationStack_Push((int)(vs)->Value);
+                    break;
                 case StackValueType.r4:
+                    EvaluationStack_Push((float)(vs)->Value);
+                    break;
                 case StackValueType.i8:
+                    EvaluationStack_Push((long)(vs)->Value);
+                    break;
                 case StackValueType.r8:
+                {
+                    EvaluationStack_Push((double)(vs)->Value);
+                    break;
+                }
                 case StackValueType.Ref:
                 {
+                  
                     break;
                 }
                 default:
@@ -613,22 +638,40 @@ namespace ApolloClr
                     throw new NotSupportedException();
             }
 #else
+            if (vs->ValueType == StackValueType.Ref)
+            {
+                var value = StackObject.ToObject(vs);
+                if (value is IntPtr)
+                {
+                    var si = (StackItem*)((IntPtr)value).ToPointer();
+                    vs = si;
+                }
+                else
+                {
+
+                }
+            }
+
             switch (vs->ValueType)
             {
                 case StackValueType.Array:
-                    {
-                        var array = ((StackObject)vs->Ptr.Target).Object as Array;
-                        array.SetValue(vsv->Value,vs->Index);
-                        break;
-                    }
+                {
+                    var array = ((StackObject) vs->Ptr.Target).Object as Array;
+                    array.SetValue(vsv->Value, vs->Index);
+                    break;
+                }
                 case StackValueType.i4:
                 case StackValueType.r4:
                 case StackValueType.i8:
                 case StackValueType.r8:
+                {
+                    vs->SetValue(vsv->ValueType, vsv->Value);
+                    break;
+                }
                 case StackValueType.Ref:
-                    {
-                        break;
-                    }
+                {
+                    break;
+                }
                 default:
                     throw new NotSupportedException();
             }

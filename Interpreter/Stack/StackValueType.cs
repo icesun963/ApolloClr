@@ -12,10 +12,12 @@ namespace ApolloClr
         u2,
         u4,
         u8,
+        u,
         I,
         Ref,
         Any,
         Array,
+        Ptr,
     }
 
   
