@@ -19,7 +19,7 @@ namespace ApolloClr.TypeDefine
 
         public ClrType ClrType { get; set; }
 
-        public  TypeDefine(SilAPI.DisassembledIlClass inputType)
+        public TypeDefine(SilAPI.DisassembledIlClass inputType)
         {
             TypeDefinition = inputType;
 
@@ -28,18 +28,19 @@ namespace ApolloClr.TypeDefine
 
                 methodDefinition.ReadBody();
                 List<string> lines = methodDefinition.BodyLines;
-                var codes = ILCodeParse.ReadILCodes(lines.ToArray(), methodDefinition.LocalList, methodDefinition.ParametersList);
+                var codes = ILCodeParse.ReadILCodes(lines.ToArray(), methodDefinition.LocalList,
+                    methodDefinition.ParametersList);
                 bool haseResult = methodDefinition.ReturnType.ToLower() != typeof(void).Name.ToLower();
                 if (methodDefinition.ShortName == ".ctor")
                 {
-                    haseResult = false;
+                    haseResult = true;
                 }
                 var method = MethodDefine.Build<MethodDefine>(codes,
                     methodDefinition.Locals,
                     methodDefinition.Parameters,
                     haseResult,
-                     methodDefinition.MaxStack,
-                     methodDefinition.Static
+                    methodDefinition.MaxStack,
+                    methodDefinition.Static
                     );
                 method.MethodDefinition = methodDefinition;
                 method.TypeDefine = this;
@@ -83,8 +84,14 @@ namespace ApolloClr.TypeDefine
             if(find==null && parse.TypeDefine!=null)
             {
                 find = parse.TypeDefine.Methods.Find(rx => rx.MethodDefinition.CallName == parse.CallName);
+
                 if (find == null)
                 {
+                    var t = Extensions.GetTypeDefineByName(parse.TypeDefine.TypeDefinition.FullName);
+                    if (t != null)
+                    {
+                        find = t.Methods.Find(rx => rx.MethodDefinition.CallName == parse.CallName);
+                    }
                     throw new NotSupportedException();
                 }
             }

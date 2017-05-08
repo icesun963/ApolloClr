@@ -50,7 +50,16 @@ namespace SilAPI
                 sb.Append("(");
                 foreach (var parameter in Parameters)
                 {
-                    sb.Append(parameter.Value + ",");
+
+
+                    if (parameter.Value == "class")
+                    {
+                        sb.Append(parameter.Value + " " + parameter.Key + ",");
+                    }
+                    else
+                    {
+                        sb.Append(parameter.Value + ",");
+                    }
                 }
                 if (Parameters.Count > 0)
                 {

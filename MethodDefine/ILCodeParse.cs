@@ -178,7 +178,10 @@ namespace ApolloClr.Method
             {
                 if(ilCode.Line.EndsWith("call instance void [mscorlib]System.Object::.ctor()"))
                 {
-                    ilCode.Op = ilCode.OpCode = "nop";
+                    //ilCode.Op = ilCode.OpCode = "nop";
+                    //把自己压入栈
+                    ilCode.Op = ilCode.OpCode = "ldarg";
+                    ilCode.Arg0 = "0";
                 }
                 if (ilCode.Line.StartsWith("{")
                     || ilCode.Line.StartsWith("}")
