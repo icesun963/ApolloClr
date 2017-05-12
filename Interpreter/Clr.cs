@@ -24,7 +24,7 @@ namespace ApolloClr
             }
         }
 #else
-        private ClrStack Stack;
+        public ClrStack Stack;
 #endif
 
         /// <summary>
@@ -320,6 +320,7 @@ namespace ApolloClr
         {
             //TODO
         }
+
 
 
         /// <summary>

@@ -125,7 +125,7 @@ namespace ApolloClr.TypeDefine
 
         protected override bool IsCOMObjectImpl()
         {
-            throw new NotImplementedException();
+            return false;
         }
 
         public override object InvokeMember(string name, BindingFlags invokeAttr, Binder binder, object target, object[] args,

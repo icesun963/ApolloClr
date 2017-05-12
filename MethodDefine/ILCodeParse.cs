@@ -32,7 +32,29 @@ namespace ApolloClr.Method
 
             foreach (var xline in lines)
             {
-                var line = xline;
+                var line = xline.Trim();
+
+                if (line.Length > 0)
+                {
+                    while (true)
+                    {
+                        var oldlenght = line.Length;
+                        line = line.Replace("  ", " ");
+                        if (oldlenght == line.Length)
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                if (string.IsNullOrEmpty(line) || line.StartsWith("//"))
+                {
+                    continue;
+                }
+                if (line.IndexOf("//") > 0)
+                {
+                    line = line.Substring(0, line.IndexOf("//"));
+                }
                 var values = line.Trim().Split(' ');
 
                 if (values.Length >= 2 && values[1] == "switch")

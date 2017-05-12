@@ -152,5 +152,128 @@ namespace ApolloClr
         }
 
         #endregion
+
+
+
+
+        /// <summary>
+        /// 如果值不是有限数，则引发 ArithmeticException。
+        /// </summary>
+        public void Ckfinite()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// 将对特定类型实例的类型化引用推送到计算堆栈上。
+        /// </summary>
+        public void Mkrefany()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// 将元数据标记转换为其运行时表示形式，并将其推送到计算堆栈上。
+        /// </summary>
+        public void Ldtoken()
+        {
+            throw new NotImplementedException();
+        }
+
+
+
+
+
+
+        /// <summary>
+        /// 返回指向当前方法的参数列表的非托管指针。
+        /// </summary>
+        public void Arglist()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// 将指向实现特定方法的本机代码的非托管指针（native int 类型）推送到计算堆栈上。
+        /// </summary>
+        public void Ldftn()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// 将指向实现与指定对象关联的特定虚方法的本机代码的非托管指针（native int 类型）推送到计算堆栈上。
+        /// </summary>
+        public void Ldvirtftn()
+        {
+            throw new NotImplementedException();
+        }
+
+
+
+        /// <summary>
+        /// 从本地动态内存池分配特定数目的字节并将第一个分配的字节的地址（瞬态指针，* 类型）推送到计算堆栈上。
+        /// </summary>
+        public void Localloc()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// 将控制从异常的 filter 子句转移回公共语言结构 (CLI) 异常处理程序。
+        /// </summary>
+        public void Endfilter()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// 指示当前位于计算堆栈上的地址可能没有与紧接的 ldind、stind、ldfld、stfld、ldobj、stobj、initblk 或 cpblk 指令的自然大小对齐。
+        /// </summary>
+        public void Unaligned()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// 指定当前位于计算堆栈顶部的地址可以是易失的，并且读取该位置的结果不能被缓存，或者对该地址的多个存储区不能被取消。
+        /// </summary>
+        public void Volatile()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// 执行后缀的方法调用指令，以便在执行实际调用指令前移除当前方法的堆栈帧。
+        /// </summary>
+        public void Tail()
+        {
+            throw new NotImplementedException();
+        }
+
+
+        /// <summary>
+        /// 约束要对其进行虚方法调用的类型。
+        /// </summary>
+        public void Constrained()
+        {
+            throw new NotImplementedException();
+        }
+
+
+        public void No()
+        {
+            throw new NotImplementedException();
+        }
+
+
+        /// <summary>
+        /// 检索嵌入在类型化引用内的类型标记。
+        /// </summary>
+        public void Refanytype()
+        {
+            throw new NotImplementedException();
+        }
+
     }
 }

@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApplloClr.Js", "ApplloClr.J
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestLib", "..\TestLib\TestLib.csproj", "{C9FD66C8-8AC3-4C9D-847E-00663D8CB970}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApolloClr.Debugger", "ApolloClr.Debugger\ApolloClr.Debugger.csproj", "{0273E760-794F-4DC6-9AD0-295B42FFBFE5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{C9FD66C8-8AC3-4C9D-847E-00663D8CB970}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C9FD66C8-8AC3-4C9D-847E-00663D8CB970}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C9FD66C8-8AC3-4C9D-847E-00663D8CB970}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0273E760-794F-4DC6-9AD0-295B42FFBFE5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0273E760-794F-4DC6-9AD0-295B42FFBFE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0273E760-794F-4DC6-9AD0-295B42FFBFE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0273E760-794F-4DC6-9AD0-295B42FFBFE5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

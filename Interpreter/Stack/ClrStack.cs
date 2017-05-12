@@ -1,10 +1,12 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Runtime.InteropServices;
+using System.Security;
 
 namespace ApolloClr
 {
 #if !JS
-    public unsafe class ClrStack
+    public unsafe class ClrStack  : System.ComponentModel.INotifyPropertyChanged
     {
         public readonly StackItem[] EvaluationStack;
         private readonly StackItem* EspZero;
@@ -12,15 +14,22 @@ namespace ApolloClr
 #if DEBUG
         private int _espI = 0;
 
-        private int EspI
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public int EspI
         {
             get { return _espI; }
             set
             {
-                _espI = value;
+           
                 if (value < 0 || value>EvaluationStack.Length)
                 {
                     throw  new NotSupportedException("Ptr 溢出!");
+                }
+                _espI = value;
+                if (PropertyChanged != null)
+                {
+                    PropertyChanged(this, new PropertyChangedEventArgs("EspI"));
                 }
 
             }

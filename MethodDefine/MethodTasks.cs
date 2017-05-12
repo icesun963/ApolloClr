@@ -131,6 +131,41 @@ namespace ApolloClr
             throw new NotSupportedException();
         }
 
+
+
+        public virtual IEnumerator<object> RunStep()
+        {
+            PC = 0;
+            IsEnd = false;
+            while (PC < End)
+            {
+                yield return null;
+                //try
+                //{
+                Lines[PC].Run();
+               
+                //}
+                //catch (Exception ex)
+                //{
+                //    Clr.EvaluationStack_Push(0);
+                //    ThrowAction(ex, -1);
+                //}
+
+                PC++;
+               
+            }
+
+            IsEnd = true;
+            //Console.WriteLine("==========Run End===========:" + Name);
+            if (TrowException != null && !IsCatched)
+            {
+                //如果发现跳出之后依然有异常抛出
+                throw TrowException;
+            }
+
+            yield return null;
+        }
+
         public virtual void Run()
         {
             //Console.WriteLine("==========Run===========:" + Name);
