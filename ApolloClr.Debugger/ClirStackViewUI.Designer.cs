@@ -52,18 +52,18 @@
             // 
             // columnHeader1
             // 
-            this.columnHeader1.Text = "ValueType";
-            this.columnHeader1.Width = 102;
+            this.columnHeader1.Text = "Type";
+            this.columnHeader1.Width = 47;
             // 
             // columnHeader2
             // 
             this.columnHeader2.Text = "Value";
-            this.columnHeader2.Width = 85;
+            this.columnHeader2.Width = 102;
             // 
             // columnHeader3
             // 
             this.columnHeader3.Text = "Index";
-            this.columnHeader3.Width = 86;
+            this.columnHeader3.Width = 57;
             // 
             // ClirStackViewUI
             // 

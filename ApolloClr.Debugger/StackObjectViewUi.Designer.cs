@@ -52,17 +52,18 @@
             // 
             // columnHeader1
             // 
-            this.columnHeader1.Text = "ValueType";
-            this.columnHeader1.Width = 107;
+            this.columnHeader1.Text = "Type";
+            this.columnHeader1.Width = 46;
             // 
             // columnHeader2
             // 
             this.columnHeader2.Text = "Value";
-            this.columnHeader2.Width = 71;
+            this.columnHeader2.Width = 105;
             // 
             // columnHeader3
             // 
             this.columnHeader3.Text = "Index";
+            this.columnHeader3.Width = 53;
             // 
             // StackObjectViewUi
             // 

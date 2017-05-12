@@ -100,7 +100,7 @@ namespace ApolloClr.Debugger
             try
             {
                 var line = BindMethodTasks.Lines[BindMethodTasks.PC].OpCode;
-
+                Log("执行:" + BindMethodTasks.Lines[BindMethodTasks.PC]);
                 if (line.Lable != null)
                 {
                     int offset = srcCode.IndexOf(line.Lable + ":");
@@ -149,7 +149,7 @@ namespace ApolloClr.Debugger
         {
             if (!BindMethodTasks.IsEnd)
             {
-                Log("执行:" + BindMethodTasks.Lines[BindMethodTasks.PC]);
+                
                 Steps.MoveNext();
                 
                 LoadView();

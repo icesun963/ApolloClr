@@ -139,10 +139,10 @@ namespace ApolloClr
             IsEnd = false;
             while (PC < End)
             {
-                yield return null;
+              
                 //try
                 //{
-                Lines[PC].Run();
+                    Lines[PC].Run();
                
                 //}
                 //catch (Exception ex)
@@ -152,7 +152,7 @@ namespace ApolloClr
                 //}
 
                 PC++;
-               
+                yield return null;
             }
 
             IsEnd = true;
