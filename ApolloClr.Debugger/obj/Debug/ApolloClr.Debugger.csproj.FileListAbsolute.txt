@@ -9,3 +9,15 @@ E:\OneDrive\WindNet\NetThemis\ApolloClr.Debugger\obj\Debug\ApolloClr.Debugger.ex
 E:\OneDrive\WindNet\NetThemis\ApolloClr.Debugger\obj\Debug\ApolloClr.Debugger.pdb
 E:\OneDrive\WindNet\NetThemis\ApolloClr.Debugger\obj\Debug\ApolloClr.Debugger.ClirStackViewUI.resources
 E:\OneDrive\WindNet\NetThemis\ApolloClr.Debugger\obj\Debug\ApolloClr.Debugger.StackObjectViewUi.resources
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApolloClr\bin\Debug\ApolloClr.Debugger.exe.config
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApolloClr.Debugger\obj\Debug\ApolloClr.Debugger.exe
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApolloClr.Debugger\obj\Debug\ApolloClr.Debugger.pdb
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApolloClr\bin\Debug\ApolloClr.Debugger.exe
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApolloClr\bin\Debug\ApolloClr.Debugger.pdb
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApolloClr.Debugger\obj\Debug\ApolloClr.Debugger.csprojResolveAssemblyReference.cache
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApolloClr.Debugger\obj\Debug\ApolloClr.Debugger.ClirStackViewUI.resources
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApolloClr.Debugger\obj\Debug\ApolloClr.Debugger.DebuggerMain.resources
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApolloClr.Debugger\obj\Debug\ApolloClr.Debugger.Properties.Resources.resources
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApolloClr.Debugger\obj\Debug\ApolloClr.Debugger.StackObjectViewUi.resources
+E:\OneDrive\WindNet\NetThemis\ApolloClr\ApolloClr.Debugger\obj\Debug\ApolloClr.Debugger.csproj.GenerateResource.Cache
+E:\OneDrive\WindNet\NetThemis\ApolloClr\bin\Debug\highlighting\CS.xshd

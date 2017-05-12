@@ -28,32 +28,23 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.richTextBox1 = new System.Windows.Forms.RichTextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.groupBox4 = new System.Windows.Forms.GroupBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
-            this.groupBox4 = new System.Windows.Forms.GroupBox();
             this.button1 = new System.Windows.Forms.Button();
             this.groupBox5 = new System.Windows.Forms.GroupBox();
             this.richTextBox2 = new System.Windows.Forms.RichTextBox();
             this.clirStackViewUI1 = new ApolloClr.Debugger.ClirStackViewUI();
             this.stackObjectViewUi2 = new ApolloClr.Debugger.StackObjectViewUi();
             this.stackObjectViewUi1 = new ApolloClr.Debugger.StackObjectViewUi();
+            this.textEditorControl1 = new ICSharpCode.TextEditor.TextEditorControl();
             this.groupBox1.SuspendLayout();
+            this.groupBox4.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
-            this.groupBox4.SuspendLayout();
             this.groupBox5.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // richTextBox1
-            // 
-            this.richTextBox1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.richTextBox1.Location = new System.Drawing.Point(3, 21);
-            this.richTextBox1.Name = "richTextBox1";
-            this.richTextBox1.Size = new System.Drawing.Size(616, 504);
-            this.richTextBox1.TabIndex = 0;
-            this.richTextBox1.Text = "";
             // 
             // groupBox1
             // 
@@ -69,6 +60,17 @@
             this.groupBox1.TabIndex = 2;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "堆栈";
+            // 
+            // groupBox4
+            // 
+            this.groupBox4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox4.Controls.Add(this.stackObjectViewUi2);
+            this.groupBox4.Location = new System.Drawing.Point(298, 181);
+            this.groupBox4.Name = "groupBox4";
+            this.groupBox4.Size = new System.Drawing.Size(287, 174);
+            this.groupBox4.TabIndex = 3;
+            this.groupBox4.TabStop = false;
+            this.groupBox4.Text = "参数";
             // 
             // groupBox2
             // 
@@ -86,24 +88,13 @@
             // 
             this.groupBox3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox3.Controls.Add(this.richTextBox1);
+            this.groupBox3.Controls.Add(this.textEditorControl1);
             this.groupBox3.Location = new System.Drawing.Point(617, 87);
             this.groupBox3.Name = "groupBox3";
             this.groupBox3.Size = new System.Drawing.Size(622, 528);
             this.groupBox3.TabIndex = 3;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "IL代码";
-            // 
-            // groupBox4
-            // 
-            this.groupBox4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox4.Controls.Add(this.stackObjectViewUi2);
-            this.groupBox4.Location = new System.Drawing.Point(298, 181);
-            this.groupBox4.Name = "groupBox4";
-            this.groupBox4.Size = new System.Drawing.Size(287, 174);
-            this.groupBox4.TabIndex = 3;
-            this.groupBox4.TabStop = false;
-            this.groupBox4.Text = "参数";
             // 
             // button1
             // 
@@ -166,6 +157,16 @@
             this.stackObjectViewUi1.Size = new System.Drawing.Size(281, 127);
             this.stackObjectViewUi1.TabIndex = 0;
             // 
+            // textEditorControl1
+            // 
+            this.textEditorControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.textEditorControl1.IsReadOnly = false;
+            this.textEditorControl1.Location = new System.Drawing.Point(3, 21);
+            this.textEditorControl1.Name = "textEditorControl1";
+            this.textEditorControl1.Size = new System.Drawing.Size(616, 504);
+            this.textEditorControl1.TabIndex = 0;
+            this.textEditorControl1.Text = "textEditorControl1";
+            // 
             // DebuggerMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 15F);
@@ -179,17 +180,15 @@
             this.Text = "Clr Debugger";
             this.Load += new System.EventHandler(this.DebuggerMain_Load);
             this.groupBox1.ResumeLayout(false);
+            this.groupBox4.ResumeLayout(false);
             this.groupBox2.ResumeLayout(false);
             this.groupBox3.ResumeLayout(false);
-            this.groupBox4.ResumeLayout(false);
             this.groupBox5.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
 
         #endregion
-
-        private System.Windows.Forms.RichTextBox richTextBox1;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.GroupBox groupBox4;
@@ -200,6 +199,7 @@
         private System.Windows.Forms.RichTextBox richTextBox2;
         private StackObjectViewUi stackObjectViewUi2;
         private StackObjectViewUi stackObjectViewUi1;
+        private ICSharpCode.TextEditor.TextEditorControl textEditorControl1;
     }
 }
 

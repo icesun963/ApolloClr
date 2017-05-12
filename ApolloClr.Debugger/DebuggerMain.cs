@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using ICSharpCode.TextEditor.Document;
 
 namespace ApolloClr.Debugger
 {
@@ -16,6 +18,8 @@ namespace ApolloClr.Debugger
         {
             InitializeComponent();
         }
+
+        public string srcCode = "";
 
 
         public void TestRun()
@@ -55,10 +59,24 @@ namespace ApolloClr.Debugger
     IL_0014: ret          
 	IL_0017: ret
 ";
-            this.richTextBox1.Text = code;
+
+            srcCode = code;
+            string dir = @".\\highlighting\\"; // Insert the path to your xshd-files.
+            FileSyntaxModeProvider fsmProvider; // Provider
+            if (Directory.Exists(dir))
+            {
+                fsmProvider = new FileSyntaxModeProvider(dir); // Create new provider with the highlighting directory.
+                HighlightingManager.Manager.AddSyntaxModeFileProvider(fsmProvider); // Attach to the text editor.
+                textEditorControl1.SetHighlighting("IL"); // Activate the highlighting, use the name from the SyntaxDefinition node.
+            }
+            //textEditorControl1.SetHighlighting("CSharp-Mode");
+            File.WriteAllText("il.il",code);
+            this.textEditorControl1.LoadFile("il.il");
+        
             var func = MethodTasks.Build(code).Compile();
             LoadClr(func);
 
+            MoveCodeLine();
         }
 
         public MethodTasks BindMethodTasks { get; set; }
@@ -75,10 +93,44 @@ namespace ApolloClr.Debugger
             LoadView();
         }
 
+
+        public void MoveCodeLine()
+        {
+        
+            try
+            {
+                var line = BindMethodTasks.Lines[BindMethodTasks.PC].OpCode;
+
+                if (line.Lable != null)
+                {
+                    int offset = srcCode.IndexOf(line.Lable + ":");
+                    int length = line.Line.Length;
+
+                    textEditorControl1.Document.MarkerStrategy.RemoveAll((r) =>
+                    {
+                        return true;
+                    });
+
+                    TextMarker marker = new TextMarker(offset, length, TextMarkerType.SolidBlock, Color.Red);
+
+                    textEditorControl1.Document.MarkerStrategy.AddMarker(marker);
+                    textEditorControl1.ActiveTextAreaControl.ScrollTo(line.LineNum);
+                    textEditorControl1.Refresh();
+                }
+            }
+            catch
+            {
+                
+             
+            }
+        }
+
         public void LoadView()
         {
             this.stackObjectViewUi1.LoadBind(BindMethodTasks.Clr.CallStack.Take(BindMethodTasks.Clr.LocalVarCount).ToArray());
             this.stackObjectViewUi2.LoadBind(BindMethodTasks.Clr.CallStack.Skip(BindMethodTasks.Clr.LocalVarCount).ToArray());
+
+            MoveCodeLine();
         }
 
         private void DebuggerMain_Load(object sender, EventArgs e)
@@ -89,7 +141,7 @@ namespace ApolloClr.Debugger
         public void Log(string msg)
         {
             this.richTextBox2.AppendText(msg + "\r\n");
-            this.richTextBox2.Select(richTextBox1.TextLength, 0);
+            this.richTextBox2.Select(richTextBox2.TextLength, 0);
             this.richTextBox2.ScrollToCaret();
         }
 

@@ -29,9 +29,10 @@ namespace ApolloClr.Method
             bool switchStart = false;
             StringBuilder sline = new StringBuilder();
 
-
+            int linenum = 0;
             foreach (var xline in lines)
             {
+                linenum++;
                 var line = xline.Trim();
 
                 if (line.Length > 0)
@@ -104,6 +105,7 @@ namespace ApolloClr.Method
 
 
                 var illine = new ILCode();
+                illine.LineNum = linenum;
                 illine.Line = line;
                 if (list.Count > 0 &&
                     (list.Last().OpCode == "try" || list.Last().OpCode == "catch" || list.Last().OpCode == "finally"))

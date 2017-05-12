@@ -16,6 +16,7 @@ namespace ApolloClr
         public string Arg1;
         public string Arg2;
         public string Line;
+        public int LineNum;
 
         public override string ToString()
         {
