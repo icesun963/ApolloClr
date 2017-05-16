@@ -79,7 +79,12 @@ namespace ApolloClr
 #if JS
                 return (Ptr as StackObject).Object;
 #else
-               return (Ptr.Target as StackObject).Object;
+                if(Ptr.IsAllocated)
+                 return (Ptr.Target as StackObject).Object;
+                else
+                {
+                    return null;
+                }
 #endif
 
             }

@@ -288,10 +288,11 @@ namespace ApolloClr
             for (int i = 0; i < CallStack.Length; i++)
             {
                 CallStack[i].Index = i;
-                fixed (int* x = &CallStack[i].IntValue)
-                {
-                    CallStack[i].VPoint = x;
-                }
+                CallStack[i].Fix();
+                //fixed (int* x = &CallStack[i].IntValue)
+                //{
+                //    CallStack[i].VPoint = x;
+                //}
             }
 #endif
         }
@@ -386,7 +387,8 @@ namespace ApolloClr
             (Argp + 1).CopyFrom(v);
 #else
             *(Argp + i) = *v;
-           (Argp + i)->VPoint = &(Argp + i)->IntValue;
+            (Argp + i)->Fix();
+            //(Argp + i)->VPoint = &(Argp + i)->IntValue;
 #endif
         }
 
@@ -432,7 +434,8 @@ namespace ApolloClr
             (Csp + i).CopyFrom(result);
 #else
             *(Csp + i) = *result;
-            (Csp + i)->VPoint = &((Csp + i)->IntValue);
+            (Csp + i)->Fix();
+           //(Csp + i)->VPoint = &((Csp + i)->IntValue);
 #endif
         }
 

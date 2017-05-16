@@ -48,14 +48,14 @@
   .ver 1:0:0:0
 }
 .module TestLib.dll
-// MVID: {74A4A187-734A-47C0-9BC5-F302095D0559}
+// MVID: {B77F7345-0013-4B97-A6C6-E8F8880DA625}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x01390000
+// Image base: 0x00B20000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================

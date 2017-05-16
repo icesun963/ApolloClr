@@ -29,16 +29,17 @@
         private void InitializeComponent()
         {
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.clirStackViewUI1 = new ApolloClr.Debugger.ClirStackViewUI();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.stackObjectViewUi2 = new ApolloClr.Debugger.StackObjectViewUi();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.stackObjectViewUi1 = new ApolloClr.Debugger.StackObjectViewUi();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.textEditorControl1 = new ICSharpCode.TextEditor.TextEditorControl();
             this.button1 = new System.Windows.Forms.Button();
             this.groupBox5 = new System.Windows.Forms.GroupBox();
             this.richTextBox2 = new System.Windows.Forms.RichTextBox();
-            this.clirStackViewUI1 = new ApolloClr.Debugger.ClirStackViewUI();
-            this.stackObjectViewUi2 = new ApolloClr.Debugger.StackObjectViewUi();
-            this.stackObjectViewUi1 = new ApolloClr.Debugger.StackObjectViewUi();
-            this.textEditorControl1 = new ICSharpCode.TextEditor.TextEditorControl();
+            this.label1 = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.groupBox4.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -51,6 +52,7 @@
             this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox1.Controls.Add(this.label1);
             this.groupBox1.Controls.Add(this.clirStackViewUI1);
             this.groupBox1.Controls.Add(this.groupBox4);
             this.groupBox1.Controls.Add(this.groupBox2);
@@ -60,6 +62,17 @@
             this.groupBox1.TabIndex = 2;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "堆栈";
+            // 
+            // clirStackViewUI1
+            // 
+            this.clirStackViewUI1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.clirStackViewUI1.BindView = null;
+            this.clirStackViewUI1.Location = new System.Drawing.Point(17, 24);
+            this.clirStackViewUI1.Name = "clirStackViewUI1";
+            this.clirStackViewUI1.Size = new System.Drawing.Size(254, 328);
+            this.clirStackViewUI1.TabIndex = 4;
             // 
             // groupBox4
             // 
@@ -71,6 +84,15 @@
             this.groupBox4.TabIndex = 3;
             this.groupBox4.TabStop = false;
             this.groupBox4.Text = "参数";
+            // 
+            // stackObjectViewUi2
+            // 
+            this.stackObjectViewUi2.BindItems = null;
+            this.stackObjectViewUi2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.stackObjectViewUi2.Location = new System.Drawing.Point(3, 21);
+            this.stackObjectViewUi2.Name = "stackObjectViewUi2";
+            this.stackObjectViewUi2.Size = new System.Drawing.Size(281, 150);
+            this.stackObjectViewUi2.TabIndex = 1;
             // 
             // groupBox2
             // 
@@ -84,6 +106,15 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "局部变量";
             // 
+            // stackObjectViewUi1
+            // 
+            this.stackObjectViewUi1.BindItems = null;
+            this.stackObjectViewUi1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.stackObjectViewUi1.Location = new System.Drawing.Point(3, 21);
+            this.stackObjectViewUi1.Name = "stackObjectViewUi1";
+            this.stackObjectViewUi1.Size = new System.Drawing.Size(281, 127);
+            this.stackObjectViewUi1.TabIndex = 0;
+            // 
             // groupBox3
             // 
             this.groupBox3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -95,6 +126,16 @@
             this.groupBox3.TabIndex = 3;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "IL代码";
+            // 
+            // textEditorControl1
+            // 
+            this.textEditorControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.textEditorControl1.IsReadOnly = false;
+            this.textEditorControl1.Location = new System.Drawing.Point(3, 21);
+            this.textEditorControl1.Name = "textEditorControl1";
+            this.textEditorControl1.Size = new System.Drawing.Size(616, 504);
+            this.textEditorControl1.TabIndex = 0;
+            this.textEditorControl1.Text = "textEditorControl1";
             // 
             // button1
             // 
@@ -128,44 +169,14 @@
             this.richTextBox2.TabIndex = 0;
             this.richTextBox2.Text = "";
             // 
-            // clirStackViewUI1
+            // label1
             // 
-            this.clirStackViewUI1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.clirStackViewUI1.BindView = null;
-            this.clirStackViewUI1.Location = new System.Drawing.Point(17, 24);
-            this.clirStackViewUI1.Name = "clirStackViewUI1";
-            this.clirStackViewUI1.Size = new System.Drawing.Size(254, 331);
-            this.clirStackViewUI1.TabIndex = 4;
-            // 
-            // stackObjectViewUi2
-            // 
-            this.stackObjectViewUi2.BindItems = null;
-            this.stackObjectViewUi2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.stackObjectViewUi2.Location = new System.Drawing.Point(3, 21);
-            this.stackObjectViewUi2.Name = "stackObjectViewUi2";
-            this.stackObjectViewUi2.Size = new System.Drawing.Size(281, 150);
-            this.stackObjectViewUi2.TabIndex = 1;
-            // 
-            // stackObjectViewUi1
-            // 
-            this.stackObjectViewUi1.BindItems = null;
-            this.stackObjectViewUi1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.stackObjectViewUi1.Location = new System.Drawing.Point(3, 21);
-            this.stackObjectViewUi1.Name = "stackObjectViewUi1";
-            this.stackObjectViewUi1.Size = new System.Drawing.Size(281, 127);
-            this.stackObjectViewUi1.TabIndex = 0;
-            // 
-            // textEditorControl1
-            // 
-            this.textEditorControl1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.textEditorControl1.IsReadOnly = false;
-            this.textEditorControl1.Location = new System.Drawing.Point(3, 21);
-            this.textEditorControl1.Name = "textEditorControl1";
-            this.textEditorControl1.Size = new System.Drawing.Size(616, 504);
-            this.textEditorControl1.TabIndex = 0;
-            this.textEditorControl1.Text = "textEditorControl1";
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(14, 359);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(39, 15);
+            this.label1.TabIndex = 5;
+            this.label1.Text = "Esp:";
             // 
             // DebuggerMain
             // 
@@ -180,6 +191,7 @@
             this.Text = "Clr Debugger";
             this.Load += new System.EventHandler(this.DebuggerMain_Load);
             this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
             this.groupBox4.ResumeLayout(false);
             this.groupBox2.ResumeLayout(false);
             this.groupBox3.ResumeLayout(false);
@@ -200,6 +212,7 @@
         private StackObjectViewUi stackObjectViewUi2;
         private StackObjectViewUi stackObjectViewUi1;
         private ICSharpCode.TextEditor.TextEditorControl textEditorControl1;
+        private System.Windows.Forms.Label label1;
     }
 }
 

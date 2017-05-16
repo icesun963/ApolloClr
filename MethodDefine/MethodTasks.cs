@@ -137,6 +137,9 @@ namespace ApolloClr
         {
             PC = 0;
             IsEnd = false;
+
+
+
             while (PC < End)
             {
               

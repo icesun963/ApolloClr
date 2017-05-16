@@ -34,7 +34,9 @@ namespace ApolloClr
                 (clr.Argp + i).CopyFrom(vs+ i);
 #else
                 *(clr.Argp + i) = *(vs + i);
-                (clr.Argp + i)->VPoint = &(clr.Argp + i)->IntValue;
+                (clr.Argp + i)->Fix();
+
+                //(clr.Argp + i)->VPoint = &(clr.Argp + i)->IntValue;
 #endif
             }
 

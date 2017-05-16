@@ -39,6 +39,8 @@ namespace ApolloClr.Debugger
                 }
                 this.listView1.Items.Add(Build(stackItem));
             }
+
+         
         }
 
         public ListViewItem Build(StackItem stackitem)

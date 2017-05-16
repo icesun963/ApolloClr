@@ -1,16 +1,20 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security;
 
 namespace ApolloClr
 {
 #if !JS
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
     public unsafe class ClrStack  : System.ComponentModel.INotifyPropertyChanged
     {
         public readonly StackItem[] EvaluationStack;
-        private readonly StackItem* EspZero;
-        private StackItem* Esp;
+
+        public StackItem* Esp;
+
+        public GCHandle GCHanlde;
 #if DEBUG
         private int _espI = 0;
 
@@ -36,10 +40,28 @@ namespace ApolloClr
         }
 #endif
 
+
         public void Reset()
         {
-            Esp = EspZero;
+            fixed (StackItem* p = &EvaluationStack[0])
+            {
+                Esp = p;
+            }
+        
             EspI = 0;
+          
+        }
+
+        /// <summary>
+        /// CLR会在GC的时候，重定向变量
+        /// </summary>
+        public void GCFix()
+        {
+            fixed (StackItem* p = &EvaluationStack[0])
+            {
+                Esp = p + EspI;
+            }
+        
         }
 
 
@@ -63,6 +85,7 @@ namespace ApolloClr
             *Esp->VPoint = *obj;
             Esp++;
             EspI++;
+        
         }
 
         public void Push(StackValueType vtype, long* obj)
@@ -71,6 +94,7 @@ namespace ApolloClr
             Esp->ValueType = vtype;
             Esp++;
             EspI++;
+       
         }
 
         public void Push(int* obj)
@@ -78,6 +102,7 @@ namespace ApolloClr
             *Esp->VPoint = *obj;
             Esp++;
             EspI++;
+         
         }
 
         public void Push(long* obj)
@@ -85,6 +110,7 @@ namespace ApolloClr
             *(long*)Esp->VPoint = *obj;
             Esp++;
             EspI++;
+        
         }
 
         public void Push(StackItem* obj)
@@ -93,6 +119,7 @@ namespace ApolloClr
             Esp->VPoint = &Esp->IntValue;
             Esp++;
             EspI++;
+        
         }
 
         public void Push(StackItem obj)
@@ -101,11 +128,13 @@ namespace ApolloClr
             Esp->VPoint = &Esp->IntValue;
             Esp++;
             EspI++;
+        
         }
         public StackItem* Pop()
         {
             Esp--;
             EspI--;
+        
             return Esp;
         }
 
@@ -118,6 +147,7 @@ namespace ApolloClr
         {
             Esp -= count;
             EspI -= count;
+    
             return Esp;
         }
 
@@ -129,17 +159,21 @@ namespace ApolloClr
             fixed (StackItem* esp = &EvaluationStack[0])
             {
                 Esp = esp;
-                EspZero = esp;
             }
 
             for (int i = 0; i < EvaluationStack.Length; i++)
             {
                 EvaluationStack[i].Index = i;
-                fixed (int* x = &EvaluationStack[i].IntValue)
-                {
-                    EvaluationStack[i].VPoint = x;
-                }
+                EvaluationStack[i].Fix();
+                //fixed (int* x = &EvaluationStack[i].IntValue)
+                //{
+                //    EvaluationStack[i].VPoint = x;
+                //}
             }
+            //钉住地址，防止被GC修改变量位置，防止Esp找不到指定的位置
+            //TODO 释放
+            GCHanlde = GCHandle.Alloc(EvaluationStack, GCHandleType.Pinned);
+       
         }
     }
 #endif

@@ -71,10 +71,10 @@ namespace ApolloClr
 #endif
              
                 //Test.RunArray();
-                //TypeDefine.AssemblyDefine.ReadAndRun(AppDomain.CurrentDomain.BaseDirectory + "TestLib.dll", "Test",
-                //    "ClassRun");
+                TypeDefine.AssemblyDefine.ReadAndRun(AppDomain.CurrentDomain.BaseDirectory + "TestLib.dll", "Test",
+                    "ClassRun");
 
-                //Console.ReadLine();
+                Console.ReadLine();
                 var func = MethodTasks.Build(code).Compile();
 
 

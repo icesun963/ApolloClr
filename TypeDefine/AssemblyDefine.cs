@@ -46,13 +46,16 @@ namespace ApolloClr.TypeDefine
                 if (typeDefinition.TypeDefinition.ShortName == type)
                 {
                     var methodefine = typeDefinition.Methods.Find(r => r.MethodDefinition.ShortName == method);
-                    methodefine.Run();
+                    if (methodefine != null)
+                    {
+                        methodefine.Run();
 
 #if JS
                      return methodefine.Clr.ResultPoint;
 #else
 
 #endif
+                    }
                     break;
                 }
             }
