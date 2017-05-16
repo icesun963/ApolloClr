@@ -31,7 +31,11 @@ namespace ApolloClr
         public Exception TrowException;
 
         public bool IsCatched = false;
+#if DEBUG
+        public bool InDebug = false;
 
+        public IEnumerator<object> DebugerStep = null;
+#endif
         public virtual string Name { get; set; }
   
         public MethodTasks Compile(Action<IOpTask> OnCallAction = null, Action<IOpTask> OnNewAction=null)
@@ -133,7 +137,7 @@ namespace ApolloClr
 
 
 
-        public virtual IEnumerator<object> RunStep()
+        public virtual IEnumerator<object> RunStep(Action onRunEnd)
         {
             PC = 0;
             IsEnd = false;
@@ -145,7 +149,32 @@ namespace ApolloClr
               
                 //try
                 //{
-                    Lines[PC].Run();
+                var line = Lines[PC];
+
+
+                MethodTasks stepinMethodTasks = null;
+                if (line.GetType().Name == typeof(OpCodeTask<,,>).Name)
+                {
+                    if (line.GetType().GetField("V3") != null)
+                    {
+                        var obj = line.GetType().GetField("V3").GetValue(line);
+                        if (obj is MethodTasks && !(obj is Cross.CrossMethod))
+                        {
+                            stepinMethodTasks = obj as MethodTasks;
+                            stepinMethodTasks.InDebug = true;
+                        }
+                    }
+                }
+
+                line.Run();
+
+                if (stepinMethodTasks != null)
+                {
+                    while (stepinMethodTasks.DebugerStep.MoveNext())
+                    {
+                        yield return stepinMethodTasks;
+                    }
+                }
                
                 //}
                 //catch (Exception ex)
@@ -155,7 +184,7 @@ namespace ApolloClr
                 //}
 
                 PC++;
-                yield return null;
+                yield return this;
             }
 
             IsEnd = true;
@@ -166,37 +195,57 @@ namespace ApolloClr
                 throw TrowException;
             }
 
-            yield return null;
+            if (onRunEnd != null)
+            {
+                onRunEnd();
+            }
+            yield return this;
         }
 
-        public virtual void Run()
+        public virtual void Run(Action onRunEnd)
         {
             //Console.WriteLine("==========Run===========:" + Name);
             PC = 0;
             IsEnd = false;
-            while (PC < End)
+
+            if (InDebug)
+            {
+                DebugerStep = RunStep(onRunEnd);
+                return;
+            }
+            else
             {
 
-                //try
-                //{
-                Lines[PC].Run();
+           
+                while (PC < End)
+                {
 
-                //}
-                //catch (Exception ex)
-                //{
-                //    Clr.EvaluationStack_Push(0);
-                //    ThrowAction(ex, -1);
-                //}
+                    //try
+                    //{
+                    Lines[PC].Run();
 
-                PC++;
+                    //}
+                    //catch (Exception ex)
+                    //{
+                    //    Clr.EvaluationStack_Push(0);
+                    //    ThrowAction(ex, -1);
+                    //}
+
+                    PC++;
+                }
+
+                IsEnd = true;
+                //Console.WriteLine("==========Run End===========:" + Name);
+                if (TrowException != null && !IsCatched)
+                {
+                    //如果发现跳出之后依然有异常抛出
+                    throw TrowException;
+                }
             }
 
-            IsEnd = true;
-            //Console.WriteLine("==========Run End===========:" + Name);
-            if (TrowException != null && !IsCatched)
+            if (onRunEnd != null)
             {
-                //如果发现跳出之后依然有异常抛出
-                throw TrowException;
+                onRunEnd();
             }
         }
 

@@ -65,7 +65,7 @@ namespace ApolloClr.TypeDefine
                 methodTaskse.Compile(MethodCompile,NewCompile);
                 if (methodTaskse.MethodDefinition.ShortName == ".cctor")
                 {
-                    methodTaskse.Run();
+                    methodTaskse.Run(null);
                 }
             }
 

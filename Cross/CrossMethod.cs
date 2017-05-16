@@ -20,7 +20,7 @@ namespace ApolloClr.Cross
 
         private bool IsStatic = false;
 
-        public override void Run()
+        public override void Run(Action onRunEnd)
         {
             var vs = Clr.Argp;
 #if JS
@@ -28,7 +28,7 @@ namespace ApolloClr.Cross
 #else
             var ptr =vs->Ptr;
 #endif
-            //∂‘÷µ∂‘œÛ ∏≥÷µ
+            //ÂØπÂÄºÂØπË±° ËµãÂÄº
             if (IsStatic)
             {
                 object[] args = new object[ArgCount];
@@ -51,8 +51,8 @@ namespace ApolloClr.Cross
                         }
                         else
                         {
-                            //Ã¯π˝∂‘œÛ¥¥Ω®
-                            //»Áπ˚‘⁄“ª∏ˆ∂‘œÛ÷–÷ÿ∏¥ π”√£¨Ã¯π˝
+                            //Ë∑≥ËøáÂØπË±°ÂàõÂª∫
+                            //Â¶ÇÊûúÂú®‰∏Ä‰∏™ÂØπË±°‰∏≠ÈáçÂ§ç‰ΩøÁî®ÔºåË∑≥Ëøá
                         }
                       
                     }
@@ -91,6 +91,11 @@ namespace ApolloClr.Cross
                 Clr.ResultPoint->Ptr = StackObject.NewObject(CrossMethodDelegate.Result);
 #endif
             }
+
+            if (onRunEnd != null)
+            {
+                onRunEnd();
+            }
         }
 
         public CrossMethod()
@@ -128,6 +133,13 @@ namespace ApolloClr.Cross
 
 #if !BRIDGE
                 coninfo = type.GetConstructor(args.ToArray());
+                if (coninfo == null)
+                {
+                    if (type.GetConstructors().Length == 1)
+                    {
+                        coninfo = type.GetConstructors()[0];
+                    }
+                }
 #endif
                 if (coninfo != null)
                 {
@@ -143,7 +155,7 @@ namespace ApolloClr.Cross
 
                     if (methodName == ".ctor")
                     {
-                        //’‚∏ˆŒﬁ∑®’“µΩππ‘Ï∫Ø ˝£¨÷ªƒ‹÷±Ω”ππ‘Ï¡À
+                        //Ëøô‰∏™Êó†Ê≥ïÊâæÂà∞ÊûÑÈÄ†ÂáΩÊï∞ÔºåÂè™ËÉΩÁõ¥Êé•ÊûÑÈÄ†‰∫Ü
                         ArgCount = 0;
                         HaseResult = true;
                         Clr = new Clr(1, ArgCount, HaseResult, 1);
@@ -175,7 +187,7 @@ namespace ApolloClr.Cross
                 Clr = new Clr(1, ArgCount, HaseResult, 1);
                 CreatDelegate(methodInfo);
             }
-            //ππΩ®CLR
+            //ÊûÑÂª∫CLR
 
 
         }
@@ -189,6 +201,10 @@ namespace ApolloClr.Cross
             {
                 tasktype = typeof(ObjectBuild<>).MakeGenericType(methodInfo.DeclaringType);
 
+            }
+            else if (parms.Length == 2 && parms[1].ParameterType==typeof(IntPtr))
+            {
+                tasktype = typeof(DelegateBuild<>).MakeGenericType(methodInfo.DeclaringType);
             }
             else
             {
@@ -243,7 +259,7 @@ namespace ApolloClr.Cross
 
             CrossMethodDelegate = Activator.CreateInstance(tasktype) as ICrossMethodDelegate;
             var funtask = tasktype.GetField("Func").FieldType;
-            // æ≤Ã¨
+            // ÈùôÊÄÅ
             if (methodInfo.IsStatic)
             {
                 var @delage = Delegate.CreateDelegate(funtask,null, methodInfo);
@@ -252,8 +268,8 @@ namespace ApolloClr.Cross
             }
             else
             {
-                var obj = Activator.CreateInstance(methodInfo.DeclaringType);
-                var @delage = Delegate.CreateDelegate(funtask, obj, methodInfo);
+                //var obj = Activator.CreateInstance(methodInfo.DeclaringType);
+                var @delage = Delegate.CreateDelegate(funtask, null, methodInfo);
                 tasktype.GetField("Func").SetValue(CrossMethodDelegate, @delage);
                 IsStatic = false;
             }

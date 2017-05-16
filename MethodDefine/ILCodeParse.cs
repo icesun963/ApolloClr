@@ -26,6 +26,7 @@ namespace ApolloClr.Method
                 Line = "Reset",
             });
 
+    
             bool switchStart = false;
             StringBuilder sline = new StringBuilder();
 
@@ -40,13 +41,17 @@ namespace ApolloClr.Method
                     while (true)
                     {
                         var oldlenght = line.Length;
-                        line = line.Replace("  ", " ");
+                        line = line.Replace("  ", " ")
+                                   .Replace("native ", "native_")
+                            ;
                         if (oldlenght == line.Length)
                         {
                             break;
                         }
                     }
                 }
+
+
 
                 if (string.IsNullOrEmpty(line) || line.StartsWith("//"))
                 {
@@ -103,6 +108,23 @@ namespace ApolloClr.Method
                     }
                 }
 
+
+                if (line.EndsWith(","))
+                {
+                    sline= new StringBuilder();
+                    sline.Append(line);
+                    continue;
+                }
+                if (sline.Length > 0)
+                {
+                    sline.Append(line);
+                    if (line.EndsWith(")"))
+                    {
+                        line = sline.ToString();
+                        sline = new StringBuilder();
+                         values = line.Trim().Split(' ');
+                    }
+                }
 
                 var illine = new ILCode();
                 illine.LineNum = linenum;

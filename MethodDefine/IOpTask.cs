@@ -6,6 +6,7 @@ namespace ApolloClr
     {
         void Run();
 
+
         Delegate BindFunc { get; }
 
         int Dump { get; set; }
@@ -14,4 +15,5 @@ namespace ApolloClr
         object Method { get; set; }
 
     }
+
 }

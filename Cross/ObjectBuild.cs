@@ -25,4 +25,25 @@ namespace ApolloClr.Cross
           
         }
     }
+
+    public class DelegateBuild<T> : BaseCrossMethodDelegate
+    {
+        public override Delegate Delegate
+        {
+            get { return null; }
+        }
+
+  
+        public override void Run()
+        {
+       
+        }
+
+        public override void SetArgs(object[] values)
+        {
+
+        }
+    }
+
+    
 }

@@ -77,14 +77,17 @@ namespace ApolloClr
                     CopyToArgs(newtask.Clr);
                 }
 
-                newtask.Run();
-
-                //如果有返回
-                if (newtask.Clr.RetResult)
+                newtask.Run(() =>
                 {
-                    //压入返回值
-                    EvaluationStack_Push(newtask.Clr.ResultPoint);
-                }
+                    //如果有返回
+                    if (newtask.Clr.RetResult)
+                    {
+                        //压入返回值
+                        EvaluationStack_Push(newtask.Clr.ResultPoint);
+                    }
+                });
+
+              
             }
             else
             {
@@ -96,14 +99,17 @@ namespace ApolloClr
                 //把先吧对象压入栈
 
                 //克隆 对战 并 运行
-                task.Run();
-             
-                //如果有返回
-                if (task.Clr.RetResult)
+                task.Run(() =>
                 {
-                    //压入返回值
-                    EvaluationStack_Push(task.Clr.ResultPoint);
-                }
+                    //如果有返回
+                    if (task.Clr.RetResult)
+                    {
+                        //压入返回值
+                        EvaluationStack_Push(task.Clr.ResultPoint);
+                    }
+                });
+             
+              
             }
 
 
@@ -168,8 +174,11 @@ namespace ApolloClr
                 task.Clr.Argp->SetValue(StackValueType.Ref, clrObj);
             }
         
-            task.Run();
-            EvaluationStack_Push(task.Clr.ResultPoint);
+            task.Run(() =>
+            {
+                EvaluationStack_Push(task.Clr.ResultPoint);
+            });
+
         }
 
 

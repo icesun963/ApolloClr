@@ -21,6 +21,8 @@ namespace ApolloClr.Debugger
 
         public string srcCode = "";
 
+        public bool IsSub = false;
+
 
         public void TestRun(string code)
         {
@@ -41,14 +43,20 @@ namespace ApolloClr.Debugger
 
         public IEnumerator<object> Steps { get; set; }
 
-        public  void LoadClr(MethodTasks method)
+        public  void LoadClr(MethodTasks method, IEnumerator<object> inputSteps=null)
         {
             BindMethodTasks = method;
             this.clirStackViewUI1.LoadStack(method.Clr.Stack);
 
-          
-            Steps = BindMethodTasks.RunStep();
-            Steps.MoveNext();
+            if (inputSteps == null)
+            {
+                Steps = BindMethodTasks.RunStep(null);
+                Steps.MoveNext();
+            }
+            else
+            {
+                Steps = inputSteps;
+            }
             Log("加载:" + method.Name);
 
             if (string.IsNullOrEmpty(srcCode))
@@ -77,6 +85,8 @@ namespace ApolloClr.Debugger
             LoadView();
 
             MoveCodeLine();
+
+            this.Text += " " + method;
         }
 
 
@@ -135,12 +145,18 @@ namespace ApolloClr.Debugger
                 textEditorControl1.SetHighlighting("IL"); // Activate the highlighting, use the name from the SyntaxDefinition node.
             }
 
-            //加载DLL
-            TypeDefine.AssemblyDefine.ReadAndRun(AppDomain.CurrentDomain.BaseDirectory + "TestLib.dll", "Test", null);
+            if (BindMethodTasks == null)
+            {
+                //加载DLL
+                TypeDefine.AssemblyDefine.ReadAndRun(AppDomain.CurrentDomain.BaseDirectory + "TestLib.dll", "Test", null);
 
 
-            var method = Extensions.GetTypeDefineByName("TestLib.Test").Methods.Find(r => r.Name.IndexOf("Run1") >= 0);
-            LoadClr(method);
+                var method =
+                    Extensions.GetTypeDefineByName("TestLib.Test").Methods.Find(r => r.Name.IndexOf("ClassRun") >= 0);
+
+                LoadClr(method);
+            }
+            
         }
 
         public void Log(string msg)
@@ -154,10 +170,61 @@ namespace ApolloClr.Debugger
         {
             if (!BindMethodTasks.IsEnd)
             {
-                
-                Steps.MoveNext();
-                
+
+
+                while (true)
+                {
+                    Steps.MoveNext();
+                    if (Steps.Current == BindMethodTasks || Steps.Current == null)
+                    {
+                        break;
+                    }
+                }
+
+
                 LoadView();
+            }
+            else
+
+            if (IsSub)
+            {
+                Close();
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            if (!BindMethodTasks.IsEnd)
+            {
+                Steps.MoveNext();
+                if (Steps.Current != BindMethodTasks && Steps.Current != null)
+                {
+                    var step = new DebuggerMain();
+                    step.LoadClr(Steps.Current as MethodTasks, (Steps.Current as MethodTasks).DebugerStep);
+                    step.IsSub = true;
+                    step.ShowDialog();
+                }
+                LoadView();
+            }
+            else
+            if (IsSub)
+            {
+                Close();
+            }
+        }
+
+        private void DebuggerMain_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (IsSub)
+            {
+                if (!BindMethodTasks.IsEnd)
+                {
+                    while (Steps.MoveNext())
+                    {
+
+                    }
+                }
+             
             }
         }
     }

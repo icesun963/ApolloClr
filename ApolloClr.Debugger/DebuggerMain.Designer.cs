@@ -29,17 +29,18 @@
         private void InitializeComponent()
         {
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.clirStackViewUI1 = new ApolloClr.Debugger.ClirStackViewUI();
+            this.label1 = new System.Windows.Forms.Label();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
-            this.stackObjectViewUi2 = new ApolloClr.Debugger.StackObjectViewUi();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.stackObjectViewUi1 = new ApolloClr.Debugger.StackObjectViewUi();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.textEditorControl1 = new ICSharpCode.TextEditor.TextEditorControl();
             this.button1 = new System.Windows.Forms.Button();
             this.groupBox5 = new System.Windows.Forms.GroupBox();
             this.richTextBox2 = new System.Windows.Forms.RichTextBox();
-            this.label1 = new System.Windows.Forms.Label();
+            this.button2 = new System.Windows.Forms.Button();
+            this.clirStackViewUI1 = new ApolloClr.Debugger.ClirStackViewUI();
+            this.stackObjectViewUi2 = new ApolloClr.Debugger.StackObjectViewUi();
+            this.stackObjectViewUi1 = new ApolloClr.Debugger.StackObjectViewUi();
             this.groupBox1.SuspendLayout();
             this.groupBox4.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -63,16 +64,14 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "堆栈";
             // 
-            // clirStackViewUI1
+            // label1
             // 
-            this.clirStackViewUI1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.clirStackViewUI1.BindView = null;
-            this.clirStackViewUI1.Location = new System.Drawing.Point(17, 24);
-            this.clirStackViewUI1.Name = "clirStackViewUI1";
-            this.clirStackViewUI1.Size = new System.Drawing.Size(254, 328);
-            this.clirStackViewUI1.TabIndex = 4;
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(14, 359);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(39, 15);
+            this.label1.TabIndex = 5;
+            this.label1.Text = "Esp:";
             // 
             // groupBox4
             // 
@@ -85,15 +84,6 @@
             this.groupBox4.TabStop = false;
             this.groupBox4.Text = "参数";
             // 
-            // stackObjectViewUi2
-            // 
-            this.stackObjectViewUi2.BindItems = null;
-            this.stackObjectViewUi2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.stackObjectViewUi2.Location = new System.Drawing.Point(3, 21);
-            this.stackObjectViewUi2.Name = "stackObjectViewUi2";
-            this.stackObjectViewUi2.Size = new System.Drawing.Size(281, 150);
-            this.stackObjectViewUi2.TabIndex = 1;
-            // 
             // groupBox2
             // 
             this.groupBox2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -105,15 +95,6 @@
             this.groupBox2.TabIndex = 2;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "局部变量";
-            // 
-            // stackObjectViewUi1
-            // 
-            this.stackObjectViewUi1.BindItems = null;
-            this.stackObjectViewUi1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.stackObjectViewUi1.Location = new System.Drawing.Point(3, 21);
-            this.stackObjectViewUi1.Name = "stackObjectViewUi1";
-            this.stackObjectViewUi1.Size = new System.Drawing.Size(281, 127);
-            this.stackObjectViewUi1.TabIndex = 0;
             // 
             // groupBox3
             // 
@@ -142,9 +123,9 @@
             this.button1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button1.Location = new System.Drawing.Point(617, 39);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.Size = new System.Drawing.Size(110, 23);
             this.button1.TabIndex = 4;
-            this.button1.Text = "单步";
+            this.button1.Text = "Step over";
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
@@ -169,26 +150,59 @@
             this.richTextBox2.TabIndex = 0;
             this.richTextBox2.Text = "";
             // 
-            // label1
+            // button2
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(14, 359);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(39, 15);
-            this.label1.TabIndex = 5;
-            this.label1.Text = "Esp:";
+            this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.button2.Location = new System.Drawing.Point(742, 39);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(100, 23);
+            this.button2.TabIndex = 6;
+            this.button2.Text = "Step into";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
+            // clirStackViewUI1
+            // 
+            this.clirStackViewUI1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.clirStackViewUI1.BindView = null;
+            this.clirStackViewUI1.Location = new System.Drawing.Point(17, 24);
+            this.clirStackViewUI1.Name = "clirStackViewUI1";
+            this.clirStackViewUI1.Size = new System.Drawing.Size(254, 328);
+            this.clirStackViewUI1.TabIndex = 4;
+            // 
+            // stackObjectViewUi2
+            // 
+            this.stackObjectViewUi2.BindItems = null;
+            this.stackObjectViewUi2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.stackObjectViewUi2.Location = new System.Drawing.Point(3, 21);
+            this.stackObjectViewUi2.Name = "stackObjectViewUi2";
+            this.stackObjectViewUi2.Size = new System.Drawing.Size(281, 150);
+            this.stackObjectViewUi2.TabIndex = 1;
+            // 
+            // stackObjectViewUi1
+            // 
+            this.stackObjectViewUi1.BindItems = null;
+            this.stackObjectViewUi1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.stackObjectViewUi1.Location = new System.Drawing.Point(3, 21);
+            this.stackObjectViewUi1.Name = "stackObjectViewUi1";
+            this.stackObjectViewUi1.Size = new System.Drawing.Size(281, 127);
+            this.stackObjectViewUi1.TabIndex = 0;
             // 
             // DebuggerMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1251, 625);
+            this.Controls.Add(this.button2);
             this.Controls.Add(this.groupBox5);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.groupBox1);
             this.Name = "DebuggerMain";
             this.Text = "Clr Debugger";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.DebuggerMain_FormClosing);
             this.Load += new System.EventHandler(this.DebuggerMain_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
@@ -213,6 +227,7 @@
         private StackObjectViewUi stackObjectViewUi1;
         private ICSharpCode.TextEditor.TextEditorControl textEditorControl1;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Button button2;
     }
 }
 

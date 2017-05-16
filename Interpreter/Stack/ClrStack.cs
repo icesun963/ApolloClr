@@ -52,17 +52,6 @@ namespace ApolloClr
           
         }
 
-        /// <summary>
-        /// CLR会在GC的时候，重定向变量
-        /// </summary>
-        public void GCFix()
-        {
-            fixed (StackItem* p = &EvaluationStack[0])
-            {
-                Esp = p + EspI;
-            }
-        
-        }
 
 
         public void Push(GCHandle ptr)

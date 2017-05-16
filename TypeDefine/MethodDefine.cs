@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using ApolloClr.Method;
 
 namespace ApolloClr.TypeDefine
 {
+    [DebuggerDisplay("Name = {Name}")]
     public class MethodDefine : MethodTasks
     {
         public SilAPI.DisassembledMethod MethodDefinition { get; set; }

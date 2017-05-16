@@ -72,7 +72,7 @@ namespace ApolloClr
              
                 //Test.RunArray();
                 TypeDefine.AssemblyDefine.ReadAndRun(AppDomain.CurrentDomain.BaseDirectory + "TestLib.dll", "Test",
-                    "ClassRun");
+                    "EventTest");
 
                 Console.ReadLine();
                 var func = MethodTasks.Build(code).Compile();
@@ -82,7 +82,7 @@ namespace ApolloClr
                 sw.Start();
                 for (int i = 0; i < count; i++)
                 {
-                    func.Run();
+                    func.Run(null);
                 }
                 sw.Stop();
 

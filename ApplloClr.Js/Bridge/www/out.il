@@ -48,14 +48,14 @@
   .ver 1:0:0:0
 }
 .module TestLib.dll
-// MVID: {B77F7345-0013-4B97-A6C6-E8F8880DA625}
+// MVID: {FF5863BF-5F12-495B-92AA-F37D036A5DB4}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00B20000
+// Image base: 0x00840000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -159,7 +159,9 @@
     IL_0000:  nop
     IL_0001:  call       void TestLib.Test::ClassRun()
     IL_0006:  nop
-    IL_0007:  ret
+    IL_0007:  call       string [mscorlib]System.Console::ReadLine()
+    IL_000c:  pop
+    IL_000d:  ret
   } // end of method Test::Main
 
   .method public hidebysig static void  ClassRun() cil managed
@@ -174,15 +176,46 @@
     IL_0007:  newobj     instance void TestLib.TestClas2::.ctor()
     IL_000c:  stloc.1
     IL_000d:  ldloc.1
-    IL_000e:  ldloca.s   q
-    IL_0010:  callvirt   instance void TestLib.TestClas2::RunFunction(class TestLib.TestClas2&)
-    IL_0015:  nop
-    IL_0016:  ldloc.1
-    IL_0017:  callvirt   instance int32 TestLib.TestClas2::get_Value()
-    IL_001c:  call       void [mscorlib]System.Console::WriteLine(int32)
-    IL_0021:  nop
-    IL_0022:  ret
+    IL_000e:  ldloc.1
+    IL_000f:  callvirt   instance void TestLib.TestClas2::RunFunction(class TestLib.TestClas2)
+    IL_0014:  nop
+    IL_0015:  ldloc.1
+    IL_0016:  callvirt   instance int32 TestLib.TestClas2::get_Value()
+    IL_001b:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0020:  nop
+    IL_0021:  ret
   } // end of method Test::ClassRun
+
+  .method public hidebysig static void  EventTest() cil managed
+  {
+    // 
+    .maxstack  2
+    .locals init ([0] class [mscorlib]System.Action runtets)
+    IL_0000:  nop
+    IL_0001:  ldnull
+    IL_0002:  ldftn      void TestLib.Test::ActionTest()
+    IL_0008:  newobj     instance void [mscorlib]System.Action::.ctor(object,
+                                                                      native int)
+    IL_000d:  stloc.0
+    IL_000e:  ldstr      "EventTest"
+    IL_0013:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0018:  nop
+    IL_0019:  ldloc.0
+    IL_001a:  callvirt   instance void [mscorlib]System.Action::Invoke()
+    IL_001f:  nop
+    IL_0020:  ret
+  } // end of method Test::EventTest
+
+  .method public hidebysig static void  ActionTest() cil managed
+  {
+    // 
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldstr      "Action"
+    IL_0006:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_000b:  nop
+    IL_000c:  ret
+  } // end of method Test::ActionTest
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

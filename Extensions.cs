@@ -383,6 +383,8 @@ namespace ApolloClr
             {
                 case "string":
                     return typeof(string);
+                case "native_int":
+                    return typeof(IntPtr);
                 case "int32":
                     return typeof(int);
                 case "int64":
