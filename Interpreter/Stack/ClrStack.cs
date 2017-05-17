@@ -31,9 +31,19 @@ namespace ApolloClr
                     throw  new NotSupportedException("Ptr 溢出!");
                 }
                 _espI = value;
-                if (PropertyChanged != null)
+               
+
+                try
                 {
-                    PropertyChanged(this, new PropertyChangedEventArgs("EspI"));
+                    if (PropertyChanged != null)
+                    {
+                        PropertyChanged(this, new PropertyChangedEventArgs("EspI"));
+                    }
+                }
+                catch 
+                {
+                    
+                
                 }
 
             }

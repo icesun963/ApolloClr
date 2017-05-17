@@ -40,7 +40,8 @@ namespace ApolloClr.TypeDefine
                     methodDefinition.Parameters,
                     haseResult,
                     methodDefinition.MaxStack,
-                    methodDefinition.Static
+                    methodDefinition.Static,
+                    methodDefinition.ShortName == ".ctor"
                     );
                 method.MethodDefinition = methodDefinition;
                 method.TypeDefine = this;
@@ -132,7 +133,7 @@ namespace ApolloClr.TypeDefine
             else
             {
                 //try clr cross
-                var method = Cross.CrossDomain.Build(r.OpCode.Arg1 + " " + r.OpCode.Arg2);
+                var method = Cross.CrossDomain.Build(r.OpCode.Arg1 + " " + r.OpCode.Arg2 );
                 r.Method = method;
                 r.GetType().GetField("V3").SetValue(r, method);
             }

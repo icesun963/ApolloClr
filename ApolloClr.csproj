@@ -42,6 +42,7 @@
     <Compile Include="Cross\CrossDomain.cs" />
     <Compile Include="Cross\CrossMethod.cs" />
     <Compile Include="Cross\CrossMethodDelegateRet.cs" />
+    <Compile Include="Cross\DelegateBuild.cs" />
     <Compile Include="Cross\ICrossMethodDelegate.cs" />
     <Compile Include="Cross\CrossMethodDelegate.cs" />
     <Compile Include="Cross\ObjectBuild.cs" />

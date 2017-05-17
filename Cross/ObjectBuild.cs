@@ -12,6 +12,7 @@ namespace ApolloClr.Cross
 
         public T Make()
         {
+            //TODO 有参数支持
             return new T();
         }
 
@@ -25,25 +26,4 @@ namespace ApolloClr.Cross
           
         }
     }
-
-    public class DelegateBuild<T> : BaseCrossMethodDelegate
-    {
-        public override Delegate Delegate
-        {
-            get { return null; }
-        }
-
-  
-        public override void Run()
-        {
-       
-        }
-
-        public override void SetArgs(object[] values)
-        {
-
-        }
-    }
-
-    
 }

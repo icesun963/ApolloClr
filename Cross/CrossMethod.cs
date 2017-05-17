@@ -45,7 +45,7 @@ namespace ApolloClr.Cross
                 {
                     if (i == 0 )
                     {
-                        if (ptr != CrossMethodDelegate.Ptr)
+                        if (!ptr.IsAllocated || ptr != CrossMethodDelegate.Ptr)
                         {
                             args[ArgCount - 1] = StackObject.ToObject(vs + i);
                         }
@@ -113,20 +113,28 @@ namespace ApolloClr.Cross
             var returnType = values[0];
             var typeName = values[1];
             var methodName = values[2];
+            int argstart = 3;
+            if (typeName == "class")
+            {
+                typeName = values[2];
+                methodName = values[3];
+                argstart++;
+            }
             var type = Extensions.GetTypeByName(typeName);
             List<Type> args = new List<Type>();
-            for (int i = 3; i < values.Length; i++)
+            for (int i = argstart; i < values.Length; i++)
             {
                 args.Add(Extensions.GetTypeByName(values[i]));
             }
             var methodInfo = type.GetMethod(methodName, args.ToArray());
+           
 #if BRIDGE
             if (methodInfo == null)
             {
                 methodInfo = type.GetMethodInfo(methodName, args.ToArray());
             }
 #endif
-            if (methodInfo == null)
+            if (methodInfo == null && methodName ==".ctor")
             {
                 ConstructorInfo coninfo = null;
                 
@@ -146,7 +154,8 @@ namespace ApolloClr.Cross
                     ArgCount = coninfo.GetParameters().Length;
                     HaseResult = true;
                     Clr = new Clr(1, ArgCount, HaseResult, 1);
-                    CreatDelegate(coninfo);
+                   
+                    CreatDelegate(coninfo, type.GenericTypeArguments);
                     return;
                 }
                 else
@@ -169,7 +178,10 @@ namespace ApolloClr.Cross
                     throw new NotSupportedException(callname + " methodInfo or coninfo Mast Be Not Null!");
                 }
             }
-
+            if (methodInfo == null)
+            {
+                methodInfo = type.GetMethod(methodName);
+            }
             if (methodInfo != null)
             {
                 ArgCount = methodInfo.GetParameters().Length;
@@ -188,12 +200,18 @@ namespace ApolloClr.Cross
                 CreatDelegate(methodInfo);
             }
             //构建CLR
+            else
+            {
+                //如果是委托
+               
 
+                throw new NotSupportedException(callname + " methodInfo or coninfo Mast Be Not Null!");
+            }
 
         }
 
 
-        public void CreatDelegate(ConstructorInfo methodInfo)
+        public void CreatDelegate(ConstructorInfo methodInfo, Type[] genTypes)
         {
             var parms = methodInfo.GetParameters();
             var tasktype = typeof(ObjectBuild<>);
@@ -202,13 +220,17 @@ namespace ApolloClr.Cross
                 tasktype = typeof(ObjectBuild<>).MakeGenericType(methodInfo.DeclaringType);
 
             }
-            else if (parms.Length == 2 && parms[1].ParameterType==typeof(IntPtr))
+            else if (parms.Length == 2 && parms[1].ParameterType == typeof(IntPtr))
             {
-                tasktype = typeof(DelegateBuild<>).MakeGenericType(methodInfo.DeclaringType);
+                if (genTypes.Length == 0)
+                    tasktype = typeof(DelegateBuild);
+                if (genTypes.Length == 1)
+                    tasktype = typeof(DelegateBuild<>).MakeGenericType(genTypes);
+
             }
             else
             {
-                
+
             }
 
             CrossMethodDelegate = Activator.CreateInstance(tasktype) as ICrossMethodDelegate;

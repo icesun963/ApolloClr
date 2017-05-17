@@ -43,6 +43,7 @@ namespace ApolloClr.Method
                         var oldlenght = line.Length;
                         line = line.Replace("  ", " ")
                                    .Replace("native ", "native_")
+                                   .Replace("!0","")
                             ;
                         if (oldlenght == line.Length)
                         {
@@ -87,13 +88,7 @@ namespace ApolloClr.Method
 
 
 
-                if (values.Length > 4)
-                {
-                    for (int i = 5; i < values.Length; i++)
-                    {
-                        values[4] += " " + values[i];
-                    }
-                }
+             
                 {
                     //如果是字符串
                     int index = line.IndexOf("\"");
@@ -125,7 +120,13 @@ namespace ApolloClr.Method
                          values = line.Trim().Split(' ');
                     }
                 }
-
+                if (values.Length > 4)
+                {
+                    for (int i = 5; i < values.Length; i++)
+                    {
+                        values[4] += " " + values[i];
+                    }
+                }
                 var illine = new ILCode();
                 illine.LineNum = linenum;
                 illine.Line = line;
@@ -171,13 +172,14 @@ namespace ApolloClr.Method
                     {
                         illine.Arg2 = values[4];
                     }
+                  
                 }
 
 
             }
             list = FixTryCatchFinally(list);
             //解析 生成
-            list = MergeCodes(list, locals, args);
+            //list = MergeCodes(list, locals, args);
             return list;
         }
 
@@ -224,10 +226,12 @@ namespace ApolloClr.Method
             {
                 if(ilCode.Line.EndsWith("call instance void [mscorlib]System.Object::.ctor()"))
                 {
+                    ilCode.Op = ilCode.OpCode = "Pop";
+                    ilCode.Arg0 = "0";
                     //ilCode.Op = ilCode.OpCode = "nop";
                     //把自己压入栈
-                    ilCode.Op = ilCode.OpCode = "ldarg";
-                    ilCode.Arg0 = "0";
+                    //ilCode.Op = ilCode.OpCode = "ldarg";
+                    //ilCode.Arg0 = "0";
                 }
                 if (ilCode.Line.StartsWith("{")
                     || ilCode.Line.StartsWith("}")

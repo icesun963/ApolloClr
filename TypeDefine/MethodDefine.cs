@@ -42,7 +42,10 @@ namespace ApolloClr.TypeDefine
                 methodDefinition.Locals,
                 methodDefinition.Parameters,
                 methodDefinition.ReturnType.ToLower() != typeof(void).Name.ToLower() && MethodDefinition.ShortName!= ".ctor",
-                methodDefinition.MaxStack);
+                methodDefinition.MaxStack,
+                MethodDefinition.Static,
+                MethodDefinition.ShortName == ".ctor"
+                );
             method.MethodDefinition = methodDefinition;
             method.TypeDefine = TypeDefine;
             method.Compile(TypeDefine.MethodCompile,TypeDefine.NewCompile);

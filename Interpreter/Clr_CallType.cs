@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using ApolloClr.Cross;
 using ApolloClr.TypeDefine;
 
 namespace ApolloClr
@@ -51,7 +52,16 @@ namespace ApolloClr
         {
             if (RetResult)
             {
-                ResultPoint = EvaluationStack_Pop();
+                if (Stack.EspI == 0)
+                {
+                    //构造函数，直接返回this
+                    ResultPoint = Argp;
+                }
+                else
+                {
+                    ResultPoint = EvaluationStack_Pop();
+                }
+               
             }
 
             DumpAction(9999);
@@ -164,16 +174,38 @@ namespace ApolloClr
         /// <param name="type"></param>
         public void Newobj(string instance,string @return, MethodTasks task)
         {
+           
+            int begin = 1;
+
+            if ((task is CrossMethod) && (task as CrossMethod).CrossMethodDelegate is DelegateBuild)
+            {
+                begin = 0;
+            }
+            else
+            {
+                if (task.Clr.ArgsVarCount > 0)
+                {
+                    //初始化
+                    task.Clr.Argp->ValueType = StackValueType.Ref;
+                    var clrObj = new ClrObject();
+                    task.InitMember(clrObj);
+
+                    task.Clr.Argp->SetValue(StackValueType.Ref, clrObj);
+                }
+
+            }
+
             if (task.Clr.ArgsVarCount > 0)
             {
-                //初始化
-                task.Clr.Argp->ValueType = StackValueType.Ref;
-                var clrObj = new ClrObject();
-                task.InitMember(clrObj);
-              
-                task.Clr.Argp->SetValue(StackValueType.Ref, clrObj);
+                var vs = EvaluationStack_Pop(task.Clr.ArgsVarCount - begin);
+
+                for (int i = 0; i < task.Clr.ArgsVarCount - begin; i++)
+                {
+                    *(task.Clr.Argp + i + begin) = *(vs + i);
+                    (task.Clr.Argp + i + begin)->Fix();
+                }
             }
-        
+
             task.Run(() =>
             {
                 EvaluationStack_Push(task.Clr.ResultPoint);

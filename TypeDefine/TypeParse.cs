@@ -11,19 +11,25 @@ namespace ApolloClr.TypeDefine
         //	IL_0001: newobj instance void [System]System.Diagnostics.Stopwatch::.ctor()
         //  call int32 TestLib.TestClass::get_Value1()
         //  call void [mscorlib]System.Console::WriteLine(int64)
+        //  IL_0008: newobj instance void class [mscorlib]System.Action`1<int32>::.ctor(object,native_int)
         public static ILMethodDefine Parse(ILCode line)
         {
             Console.WriteLine(line.Arg0 + " " + line.Arg1 + " " + line.Arg2 + "  " + line.Line);
             var callName = line.Arg0 + " " + line.Arg1;
             if (line.Arg0 == "instance")
             {
-                callName = line.Arg1 + " " + line.Arg2;
+                callName = line.Arg1 + " " + line.Arg2 ;
             }
             var values = callName.Split(new string[] { "::", ",", "(", ")", " " },
                StringSplitOptions.RemoveEmptyEntries);
             var returnType = values[0];
             var typeName = values[1];
             var methodName = values[2];
+            if (typeName == "class")
+            {
+                typeName = values[2];
+                methodName = values[3];
+            }
             var type = Extensions.GetTypeDefineByName(typeName);
 
             var result = new ILMethodDefine();

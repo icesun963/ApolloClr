@@ -107,7 +107,7 @@ namespace ApolloClr.Debugger
                         return true;
                     });
 
-                    TextMarker marker = new TextMarker(offset, length, TextMarkerType.SolidBlock, Color.Red);
+                    TextMarker marker = new TextMarker(offset, length, TextMarkerType.SolidBlock, Color.CadetBlue);
 
                     textEditorControl1.Document.MarkerStrategy.AddMarker(marker);
                     textEditorControl1.ActiveTextAreaControl.ScrollTo(line.LineNum);
@@ -152,7 +152,7 @@ namespace ApolloClr.Debugger
 
 
                 var method =
-                    Extensions.GetTypeDefineByName("TestLib.Test").Methods.Find(r => r.Name.IndexOf("ClassRun") >= 0);
+                    Extensions.GetTypeDefineByName("TestLib.Test").Methods.Find(r => r.Name.IndexOf("EventTest") >= 0);
 
                 LoadClr(method);
             }

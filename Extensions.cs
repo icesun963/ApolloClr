@@ -348,12 +348,32 @@ namespace ApolloClr
             var values = name.Split(new string[] { "::", ",", "(", ")", "[","]" },
            StringSplitOptions.RemoveEmptyEntries);
             name = values.Last();
-            Type type = Type.GetType(name);
 
+            Type type = Type.GetType(name);
+            //泛型处理
+            if (name.IndexOf("`") > 0)
+            {
+                var index = name.IndexOf("<");
+                var args = name.Substring(index + 1);
+                name = name.Substring(0, index);
+                type = Type.GetType(name);
+                //TODO 暂时支持一层嵌套
+                var types = new List<Type>();
+                foreach (var arg in args.Split(new string[] { ">","," }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    types.Add(GetTypeByName(arg));
+                }
+                if (type != null)
+                {
+                    type = type.MakeGenericType(types.ToArray());
+                }
+            }
+           
             if (type != null)
             {
                 return type;
             }
+
             if (name.StartsWith("System"))
             {
                 type = typeof(int).Assembly.GetType(name);

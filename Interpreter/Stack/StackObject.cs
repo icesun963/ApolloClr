@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 namespace ApolloClr
 {
     /// <summary>
-    /// ¶ÔÏóÖ¸Õë
+    /// å¯¹è±¡æŒ‡é’ˆ
     /// </summary>
     [DebuggerDisplay("Ptr = {PtrNum}")]
     public class StackObject
@@ -14,7 +14,7 @@ namespace ApolloClr
 
 #if !JS
         /// <summary>
-        /// Ö¸Ïò×Ô¼ºµÄÖ¸Õë
+        /// æŒ‡å‘è‡ªå·±çš„æŒ‡é’ˆ
         /// </summary>
         public GCHandle Ptr;
 
@@ -27,7 +27,7 @@ namespace ApolloClr
         }
 #endif
         /// <summary>
-        /// Ö¸ÏòµÄ¶ÔÏó
+        /// æŒ‡å‘çš„å¯¹è±¡
         /// </summary>
         public object Object;
 
@@ -44,7 +44,7 @@ namespace ApolloClr
 #endif
         }
 
-        //TODO ¶ÔÏó¹ÜÀí ·ÀÖ¹ÊÍ·Å
+        //TODO å¯¹è±¡ç®¡ç† é˜²æ­¢é‡Šæ”¾
 #if !JS
         public static GCHandle NewObject(object obj)
         {
@@ -75,7 +75,9 @@ namespace ApolloClr
                 case StackValueType.r8:
                     return stackItem->ValueDouble;
                 case StackValueType.Ref:
-                    return GetStackObject(stackItem->Ptr).Object;
+                    if (stackItem->Ptr.IsAllocated)
+                        return GetStackObject(stackItem->Ptr).Object;
+                    return null;
             }
 
             return null;

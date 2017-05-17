@@ -28,9 +28,26 @@ namespace ApolloClr
 
 #else
         public static StackItem* SPtrEmpty = null;
+        private static StackItem _SPtrEmpty;
         public int* VPoint;
         public GCHandle Ptr;
 
+
+        static StackItem()
+        {
+            _SPtrEmpty = new StackItem()
+            {
+                ValueType = StackValueType.Ref,
+            };
+            GCHandle.Alloc(_SPtrEmpty, GCHandleType.Pinned);
+            fixed (StackItem* p = &_SPtrEmpty)
+            {
+                SPtrEmpty = p;
+            }
+            
+           
+       
+        }
 #endif
 #if JS
         public StackItem(int lindex,BaseClrStack current)
@@ -79,8 +96,8 @@ namespace ApolloClr
 #if JS
                 return (Ptr as StackObject).Object;
 #else
-                if(Ptr.IsAllocated)
-                 return (Ptr.Target as StackObject).Object;
+                if(Ptr.IsAllocated && Ptr.Target!=null) 
+                 return  (Ptr.Target as StackObject).Object;
                 else
                 {
                     return null;

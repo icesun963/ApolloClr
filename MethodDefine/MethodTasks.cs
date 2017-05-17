@@ -37,6 +37,7 @@ namespace ApolloClr
         public IEnumerator<object> DebugerStep = null;
 #endif
         public virtual string Name { get; set; }
+
   
         public MethodTasks Compile(Action<IOpTask> OnCallAction = null, Action<IOpTask> OnNewAction=null)
         {
@@ -47,9 +48,16 @@ namespace ApolloClr
                 {
                     OnCallAction?.Invoke(opTask);
                 }
-                if (opTask.OpCode.Op == "newobj")
+                else if (opTask.OpCode.Op == "newobj")
                 {
                     OnNewAction?.Invoke(opTask);
+                }
+                else if (opTask.GetType().GetField("V3") != null)
+                {
+                    if (opTask.GetType().GetField("V3").FieldType == typeof(MethodTasks))
+                    {
+                        OnCallAction?.Invoke(opTask);
+                    }
                 }
             }
             End = Lines.Length;
@@ -168,14 +176,14 @@ namespace ApolloClr
 
                 line.Run();
 
-                if (stepinMethodTasks != null)
+                if (stepinMethodTasks != null && stepinMethodTasks.DebugerStep != null)
                 {
                     while (stepinMethodTasks.DebugerStep.MoveNext())
                     {
                         yield return stepinMethodTasks;
                     }
                 }
-               
+
                 //}
                 //catch (Exception ex)
                 //{
@@ -303,7 +311,7 @@ namespace ApolloClr
                 {
                     continue;
                 }
-                if (line.OpCode == ".try")
+                if (line.OpCode == "call")
                 {
 
                 }
@@ -499,12 +507,13 @@ namespace ApolloClr
             Dictionary<string, string> pargrams = null,
             bool haseResult = true,
             int maxstack = 5,
-            bool isstatic =true
+            bool isstatic =true,
+            bool isctor = false
             )
             where T : MethodTasks, new()
         {
             var pcount = pargrams == null ? 5 : pargrams.Count;
-            if (!isstatic)
+            if (!isstatic )
             {
                 pcount++;
             }

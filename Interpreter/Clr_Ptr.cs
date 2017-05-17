@@ -196,9 +196,9 @@ namespace ApolloClr
         /// <summary>
         /// 将指向实现特定方法的本机代码的非托管指针（native int 类型）推送到计算堆栈上。
         /// </summary>
-        public void Ldftn()
+        public void Ldftn(string retType, string method, MethodTasks task)
         {
-            throw new NotImplementedException();
+            EvaluationStack_Push(task);
         }
 
         /// <summary>
