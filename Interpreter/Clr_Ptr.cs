@@ -35,7 +35,7 @@ namespace ApolloClr
             else
             {
                 var value = new T();
-                sp->SetValue(StackValueType.Ref, value);
+                sp->SetValue(StackValueType.Ref, value,true);
             }
         }
 

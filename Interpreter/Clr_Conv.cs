@@ -665,7 +665,7 @@ namespace ApolloClr
                 case StackValueType.i8:
                 case StackValueType.r8:
                 {
-                    vs->SetValue(vsv->ValueType, vsv->Value);
+                    vs->SetValue(vsv->ValueType, vsv->Value,true);
                     break;
                 }
                 case StackValueType.Ref:

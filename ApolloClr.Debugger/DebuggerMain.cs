@@ -45,6 +45,7 @@ namespace ApolloClr.Debugger
 
         public  void LoadClr(MethodTasks method, IEnumerator<object> inputSteps=null)
         {
+            method = method.GetDebuggerMethod();
             BindMethodTasks = method;
             this.clirStackViewUI1.LoadStack(method.Clr.Stack);
 

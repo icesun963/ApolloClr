@@ -12,6 +12,8 @@ namespace ApolloClr.Cross
 
         private Action Action;
 
+        public Action OnEndAction;
+
         /// <summary>
         /// 对象引用
         /// </summary>
@@ -24,7 +26,7 @@ namespace ApolloClr.Cross
 
 
 
-  
+
         public override void Run()
         {
             Action = () =>
@@ -32,9 +34,18 @@ namespace ApolloClr.Cross
                 //IntPtr转换成 MethodTask
                 //传入参数
                 //执行
-                Method.InDebug = false;
-                //TODO 暂不支持委托DEBUG
-                Method.Run(null);
+                if (Target != null)
+                {
+                    Method.Clr.Argp->SetValue(StackValueType.Ref, Target, true);
+                }
+                Method.Run(() =>
+                {
+                    if (OnEndAction != null)
+                    {
+                        OnEndAction();
+                    }
+                });
+
             };
 
             Result = Action;
@@ -49,6 +60,7 @@ namespace ApolloClr.Cross
                     Method = values[i] as MethodTasks;
                 }
             }
+            Target = values[1];
             //TODO 其他参数
         }
     }
@@ -61,12 +73,8 @@ namespace ApolloClr.Cross
         {
             Action = r =>
             {
-                Method.Clr.Argp->SetValue(StackValueType.i4, r);
-                //IntPtr转换成 MethodTask
-                //传入参数
-                //执行
-                Method.InDebug = false;
-                //TODO 暂不支持委托DEBUG
+                Method.Clr.Argp->SetValue(StackValueType.i4, r, true);
+
                 Method.Run(null);
             };
             Result = Action;

@@ -136,7 +136,7 @@ namespace ApolloClr
 #else
       
 
-        public void SetValue(StackValueType vtype, object value)
+        public void SetValue(StackValueType vtype, object value,bool settype =false)
         {
             switch (vtype)
             {
@@ -169,6 +169,11 @@ namespace ApolloClr
                     Ptr = StackObject.NewObject(value);
                     break;
                 }
+            }
+
+            if (settype)
+            {
+                ValueType = vtype;
             }
         
         }

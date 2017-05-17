@@ -35,10 +35,18 @@ namespace ApolloClr
         public bool InDebug = false;
 
         public IEnumerator<object> DebugerStep = null;
+
+
+        public virtual MethodTasks GetDebuggerMethod()
+        {
+            return this;
+        }
 #endif
         public virtual string Name { get; set; }
 
   
+
+
         public MethodTasks Compile(Action<IOpTask> OnCallAction = null, Action<IOpTask> OnNewAction=null)
         {
             Lines = TaskList.ToArray();
@@ -166,10 +174,15 @@ namespace ApolloClr
                     if (line.GetType().GetField("V3") != null)
                     {
                         var obj = line.GetType().GetField("V3").GetValue(line);
-                        if (obj is MethodTasks && !(obj is Cross.CrossMethod))
+                        if (obj is MethodTasks )
                         {
                             stepinMethodTasks = obj as MethodTasks;
                             stepinMethodTasks.InDebug = true;
+
+                            if (obj is Cross.CrossMethod)
+                            {
+                                
+                            }
                         }
                     }
                 }
@@ -299,8 +312,8 @@ namespace ApolloClr
                     {
                         var clrobj = new ClrObject(typeDefine.ClrType);
 
-                        (clr.Csp + i)->SetValue(StackValueType.Ref, clrobj);
-                        (clr.Csp + i)->ValueType = StackValueType.Ref;
+                        (clr.Csp + i)->SetValue(StackValueType.Ref, clrobj,true);
+                    
                     }
                 }
             }

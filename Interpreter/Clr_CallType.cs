@@ -186,11 +186,11 @@ namespace ApolloClr
                 if (task.Clr.ArgsVarCount > 0)
                 {
                     //初始化
-                    task.Clr.Argp->ValueType = StackValueType.Ref;
+           
                     var clrObj = new ClrObject();
                     task.InitMember(clrObj);
 
-                    task.Clr.Argp->SetValue(StackValueType.Ref, clrObj);
+                    task.Clr.Argp->SetValue(StackValueType.Ref, clrObj,true);
                 }
 
             }

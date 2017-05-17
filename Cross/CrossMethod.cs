@@ -20,6 +20,17 @@ namespace ApolloClr.Cross
 
         private bool IsStatic = false;
 
+#if DEBUG
+        private MethodTasks DebugerMethod { get; set; }
+
+        public override unsafe MethodTasks GetDebuggerMethod()
+        {
+            if (DebugerMethod != null)
+                return DebugerMethod;
+            return base.GetDebuggerMethod();
+        }
+#endif
+
         public override void Run(Action onRunEnd)
         {
             var vs = Clr.Argp;
@@ -80,22 +91,49 @@ namespace ApolloClr.Cross
            
           
             CrossMethodDelegate.Run();
-            if (HaseResult)
+
+
+            Action endAction = () =>
             {
-                Clr.ResultPoint = Clr.Csp;
+                if (HaseResult)
+                {
+                    Clr.ResultPoint = Clr.Csp;
 #if JS
                 Clr.ResultPoint.ValueType = StackValueType.Ref;
                 Clr.ResultPoint.Ptr = StackObject.NewObject(CrossMethodDelegate.Result);
 #else
-                Clr.ResultPoint->ValueType = StackValueType.Ref;
-                Clr.ResultPoint->Ptr = StackObject.NewObject(CrossMethodDelegate.Result);
+                    Clr.ResultPoint->ValueType = StackValueType.Ref;
+                    Clr.ResultPoint->Ptr = StackObject.NewObject(CrossMethodDelegate.Result);
 #endif
-            }
+                }
 
-            if (onRunEnd != null)
+                if (onRunEnd != null)
+                {
+                    onRunEnd();
+                }
+            };
+
+            if (InDebug)
             {
-                onRunEnd();
+                if (CrossMethodDelegate.Delegate.Target is Delegate)
+                {
+                    var db = ((CrossMethodDelegate.Delegate.Target as Delegate).Target as DelegateBuild);
+                    if (db.Method.InDebug && db.Method.DebugerStep != null)
+                    {
+                        DebugerStep = db.Method.DebugerStep;
+
+                        this.DebugerMethod = db.Method;
+                    }
+
+                 
+                }
             }
+            if (DebugerStep == null)
+            {
+                endAction();
+            }
+           
+          
         }
 
         public CrossMethod()
