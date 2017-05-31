@@ -14,7 +14,73 @@ namespace ApolloClr
 {
     public unsafe static class Extensions
     {
+
+        public const string STR_CTOR = ".ctor";
+        public const string STR_CCTOR = ".cctor";
+
+
         private static Action<object, object> DeleageSetFun = null;
+
+
+        public static bool IsVoid(this string inputType)
+        {
+            return inputType.ToLower() != typeof(void).Name.ToLower();
+        }
+
+        public static object V3(this IOpTask task)
+        {
+            return task.GetType().GetField("V3").GetValue(task);
+        }
+
+        public static void V3(this IOpTask task, object value)
+        {
+            task.GetType().GetField("V3").SetValue(task, value);
+        }
+        public static object V2(this IOpTask task)
+        {
+            return task.GetType().GetField("V2").GetValue(task);
+        }
+
+        public static void V2(this IOpTask task, object value)
+        {
+            task.GetType().GetField("V2").SetValue(task, value);
+        }
+
+        public static object V1(this IOpTask task)
+        {
+            return task.GetType().GetField("V1").GetValue(task);
+        }
+
+        public static void V1(this IOpTask task, object value)
+        {
+            task.GetType().GetField("V1").SetValue(task, value);
+        }
+
+        /// <summary>
+        /// 获取对象类型（偷懒写法）
+        /// </summary>
+        /// <param name="object"></param>
+        /// <returns></returns>
+        public static StackValueType GetValueType(this object @object)
+        {
+            if (@object is double)
+            {
+                return StackValueType.r8;
+            }
+            else if (@object is float)
+            {
+                return StackValueType.r4;
+            }
+            else if (@object is int)
+            {
+                return StackValueType.i4;
+            }
+            else if (@object is long)
+            {
+                return StackValueType.i8;
+            }
+            return StackValueType.Ref;
+        }
 
         public static Delegate SetTarget(this Delegate @delegate, object target)
         {
@@ -330,6 +396,10 @@ namespace ApolloClr
             var values = name.Split(new string[] { "::", ",", "(", ")", "[", "]" },
         StringSplitOptions.RemoveEmptyEntries);
             name = values.Last();
+            if (name.IndexOf("<") >= 0)
+            {
+                name = name.Substring(0, name.IndexOf("<"));
+            }
             foreach (var assemblyDefine in Assembly)
             {
                 var q = assemblyDefine.TypeDefines.Find(r => r.TypeDefinition.FullName == name);
@@ -418,11 +488,15 @@ namespace ApolloClr
                 case "bool":
                     return typeof(bool);
             }
-           
+
+            if (name.StartsWith("!!"))
+            {
+                //泛型处理    
+            }
        
             if (type == null)
             {
-                throw new NotSupportedException("Type  Was  Not Fount :" + name);
+                throw new NotSupportedException("Type  Was  Not Found :" + name);
             }
             return type;
         }

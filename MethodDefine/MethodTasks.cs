@@ -31,6 +31,8 @@ namespace ApolloClr
         public Exception TrowException;
 
         public bool IsCatched = false;
+
+        public bool IsCompiled = false;
 #if DEBUG
         public bool InDebug = false;
 
@@ -44,7 +46,7 @@ namespace ApolloClr
 #endif
         public virtual string Name { get; set; }
 
-  
+        public string SourceCode { get; set; }
 
 
         public MethodTasks Compile(Action<IOpTask> OnCallAction = null, Action<IOpTask> OnNewAction=null)
@@ -60,6 +62,7 @@ namespace ApolloClr
                 {
                     OnNewAction?.Invoke(opTask);
                 }
+                //else if (opTask.GetType().GetField("V3") != null)
                 else if (opTask.GetType().GetField("V3") != null)
                 {
                     if (opTask.GetType().GetField("V3").FieldType == typeof(MethodTasks))
@@ -146,6 +149,8 @@ namespace ApolloClr
         }
 
 
+  
+
         protected virtual MethodTasks CloneOne()
         {
             throw new NotSupportedException();
@@ -165,6 +170,7 @@ namespace ApolloClr
               
                 //try
                 //{
+
                 var line = Lines[PC];
 
 
@@ -179,10 +185,6 @@ namespace ApolloClr
                             stepinMethodTasks = obj as MethodTasks;
                             stepinMethodTasks.InDebug = true;
 
-                            if (obj is Cross.CrossMethod)
-                            {
-                                
-                            }
                         }
                     }
                 }
@@ -279,6 +281,7 @@ namespace ApolloClr
         {
             var list = ILCodeParse.ReadILCodes(codes);
             var ret= Build<MethodTasks>(list);
+            ret.SourceCode = codes;
             ret.CompileIL();
 
             return ret;
@@ -286,6 +289,7 @@ namespace ApolloClr
 
         public void CompileIL()
         {
+            IsCompiled = true;
             var clr = this.Clr;
 
             //如果是对象则进行初始化

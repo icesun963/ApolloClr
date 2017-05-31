@@ -73,7 +73,8 @@ namespace ApolloClr.Cross
         {
             Action = r =>
             {
-                Method.Clr.Argp->SetValue(StackValueType.i4, r, true);
+                if (r != null)
+                    Method.Clr.Argp->SetValue(r.GetValueType(), r, true);
 
                 Method.Run(null);
             };

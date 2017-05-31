@@ -30,8 +30,8 @@ namespace ApolloClr.TypeDefine
                 List<string> lines = methodDefinition.BodyLines;
                 var codes = ILCodeParse.ReadILCodes(lines.ToArray(), methodDefinition.LocalList,
                     methodDefinition.ParametersList);
-                bool haseResult = methodDefinition.ReturnType.ToLower() != typeof(void).Name.ToLower();
-                if (methodDefinition.ShortName == ".ctor")
+                bool haseResult = methodDefinition.ReturnType.IsVoid();
+                if (methodDefinition.IsCtor)
                 {
                     haseResult = true;
                 }
@@ -41,7 +41,7 @@ namespace ApolloClr.TypeDefine
                     haseResult,
                     methodDefinition.MaxStack,
                     methodDefinition.Static,
-                    methodDefinition.ShortName == ".ctor"
+                    methodDefinition.IsCtor
                     );
                 method.MethodDefinition = methodDefinition;
                 method.TypeDefine = this;
@@ -62,9 +62,14 @@ namespace ApolloClr.TypeDefine
 
             foreach (var methodTaskse in Methods)
             {
+                if (methodTaskse.MethodDefinition.IsGenerics)
+                {
+                    continue;
+                }
+
                 methodTaskse.CompileIL();
                 methodTaskse.Compile(MethodCompile,NewCompile);
-                if (methodTaskse.MethodDefinition.ShortName == ".cctor")
+                if (methodTaskse.MethodDefinition.ShortName == Extensions.STR_CCTOR)
                 {
                     methodTaskse.Run(null);
                 }
@@ -95,19 +100,30 @@ namespace ApolloClr.TypeDefine
                     }
                     throw new NotSupportedException();
                 }
+                else
+                {
+                    if (find.MethodDefinition.IsGenerics)
+                    {
+                        CallNameDefine callName = parse.CallName;
+                        var args = callName.GetGenericsArgs();
+                        find.GenericsArgs = args;
+                        find = find.ReBuild();
+                    }
+                }
             }
             if (find != null)
             {
                 r.Method = find;
-                r.GetType().GetField("V3").SetValue(r, find);
+                r.V3(find);
+                //r.GetType().GetField("V3").SetValue(r, find);
             }
             else
             {
                 //try clr cross
                 var method = Cross.CrossDomain.Build(parse.CallName);
                 r.Method = method;
-                r.GetType().GetField("V3").SetValue(r, method);
-
+                //r.GetType().GetField("V3").SetValue(r, method);
+                r.V3(method);
             }
         }
 
@@ -128,16 +144,18 @@ namespace ApolloClr.TypeDefine
             if (find != null)
             {
                 r.Method = find;
-                r.GetType().GetField("V3").SetValue(r, find);
+                r.V3(find);
+                //r.GetType().GetField("V3").SetValue(r, find);
             }
             else
             {
                 //try clr cross
-                var method = Cross.CrossDomain.Build(r.OpCode.Arg1 + " " + r.OpCode.Arg2 );
+                var method = Cross.CrossDomain.Build(r.OpCode.Arg1 + " " + r.OpCode.Arg2);
                 r.Method = method;
-                r.GetType().GetField("V3").SetValue(r, method);
+                //r.GetType().GetField("V3").SetValue(r, method);
+                r.V3(method);
             }
-        
+
 
         }
 

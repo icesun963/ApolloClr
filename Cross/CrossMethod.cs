@@ -112,10 +112,10 @@ namespace ApolloClr.Cross
                     onRunEnd();
                 }
             };
-
+#if DEBUG
             if (InDebug)
             {
-                if (CrossMethodDelegate.Delegate.Target is Delegate)
+                if (CrossMethodDelegate.Delegate!=null && CrossMethodDelegate.Delegate.Target is Delegate)
                 {
                     var db = ((CrossMethodDelegate.Delegate.Target as Delegate).Target as DelegateBuild);
                     if (db.Method.InDebug && db.Method.DebugerStep != null)
@@ -128,7 +128,11 @@ namespace ApolloClr.Cross
                  
                 }
             }
+
+
             if (DebugerStep == null)
+
+#endif
             {
                 endAction();
             }
@@ -172,7 +176,7 @@ namespace ApolloClr.Cross
                 methodInfo = type.GetMethodInfo(methodName, args.ToArray());
             }
 #endif
-            if (methodInfo == null && methodName ==".ctor")
+            if (methodInfo == null && methodName ==Extensions.STR_CTOR)
             {
                 ConstructorInfo coninfo = null;
                 
@@ -198,9 +202,10 @@ namespace ApolloClr.Cross
                 }
                 else
                 {
+
 #if BRIDGE
 
-                    if (methodName == ".ctor")
+                    if (methodName ==    Extensions.STR_CTOR)
                     {
                         //这个无法找到构造函数，只能直接构造了
                         ArgCount = 0;
@@ -225,7 +230,7 @@ namespace ApolloClr.Cross
                 ArgCount = methodInfo.GetParameters().Length;
                 HaseResult = methodInfo.ReturnType != typeof(void);
 #if BRIDGE
-                if (methodName == "ctor" || methodName == ".ctor")
+                if (methodName == "ctor" || methodName ==    Extensions.STR_CTOR)
                 {
                     HaseResult = true;
                 }
@@ -300,7 +305,7 @@ namespace ApolloClr.Cross
                 }
                 else if (parms.Length >= 4)
                 {
-
+                    throw new NotSupportedException();
                 }
             }
             else
@@ -310,12 +315,30 @@ namespace ApolloClr.Cross
                     tasktype = typeof(CrossMethodDelegateRet<>).MakeGenericType(retType);
 
                 }
-                else
+                if (parms.Length == 1)
                 {
-                    
+                    tasktype = typeof(CrossMethodDelegateRet<,>).MakeGenericType(retType, parms[0].ParameterType);
+
+                }
+                else if (parms.Length == 2)
+                {
+                    tasktype = typeof(CrossMethodDelegateRet<,,>).MakeGenericType(retType,
+                        parms[0].ParameterType,
+                        parms[1].ParameterType);
+
+                }
+                else if (parms.Length == 3)
+                {
+                    tasktype = typeof(CrossMethodDelegateRet<,,,>).MakeGenericType(retType,
+                        parms[0].ParameterType,
+                        parms[1].ParameterType, parms[2].ParameterType);
+                }
+                else if (parms.Length >= 4)
+                {
+                    throw new NotSupportedException();
                 }
             }
-          
+
 
             CrossMethodDelegate = Activator.CreateInstance(tasktype) as ICrossMethodDelegate;
             var funtask = tasktype.GetField("Func").FieldType;

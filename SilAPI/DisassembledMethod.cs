@@ -70,6 +70,11 @@ namespace SilAPI
             }
         }
 
+        public bool IsGenerics
+        {
+            get { return CallName.IndexOf("<") >= 0; }
+        }
+
         public Dictionary<string,string> Locals= new Dictionary<string, string>();
 
         public Dictionary<string, string> Parameters = new Dictionary<string, string>();

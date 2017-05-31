@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
+
 namespace SilAPI
 {
     /// <summary>
@@ -39,6 +40,12 @@ namespace SilAPI
         /// The short name.
         /// </value>
         public string ShortName { get; internal set; }
+
+
+        public bool IsCtor
+        {
+            get { return ShortName == ApolloClr.Extensions.STR_CTOR; }
+        }
 
         /// <summary>
         /// Gets the raw IL.

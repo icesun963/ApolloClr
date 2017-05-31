@@ -43,7 +43,7 @@ namespace ApolloClr.Method
                         var oldlenght = line.Length;
                         line = line.Replace("  ", " ")
                                    .Replace("native ", "native_")
-                                   .Replace("!0","")
+                                   //.Replace("!0","")
                             ;
                         if (oldlenght == line.Length)
                         {
